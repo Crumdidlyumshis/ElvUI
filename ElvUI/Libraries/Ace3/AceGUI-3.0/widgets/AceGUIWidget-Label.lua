@@ -2,7 +2,7 @@
 Label Widget
 Displays text and optionally an icon.
 -------------------------------------------------------------------------------]]
-local Type, Version = "Label", 28
+local Type, Version = "Label", 26
 local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
@@ -11,6 +11,10 @@ local max, select, pairs = math.max, select, pairs
 
 -- WoW APIs
 local CreateFrame, UIParent = CreateFrame, UIParent
+
+-- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
+-- List them here for Mikk's FindGlobals script
+-- GLOBALS: GameFontHighlightSmall
 
 --[[-----------------------------------------------------------------------------
 Support functions
@@ -125,16 +129,11 @@ local methods = {
 	end,
 
 	["SetFont"] = function(self, font, height, flags)
-		if not self.fontObject then
-			self.fontObject = CreateFont("AceGUI30LabelFont" .. AceGUI:GetNextWidgetNum(Type))
-		end
-		self.fontObject:SetFont(font, height, flags)
-		self:SetFontObject(self.fontObject)
+		self.label:SetFont(font, height, flags)
 	end,
 
 	["SetFontObject"] = function(self, font)
-		self.label:SetFontObject(font or GameFontHighlightSmall)
-		UpdateImageAnchor(self)
+		self:SetFont((font or GameFontHighlightSmall):GetFont())
 	end,
 
 	["SetImageSize"] = function(self, width, height)

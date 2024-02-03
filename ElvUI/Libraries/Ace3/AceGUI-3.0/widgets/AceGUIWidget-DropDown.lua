@@ -11,6 +11,10 @@ local PlaySound = PlaySound
 local UIParent, CreateFrame = UIParent, CreateFrame
 local _G = _G
 
+-- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
+-- List them here for Mikk's FindGlobals script
+-- GLOBALS: CLOSE
+
 local function fixlevels(parent,...)
 	local i = 1
 	local child = select(i, ...)
@@ -35,7 +39,7 @@ end
 
 do
 	local widgetType = "Dropdown-Pullout"
-	local widgetVersion = 5
+	local widgetVersion = 3
 
 	--[[ Static data ]]--
 
@@ -189,7 +193,12 @@ do
 
 		local height = 8
 		for i, item in pairs(items) do
-			item:SetPoint("TOP", itemFrame, "TOP", 0, -2 + (i - 1) * -16)
+			if i == 1 then
+				item:SetPoint("TOP", itemFrame, "TOP", 0, -2)
+			else
+				item:SetPoint("TOP", items[i-1].frame, "BOTTOM", 0, 1)
+			end
+
 			item:Show()
 
 			height = height + 16
@@ -249,7 +258,7 @@ do
 
 	local function Constructor()
 		local count = AceGUI:GetNextWidgetNum(widgetType)
-		local frame = CreateFrame("Frame", "AceGUI30Pullout"..count, UIParent, "BackdropTemplate")
+		local frame = CreateFrame("Frame", "AceGUI30Pullout"..count, UIParent)
 		local self = {}
 		self.count = count
 		self.type = widgetType
@@ -300,7 +309,7 @@ do
 		scrollFrame.obj = self
 		itemFrame.obj = self
 
-		local slider = CreateFrame("Slider", "AceGUI30PulloutScrollbar"..count, scrollFrame, "BackdropTemplate")
+		local slider = CreateFrame("Slider", "AceGUI30PulloutScrollbar"..count, scrollFrame)
 		slider:SetOrientation("VERTICAL")
 		slider:SetHitRectInsets(0, 0, -10, 0)
 		slider:SetBackdrop(sliderBackdrop)
@@ -347,7 +356,7 @@ end
 
 do
 	local widgetType = "Dropdown"
-	local widgetVersion = 36
+	local widgetVersion = 34
 
 	--[[ Static data ]]--
 
@@ -372,6 +381,7 @@ do
 
 	local function Dropdown_TogglePullout(this)
 		local self = this.obj
+		PlaySound(856) -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
 		if self.open then
 			self.open = nil
 			self.pullout:Close()
@@ -455,7 +465,6 @@ do
 		self:SetWidth(200)
 		self:SetLabel()
 		self:SetPulloutWidth(nil)
-		self.list = {}
 	end
 
 	-- exported, AceGUI callback
@@ -526,7 +535,9 @@ do
 
 	-- exported
 	local function SetValue(self, value)
-		self:SetText(self.list[value] or "")
+		if self.list then
+			self:SetText(self.list[value] or "")
+		end
 		self.value = value
 	end
 
@@ -590,7 +601,7 @@ do
 		end
 	end
 	local function SetList(self, list, order, itemType)
-		self.list = list or {}
+		self.list = list
 		self.pullout:Clear()
 		self.hasClose = nil
 		if not list then return end
@@ -618,8 +629,10 @@ do
 
 	-- exported
 	local function AddItem(self, value, text, itemType)
-		self.list[value] = text
-		AddListItem(self, value, text, itemType)
+		if self.list then
+			self.list[value] = text
+			AddListItem(self, value, text, itemType)
+		end
 	end
 
 	-- exported

@@ -37,9 +37,16 @@ local error, assert = error, assert
 -- WoW APIs
 local _G = _G
 
+-- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
+-- List them here for Mikk's FindGlobals script
+-- GLOBALS: LibStub, SELECTED_CHAT_FRAME, DEFAULT_CHAT_FRAME
+
+
 local L = setmetatable({}, {	-- TODO: replace with proper locale
 	__index = function(self,k) return k end
 })
+
+
 
 local function print(msg)
 	(SELECTED_CHAT_FRAME or DEFAULT_CHAT_FRAME):AddMessage(msg)
@@ -394,7 +401,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 		return
 	end
 
-	local strInput = strsub(info.input,inputpos);
+	local str = strsub(info.input,inputpos);
 
 	if tab.type=="execute" then
 		------------ execute --------------------------------------------
@@ -407,21 +414,21 @@ local function handle(info, inputpos, tab, depth, retfalse)
 
 		local res = true
 		if tab.pattern then
-			if type(tab.pattern)~="string" then err(info, inputpos, "'pattern' - expected a string") end
-			if not strmatch(strInput, tab.pattern) then
-				usererr(info, inputpos, "'"..strInput.."' - " .. L["invalid input"])
+			if not(type(tab.pattern)=="string") then err(info, inputpos, "'pattern' - expected a string") end
+			if not strmatch(str, tab.pattern) then
+				usererr(info, inputpos, "'"..str.."' - " .. L["invalid input"])
 				return
 			end
 		end
 
-		do_final(info, inputpos, tab, "set", strInput)
+		do_final(info, inputpos, tab, "set", str)
 
 
 
 	elseif tab.type=="toggle" then
 		------------ toggle --------------------------------------------
 		local b
-		local str = strtrim(strlower(strInput))
+		local str = strtrim(strlower(str))
 		if str=="" then
 			b = callmethod(info, inputpos, tab, "get")
 
@@ -458,9 +465,9 @@ local function handle(info, inputpos, tab, depth, retfalse)
 
 	elseif tab.type=="range" then
 		------------ range --------------------------------------------
-		local val = tonumber(strInput)
+		local val = tonumber(str)
 		if not val then
-			usererr(info, inputpos, "'"..strInput.."' - "..L["expected number"])
+			usererr(info, inputpos, "'"..str.."' - "..L["expected number"])
 			return
 		end
 		if type(info.step)=="number" then
@@ -480,7 +487,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 
 	elseif tab.type=="select" then
 		------------ select ------------------------------------
-		local str = strtrim(strlower(strInput))
+		local str = strtrim(strlower(str))
 
 		local values = tab.values
 		if type(values) == "function" or type(values) == "string" then
@@ -521,7 +528,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 
 	elseif tab.type=="multiselect" then
 		------------ multiselect -------------------------------------------
-		local str = strtrim(strlower(strInput))
+		local str = strtrim(strlower(str))
 
 		local values = tab.values
 		if type(values) == "function" or type(values) == "string" then
@@ -558,7 +565,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 
 			--check that the opt is valid
 			local ok
-			for k in pairs(values) do
+			for k,v in pairs(values) do
 				if strlower(k)==opt then
 					opt = k	-- overwrite with key (in case of case mismatches)
 					ok = true
@@ -627,7 +634,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 
 	elseif tab.type=="color" then
 		------------ color --------------------------------------------
-		local str = strtrim(strlower(strInput))
+		local str = strtrim(strlower(str))
 		if str == "" then
 			--TODO: Show current value
 			return
@@ -699,7 +706,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 
 	elseif tab.type=="keybinding" then
 		------------ keybinding --------------------------------------------
-		local str = strtrim(strlower(strInput))
+		local str = strtrim(strlower(str))
 		if str == "" then
 			--TODO: Show current value
 			return
