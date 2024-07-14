@@ -1,50 +1,64 @@
-local E, L = unpack(ElvUI)
-local B = E:GetModule("Blizzard")
+local E, L, V, P, G = unpack(ElvUI)
+local BL = E:GetModule('Blizzard')
 
---Lua functions
-local min = math.min
---WoW API / Variables
-local GetScreenHeight = GetScreenHeight
+local _G = _G
+local min = min
+local CreateFrame = CreateFrame
+local hooksecurefunc = hooksecurefunc
 
-local hideRule = "[@arena1,exists][@arena2,exists][@arena3,exists][@arena4,exists][@arena5,exists][@boss1,exists][@boss2,exists][@boss3,exists][@boss4,exists]"
+local Tracker_Collapse = WatchFrame_Collapse
+local Tracker_Expand = WatchFrame_Expand
+local Tracker = WatchFrame
 
-function B:SetObjectiveFrameAutoHide()
-	if E.db.general.watchFrameAutoHide then
-		RegisterStateDriver(WatchFrame, "visibility", hideRule)
-	else
-		UnregisterStateDriver(WatchFrame, "visibility")
+local function ObjectiveTracker_SetPoint(tracker, _, parent)
+	if parent ~= tracker.holder then
+		tracker:ClearAllPoints()
+		tracker:SetPoint('TOP', tracker.holder)
 	end
 end
 
-function B:SetObjectiveFrameHeight()
-	local top = WatchFrame:GetTop() or 0
-	local screenHeight = GetScreenHeight()
-	local gapFromTop = screenHeight - top
-	local maxHeight = screenHeight - gapFromTop
-	local watchFrameHeight = min(maxHeight, E.db.general.objectiveFrameHeight)
+function BL:ObjectiveTracker_SetHeight()
+	local top = Tracker:GetTop() or 0
+	local gapFromTop = E.screenHeight - top
+	local maxHeight = E.screenHeight - gapFromTop
+	local frameHeight = min(maxHeight, E.db.general.objectiveFrameHeight)
 
-	WatchFrame:Height(watchFrameHeight)
+	Tracker:Height(frameHeight)
 end
 
-function B:MoveWatchFrame()
-	local WatchFrameHolder = CreateFrame("Frame", "WatchFrameHolder", E.UIParent)
-	WatchFrameHolder:Size(207, 22)
-	WatchFrameHolder:Point("TOPRIGHT", -135, -300)
+function BL:ObjectiveTracker_AutoHideOnHide()
+	if not Tracker.collapsed then
+		Tracker.userCollapsed = true
+		Tracker_Collapse(Tracker)
+	end
+end
 
-	E:CreateMover(WatchFrameHolder, "WatchFrameMover", L["Objective Frame"], nil, nil, nil, nil, nil, "general,objectiveFrameGroup")
-	WatchFrameHolder:SetAllPoints(WatchFrameMover)
+function BL:ObjectiveTracker_AutoHideOnShow()
+	if Tracker.collapsed then
+		Tracker.userCollapsed = nil
+		Tracker_Expand(Tracker)
+	end
+end
 
-	WatchFrame:ClearAllPoints()
-	WatchFrame:SetPoint("TOP", WatchFrameHolder, "TOP")
-	B:SetObjectiveFrameHeight()
-	WatchFrame:SetClampedToScreen(false)
+function BL:ObjectiveTracker_Setup()
+	local holder = CreateFrame('Frame', 'ObjectiveFrameHolder', E.UIParent)
+	holder:Point('TOPRIGHT', E.UIParent, -135, -300)
+	holder:Size(130, 22)
 
-	hooksecurefunc(WatchFrame, "SetPoint", function(_, _, parent)
-		if parent ~= WatchFrameHolder then
-			WatchFrame:ClearAllPoints()
-			WatchFrame:SetPoint("TOP", WatchFrameHolder, "TOP")
-		end
-	end)
+	E:CreateMover(holder, 'ObjectiveFrameMover', L["Objective Frame"], nil, nil, nil, nil, nil, 'general,blizzUIImprovements')
+	holder:SetAllPoints(_G.ObjectiveFrameMover)
 
-	self:SetObjectiveFrameAutoHide()
+	-- prevent it from being moved by blizzard (the hook below will most likely do nothing now)
+	Tracker:SetMovable(true)
+	Tracker:SetUserPlaced(true)
+	Tracker:SetDontSavePosition(true)
+	Tracker:SetClampedToScreen(false)
+	Tracker:ClearAllPoints()
+	Tracker:SetPoint('TOP', holder)
+
+	Tracker.holder = holder
+	hooksecurefunc(Tracker, 'SetPoint', ObjectiveTracker_SetPoint)
+
+	BL:ObjectiveTracker_AutoHide() -- supported but no boss frames, only works for arena
+	BL:ObjectiveTracker_SetHeight()
 end
