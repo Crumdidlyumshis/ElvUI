@@ -10,7 +10,6 @@ local min, max = min, max
 local next, format, type, pcall, unpack = next, format, type, pcall, unpack
 local tinsert, ipairs, pairs, wipe, sort, gsub = tinsert, ipairs, pairs, wipe, sort, gsub
 local tostring, strfind, strsplit = tostring, strfind, strsplit
-local hooksecurefunc = hooksecurefunc
 
 local CloseDropDownMenus = CloseDropDownMenus
 local CreateFrame = CreateFrame
@@ -18,6 +17,7 @@ local EasyMenu = EasyMenu
 local GetBackpackCurrencyInfo = GetBackpackCurrencyInfo
 local GetCurrencyListSize = GetCurrencyListSize
 local GetCurrencyListInfo = GetCurrencyListInfo
+local GetItemInfo = GetItemInfo
 local ExpandCurrencyList = ExpandCurrencyList
 local GetNumTalentTabs = GetNumTalentTabs
 local GetSpecializationInfo = LCS.GetSpecializationInfo
@@ -723,9 +723,12 @@ function DT:PopulateData(currencyOnly)
 			headerIndex = i
 		end
 		if info.name and not info.isHeader then
-			local _, currencyLink = _G.GetItemInfo(info.itemID)
+			print(info.itemID)
+			local _, currencyLink
+			if info.itemID then
+				_, currencyLink = GetItemInfo(info.itemID)
+			end
 			local currencyID = currencyLink and info.itemID
-
 			if currencyID then
 				if DT.CurrencyList then
 					DT.CurrencyList[tostring(currencyID)] = info.name
@@ -754,7 +757,7 @@ function DT:PopulateData(currencyOnly)
 
 	if not currencyOnly then
 		for index = 1, GetNumTalentTabs() do
-			local id, name, _, icon, _, statID = GetSpecializationInfo(index)
+			local id, name, _, icon, _, _, statID = GetSpecializationInfo(index)
 
 			if id then
 				DT.SPECIALIZATION_CACHE[index] = { id = id, name = name, icon = icon, statID = statID }
@@ -782,7 +785,11 @@ end
 
 function DT:CurrencyInfo(id)
 	local info = {}
-	info.name, _, _, _, _, info.quantity, _, _, info.iconFileID, info.itemID = GetCurrencyListInfo(id)
+
+	info.name, _, _, _, _, info.quantity, _, info.iconFileID, info.itemID = GetCurrencyListInfo(id)
+	if info.itemID then
+		_, _, _, _, _, _, _, info.maxQuantity = GetItemInfo(info.itemID)
+	end
 
 	return info, info and info.name, format(iconString, info and info.iconFileID or [[Interface\Icons\Spell_Nature_Bloodlust]])
 end
@@ -845,9 +852,9 @@ function DT:Initialize()
 	_G.DataTextTooltipTextLeft1:FontTemplate(font, textSize, fontOutline)
 	_G.DataTextTooltipTextRight1:FontTemplate(font, textSize, fontOutline)
 
-	-- DT:RegisterCustomCurrencyDT() -- Register all the user created currency datatexts from the 'CustomCurrency' DT.
+	DT:RegisterCustomCurrencyDT() -- Register all the user created currency datatexts from the 'CustomCurrency' DT.
 
-	-- hooksecurefunc('SetCurrencyBackpack', function() DT:ForceUpdate_DataText('Currencies') end)
+	hooksecurefunc('SetCurrencyBackpack', function() DT:ForceUpdate_DataText('Currencies') end)
 
 	DT:PopulateData()
 	DT:RegisterEvent('CURRENCY_DISPLAY_UPDATE')
