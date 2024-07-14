@@ -20,7 +20,7 @@ function BL:ADDON_LOADED(_, addon)
 			ChatFrameEditBox:Insert(GetTradeSkillListLink())
 		end)
 
-		self:UnregisterEvent("ADDON_LOADED")
+		BL:UnregisterEvent("ADDON_LOADED")
 	end
 
 	if addon == 'Blizzard_GuildBankUI' then
@@ -30,20 +30,38 @@ function BL:ADDON_LOADED(_, addon)
 	end
 end
 
+function BL:ObjectiveTracker_AutoHide()
+	local tracker = _G.WatchFrame
+	if not tracker then return end
+
+	if not tracker.AutoHider then
+		tracker.AutoHider = CreateFrame('Frame', nil, tracker, 'SecureHandlerStateTemplate')
+		tracker.AutoHider:SetAttribute('_onstate-objectiveHider', 'if newstate == 1 then self:Hide() else self:Show() end')
+		tracker.AutoHider:SetScript('OnHide', BL.ObjectiveTracker_AutoHideOnHide)
+		tracker.AutoHider:SetScript('OnShow', BL.ObjectiveTracker_AutoHideOnShow)
+	end
+
+	if E.db.general.objectiveFrameAutoHide then
+		RegisterStateDriver(tracker.AutoHider, 'objectiveHider', '[@arena1,exists][@arena2,exists][@arena3,exists][@arena4,exists][@arena5,exists][@boss1,exists][@boss2,exists][@boss3,exists][@boss4,exists][@boss5,exists] 1;0')
+	else
+		UnregisterStateDriver(tracker.AutoHider, 'objectiveHider')
+	end
+end
+
 function BL:Initialize()
-	self.Initialized = true
+	BL.Initialized = true
 
-	self:AlertMovers()
-	self:EnhanceColorPicker()
-	self:KillBlizzard()
-	self:PositionCaptureBar()
-	self:PositionDurabilityFrame()
-	self:PositionGMFrames()
-	self:PositionVehicleFrame()
-	self:MoveWatchFrame()
+	BL:AlertMovers()
+	BL:EnhanceColorPicker()
+	BL:KillBlizzard()
+	BL:PositionCaptureBar()
+	BL:PositionDurabilityFrame()
+	BL:PositionGMFrames()
+	BL:PositionVehicleFrame()
+	BL:ObjectiveTracker_Setup()
 
-	self:RegisterEvent("ADDON_LOADED")
-	self:RegisterEvent("ZONE_CHANGED_NEW_AREA", SetMapToCurrentZone)
+	BL:RegisterEvent("ADDON_LOADED")
+	BL:RegisterEvent("ZONE_CHANGED_NEW_AREA", SetMapToCurrentZone)
 
 	KBArticle_BeginLoading = E.noop
 	KBSetup_BeginLoading = E.noop
