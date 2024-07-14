@@ -136,7 +136,7 @@ local CONTAINER_WIDTH = 192
 local CONTAINER_SPACING = 0
 local VISIBLE_CONTAINER_SPACING = 3
 local CONTAINER_SCALE = 0.75
-local BIND_START, BIND_END
+local BIND
 
 B.numTrackedTokens = 0
 B.QuestSlots = {}
@@ -172,7 +172,7 @@ B.IsEquipmentSlot = {
 
 local bagIDs, bankIDs = {0, 1, 2, 3, 4}, { -1 }
 local bankOffset, maxBankSlots = 4, 11
-local bankEvents = {'BAG_UPDATE', 'ITEM_LOCK_CHANGED', 'PLAYERBANKBAGSLOTS_CHANGED', 'PLAYERBANKSLOTS_CHANGED'}
+local bankEvents = {'BAG_UPDATE', 'ITEM_LOCK_CHANGED', 'PLAYERBANKBAGSLOTS_CHANGED', 'PLAYERBANKBAGSLOTS_UPDATED', 'PLAYERBANKSLOTS_CHANGED'}
 local bagEvents = {'BAG_UPDATE', 'ITEM_LOCK_CHANGED', 'QUEST_ACCEPTED', 'QUEST_REMOVED', 'QUEST_LOG_UPDATE'}
 local presistentEvents = {
 	PLAYERBANKSLOTS_CHANGED = true,
@@ -451,17 +451,18 @@ function B:GetItemQuestInfo(itemLink, itemType)
 	if itemType == 'Quest' then
 		return true, true
 	else
-		E.ScanTooltip:SetOwner(UIParent, 'ANCHOR_NONE')
-		E.ScanTooltip:SetHyperlink(itemLink)
-		E.ScanTooltip:Show()
-
 		local isQuestItem, isStarterItem
-		for i = BIND_START, BIND_END do
-			local line = _G['ElvUI_ScanTooltipTextLeft'..i]:GetText()
+		local info = E.ScanTooltip:GetHyperlinkInfo(itemLink)
 
-			if not line or line == '' then break end
-			if not isQuestItem and line == _G.ITEM_BIND_QUEST then isQuestItem = true end
-			if not isStarterItem and line == _G.ITEM_STARTS_QUEST then isStarterItem = true end
+		if info then
+			for i = 1, BIND do
+				local line = info.lines[i]
+				local text = line and line.leftText
+
+				if not text or text == '' then break end
+				if not isQuestItem and line == _G.ITEM_BIND_QUEST then isQuestItem = true end
+				if not isStarterItem and line == _G.ITEM_STARTS_QUEST then isStarterItem = true end
+			end
 		end
 
 		E.ScanTooltip:Hide()
@@ -527,20 +528,24 @@ function B:UpdateSlot(frame, bagID, slotID)
 		end
 
 		if B.db.showBindType and (slot.rarity and slot.rarity > 1) then
-			local bindTypeLines = B:GetBindLines()
+
 			local BoE, BoU
-			for i = 2, bindTypeLines do
-				local line = _G['ElvUI_ScanTooltipTextLeft'..i]:GetText()
-				if (not line or line == '') or (line == ITEM_SOULBOUND or line == ITEM_ACCOUNTBOUND or line == ITEM_BNETACCOUNTBOUND) then break end
+			local info = E.ScanTooltip:GetHyperlinkInfo(slot.itemLink)
+			if info then
+				for i = 2, BIND do
+					local line = info.lines[i]
+					local text = line and line.leftText
 
-				BoE, BoU = line == ITEM_BIND_ON_EQUIP, line == ITEM_BIND_ON_USE
+					if (not text or text == '') or (text == ITEM_SOULBOUND or text == ITEM_ACCOUNTBOUND) then break end
 
-				if not B.db.showBindType and (slot.rarity and slot.rarity > 1) or (BoE or BoU) then break end
-			end
+					BoE, BoU = text == ITEM_BIND_ON_EQUIP, text == ITEM_BIND_ON_USE
+					if not B.db.showBindType and (slot.rarity and slot.rarity > 1) or (BoE or BoU) then break end
+				end
 
-			if BoE or BoU then
-				slot.bindType:SetText(BoE and L["BoE"] or L["BoU"])
-				slot.bindType:SetVertexColor(r, g, b)
+				if BoE or BoU then
+					slot.bindType:SetText(BoE and L["BoE"] or L["BoU"])
+					slot.bindType:SetVertexColor(r, g, b)
+				end
 			end
 		end
 	end
@@ -878,7 +883,7 @@ function B:UpdateLayout(frame)
 end
 
 -- Taken from retail, modified by Crum
-function B:BankFrameItemButton_Update(button)
+local function bankFrameItemButton_Update(button)
 	local container = button:GetParent():GetID()
 	local buttonID = button:GetID()
 	if button.isBag then
@@ -886,6 +891,7 @@ function B:BankFrameItemButton_Update(button)
 	end
 	local texture = button.icon
 	local inventoryID = button:GetInventorySlot()
+	local link = GetInventoryItemLink('player', inventoryID)
 	local textureName = GetInventoryItemTexture("player", inventoryID)
 	local slotTextureName
 	button.hasItem = nil
@@ -908,10 +914,8 @@ function B:BankFrameItemButton_Update(button)
 			questTexture:Hide()
 		end
 	end
-	-- if textureName then
-	-- print(textureName, inventoryID)
-	-- end
-	if textureName then
+
+	if textureName and button.isBag then
 		texture:SetTexture(textureName)
 		texture:Show()
 		SetItemButtonCount(button, GetInventoryItemCount('player', inventoryID))
@@ -932,7 +936,7 @@ end
 function B:UpdateBankBagIcon(holder)
 	if not holder then return end
 
-	B:BankFrameItemButton_Update(holder)
+	bankFrameItemButton_Update(holder)
 
 	local numSlots = GetNumBankSlots()
 	local color = ((holder.index - 1) <= numSlots) and 1 or 0.1
@@ -982,7 +986,7 @@ function B:OnEvent(event, ...)
 			B:SetBagAssignments(holder, true)
 			self.notPurchased[containerID] = nil
 		end
-	elseif event == 'PLAYERBANKSLOTS_CHANGED' then
+	elseif event == 'PLAYERBANKSLOTS_CHANGED' or event == 'PLAYERBANKSLOTS_UPDATED' then
 		local slotID = ...
 		local index = (slotID <= NUM_BANKGENERIC_SLOTS) and BANK_CONTAINER or (slotID - NUM_BANKGENERIC_SLOTS)
 		local default = index == BANK_CONTAINER
@@ -1002,7 +1006,7 @@ function B:OnEvent(event, ...)
 				bag.staleSlots[slotID] = true
 			end
 		end
-	elseif event == 'BAG_UPDATE' then
+	elseif event == 'BAG_UPDATE' or event == 'PLAYERBANKBAGSLOTS_UPDATED' then
 		B:UpdateContainerIcons()
 		B:UpdateBagSlots(self, ...)
 
@@ -2096,14 +2100,14 @@ end
 
 function B:UpdateBindLines(_, cvar)
 	if cvar == 'USE_COLORBLIND_MODE' then
-		BIND_START, BIND_END = B:GetBindLines()
+		BIND = B:GetBindLines()
 	end
 end
 
 function B:Initialize()
 	B.db = E.db.bags
 
-	BIND_START, BIND_END = B:GetBindLines()
+	BIND = B:GetBindLines()
 
 	B.ProfessionColors = {
 		[0x1]		= E:GetColorTable(B.db.colors.profession.quiver),
