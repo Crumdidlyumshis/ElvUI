@@ -150,7 +150,6 @@ E:ScheduleRepeatingTimer(toggleCoordsStartStop, 0.5)
 
 E:RegisterEvent('CRITERIA_UPDATE', 'MapInfo_CoordsStop') -- when the player goes into an animation (landing)
 E:RegisterEventForObject('PLAYER_LOGIN', E.MapInfo, E.MapInfo_Update)
-E:RegisterEventForObject('LOADING_SCREEN_DISABLED', E.MapInfo, E.MapInfo_Update)
 E:RegisterEventForObject('ZONE_CHANGED_NEW_AREA', E.MapInfo, E.MapInfo_Update)
 E:RegisterEventForObject('ZONE_CHANGED_INDOORS', E.MapInfo, E.MapInfo_Update)
 E:RegisterEventForObject('ZONE_CHANGED', E.MapInfo, E.MapInfo_Update)
