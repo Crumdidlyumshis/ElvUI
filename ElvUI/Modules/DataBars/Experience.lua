@@ -45,8 +45,8 @@ end
 
 local function RestedQuestLayering()
 	local bar = DB.StatusBars.Experience
-	bar.Quest.barTexture:SetDrawLayer('ARTWORK', (QuestLogXP > RestedXP) and 2 or 3)
-	bar.Rested.barTexture:SetDrawLayer('ARTWORK', (QuestLogXP <= RestedXP) and 2 or 3)
+	bar.Quest:SetFrameLevel((QuestLogXP > RestedXP) and 2 or 3)
+	bar.Rested:SetFrameLevel((QuestLogXP <= RestedXP) and 2 or 3)
 end
 
 function DB:ExperienceBar_Update()
@@ -233,7 +233,8 @@ end
 function DB:ExperienceBar()
 	local Experience = DB:CreateBar('ElvUI_ExperienceBar', 'Experience', DB.ExperienceBar_Update, DB.ExperienceBar_OnEnter, DB.ExperienceBar_OnClick, {'BOTTOM', E.UIParent, 'BOTTOM', 0, 43})
 	Experience:HookScript('OnMouseUp', DB.ExperienceBar_OnClick) -- Warmane
-	Experience.barTexture:SetDrawLayer('ARTWORK', 4)
+	Experience:SetFrameLevel(4)
+	Experience.barTexture:SetDrawLayer('ARTWORK')
 	DB:CreateBarBubbles(Experience)
 
 	Experience.ShouldHide = function()
@@ -245,8 +246,9 @@ function DB:ExperienceBar()
 	Rested:EnableMouse(false)
 	Rested:SetInside()
 	Rested:Hide()
+	Rested:SetFrameLevel(0)
 	Rested.barTexture = Rested:GetStatusBarTexture()
-	Rested.barTexture:SetDrawLayer('ARTWORK', 3)
+	Rested.barTexture:SetDrawLayer('ARTWORK')
 	Experience.Rested = Rested
 
 	local Quest = CreateFrame('StatusBar', 'ElvUI_ExperienceBar_Quest', Experience.holder)
@@ -254,8 +256,9 @@ function DB:ExperienceBar()
 	Quest:EnableMouse(false)
 	Quest:SetInside()
 	Quest:Hide()
+	Quest:SetFrameLevel(1)
 	Quest.barTexture = Quest:GetStatusBarTexture()
-	Quest.barTexture:SetDrawLayer('ARTWORK', 2)
+	Quest.barTexture:SetDrawLayer('ARTWORK')
 	Experience.Quest = Quest
 
 	E:CreateMover(Experience.holder, 'ExperienceBarMover', L['Experience Bar'], nil, nil, nil, nil, nil, 'databars,experience')
