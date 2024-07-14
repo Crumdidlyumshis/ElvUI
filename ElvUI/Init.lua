@@ -13,6 +13,7 @@ local GetLocale = GetLocale
 local GetTime = GetTime
 local CreateFrame = CreateFrame
 local ReloadUI = ReloadUI
+local UIParent = UIParent
 
 local UIDropDownMenu_SetAnchor = UIDropDownMenu_SetAnchor
 
