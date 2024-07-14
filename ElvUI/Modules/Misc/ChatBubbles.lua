@@ -1,56 +1,68 @@
-local E, L, V, P, G = unpack(ElvUI)
+local E, L, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local M = E:GetModule("Misc")
 local CH = E:GetModule("Chat")
 
-local format, wipe, pairs = format, wipe, pairs
-local strmatch, strlower, gmatch, gsub = strmatch, strlower, gmatch, gsub
+local select, unpack = select, unpack
+local format, gmatch, gsub, lower, match = string.format, string.gmatch, string.gsub, string.lower, string.match
 
-local CreateFrame = CreateFrame
-local PRIEST_COLOR = RAID_CLASS_COLORS.PRIEST
+local GetPlayerInfoByGUID = GetPlayerInfoByGUID
+local WorldFrame = WorldFrame
 local WorldGetChildren = WorldFrame.GetChildren
 local WorldGetNumChildren = WorldFrame.GetNumChildren
+local ICON_LIST = ICON_LIST
+local ICON_TAG_LIST = ICON_TAG_LIST
+local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 
 --Message caches
 local messageToGUID = {}
 local messageToSender = {}
 
+local function replaceIconTags(value)
+	value = lower(value)
+	if ICON_TAG_LIST[value] and ICON_LIST[ICON_TAG_LIST[value]] then
+		return format("%s0|t", ICON_LIST[ICON_TAG_LIST[value]])
+	end
+end
+
 function M:UpdateBubbleBorder()
-	local holder = self.holder
-	local str = holder and holder.String
-	if not str then return end
+	if not self.text then return end
 
-	local option = E.private.general.chatBubbles
-	if option == "backdrop" then
-		holder:SetBackdropBorderColor(str:GetTextColor())
-	elseif option == "backdrop_noborder" then
-		holder:SetBackdropBorderColor(0,0,0,0)
+	if E.private.general.chatBubbles == "backdrop" then
+		if E.PixelMode then
+			self:SetBackdropBorderColor(self.text:GetTextColor())
+		else
+			local r, g, b = self.text:GetTextColor()
+			self.bordertop:SetTexture(r, g, b)
+			self.borderbottom:SetTexture(r, g, b)
+			self.borderleft:SetTexture(r, g, b)
+			self.borderright:SetTexture(r, g, b)
+		end
 	end
 
-	local name = self.Name and self.Name:GetText()
-	if name then self.Name:SetText() end
-
-	local text = str:GetText()
-	if not text then return end
-
-	if E.private.general.chatBubbleName then
-		M:AddChatBubbleName(self, messageToGUID[text], messageToSender[text])
+	local text = self.text:GetText()
+	if self.Name then
+		self.Name:SetText("") --Always reset it
+		if text and E.private.general.chatBubbleName then
+			M:AddChatBubbleName(self, messageToGUID[text], messageToSender[text])
+		end
 	end
+
+	local rebuiltString
 
 	if E.private.chat.enable and E.private.general.classColorMentionsSpeech then
-		local isFirstWord, rebuiltString
-		if text and strmatch(text, "%s-%S+%s*") then
-			for word in gmatch(text, "%s-%S+%s*") do
-				local tempWord = gsub(word, "^[%s%p]-([^%s%p]+)([%-]?[^%s%p]-)[%s%p]*$", "%1%2")
-				local lowerCaseWord = strlower(tempWord)
+		if text and match(text, "%s-%S+%s*") then
+			local classColorTable, lowerCaseWord, isFirstWord, tempWord, wordMatch, classMatch
 
-				local classMatch = CH.ClassNames[lowerCaseWord]
-				local wordMatch = classMatch and lowerCaseWord
+			for word in gmatch(text, "%s-%S+%s*") do
+				tempWord = gsub(word, "^[%s%p]-([^%s%p]+)([%-]?[^%s%p]-)[%s%p]*$", "%1%2")
+				lowerCaseWord = lower(tempWord)
+
+				classMatch = CH.ClassNames[lowerCaseWord]
+				wordMatch = classMatch and lowerCaseWord
 
 				if wordMatch and not E.global.chat.classColorMentionExcludedNames[wordMatch] then
-					local classColorTable = E:ClassColor(classMatch)
-					if classColorTable then
-						word = gsub(word, gsub(tempWord, "%-","%%-"), format("|cff%.2x%.2x%.2x%s|r", classColorTable.r*255, classColorTable.g*255, classColorTable.b*255, tempWord))
-					end
+					classColorTable = CUSTOM_CLASS_COLORS and CUSTOM_CLASS_COLORS[classMatch] or RAID_CLASS_COLORS[classMatch]
+					word = gsub(word, gsub(tempWord, "%-", "%%-"), format("\124cff%.2x%.2x%.2x%s\124r", classColorTable.r*255, classColorTable.g*255, classColorTable.b*255, tempWord))
 				end
 
 				if not isFirstWord then
@@ -60,29 +72,37 @@ function M:UpdateBubbleBorder()
 					rebuiltString = format("%s%s", rebuiltString, word)
 				end
 			end
-
-			if rebuiltString then
-				str:SetText(gsub(rebuiltString, "     +", "    "))
-			end
 		end
+	end
+
+	if text then
+		rebuiltString = gsub(rebuiltString or text, "{([^}]+)}", replaceIconTags)
+	end
+
+	if rebuiltString then
+		self.text:SetText(rebuiltString)
 	end
 end
 
 function M:AddChatBubbleName(chatBubble, guid, name)
 	if not name then return end
 
-	local color = PRIEST_COLOR
-	local data = guid and guid ~= "" and CH:GetPlayerInfoByGUID(guid)
-	if data and data.classColor then
-		color = data.classColor
+	local color
+	if guid and guid ~= "" then
+		local _, class = GetPlayerInfoByGUID(guid)
+		if class then
+			color = (CUSTOM_CLASS_COLORS and CUSTOM_CLASS_COLORS[class] and E:RGBToHex(CUSTOM_CLASS_COLORS[class].r, CUSTOM_CLASS_COLORS[class].g, CUSTOM_CLASS_COLORS[class].b))
+				or (RAID_CLASS_COLORS[class] and E:RGBToHex(RAID_CLASS_COLORS[class].r, RAID_CLASS_COLORS[class].g, RAID_CLASS_COLORS[class].b))
+		end
+	else
+		color = "|cffffffff"
 	end
 
-	chatBubble.Name:SetFormattedText("|c%s%s|r", color.colorStr, name)
-	chatBubble.Name:Width(chatBubble:GetWidth()-10)
+	chatBubble.Name:SetFormattedText("%s%s|r", color, name)
 end
 
 function M:SkinBubble(frame)
-	local mult = E.mult * E.uiscale
+	local mult = E.mult * UIParent:GetScale()
 	for i = 1, frame:GetNumRegions() do
 		local region = select(i, frame:GetRegions())
 		if region:IsObjectType("Texture") then
@@ -212,14 +232,11 @@ function M:IsChatBubble(frame)
 	end
 end
 
-local function ChatBubble_OnEvent(_, event, msg, sender, _, _, _, _, _, _, _, _, _, guid)
-	if event == "PLAYER_ENTERING_WORLD" then --Clear caches
-		wipe(messageToGUID)
-		wipe(messageToSender)
-	elseif E.private.general.chatBubbleName then
-		messageToGUID[msg] = guid
-		messageToSender[msg] = sender
-	end
+local function ChatBubble_OnEvent(self, event, msg, sender, _, _, _, _, _, _, _, _, _, guid)
+	if not E.private.general.chatBubbleName then return end
+
+	messageToGUID[msg] = guid
+	messageToSender[msg] = sender
 end
 
 local lastChildern, numChildren = 0, 0
@@ -232,10 +249,10 @@ local function findChatBubbles(...)
 	end
 end
 
-local function ChatBubble_OnUpdate(eventFrame, elapsed)
-	eventFrame.lastupdate = (eventFrame.lastupdate or -2) + elapsed
-	if eventFrame.lastupdate < 0.1 then return end
-	eventFrame.lastupdate = 0
+local function ChatBubble_OnUpdate(self, elapsed)
+	self.lastupdate = self.lastupdate + elapsed
+	if self.lastupdate < .1 then return end
+	self.lastupdate = 0
 
 	numChildren = WorldGetNumChildren(WorldFrame)
 	if lastChildern ~= numChildren then
@@ -245,20 +262,17 @@ local function ChatBubble_OnUpdate(eventFrame, elapsed)
 end
 
 function M:LoadChatBubbles()
-	yOffset = (E.private.general.chatBubbles == "backdrop" and 2) or (E.private.general.chatBubbles == "backdrop_noborder" and -2) or 0
+	if E.private.general.chatBubbles == "disabled" then return end
 
-	M.BubbleFrame = CreateFrame("Frame")
-	M.BubbleFrame:RegisterEvent("CHAT_MSG_SAY")
-	M.BubbleFrame:RegisterEvent("CHAT_MSG_YELL")
-	M.BubbleFrame:RegisterEvent("CHAT_MSG_MONSTER_SAY")
-	M.BubbleFrame:RegisterEvent("CHAT_MSG_MONSTER_YELL")
-	M.BubbleFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+	self.BubbleFrame = CreateFrame("Frame")
+	self.BubbleFrame.lastupdate = -2 -- wait 2 seconds before hooking frames
 
-	if E.private.general.chatBubbles ~= "disabled" then
-		M.BubbleFrame:SetScript("OnEvent", ChatBubble_OnEvent)
-		M.BubbleFrame:SetScript("OnUpdate", ChatBubble_OnUpdate)
-	else
-		M.BubbleFrame:SetScript("OnEvent", nil)
-		M.BubbleFrame:SetScript("OnUpdate", nil)
-	end
+	self.BubbleFrame:RegisterEvent("CHAT_MSG_SAY")
+	self.BubbleFrame:RegisterEvent("CHAT_MSG_YELL")
+	self.BubbleFrame:RegisterEvent("CHAT_MSG_PARTY")
+	self.BubbleFrame:RegisterEvent("CHAT_MSG_PARTY_LEADER")
+	self.BubbleFrame:RegisterEvent("CHAT_MSG_MONSTER_SAY")
+	self.BubbleFrame:RegisterEvent("CHAT_MSG_MONSTER_YELL")
+	self.BubbleFrame:SetScript("OnEvent", ChatBubble_OnEvent)
+	self.BubbleFrame:SetScript("OnUpdate", ChatBubble_OnUpdate)
 end
