@@ -15,11 +15,10 @@ local SelectQuestLogEntry = SelectQuestLogEntry
 local GetQuestLogRewardMoney = GetQuestLogRewardMoney
 local BreakUpLargeNumbers = LC.BreakUpLargeNumbers
 
-local C_QuestLog_GetInfo = C_QuestLog.GetInfo
-local GetNumQuestLogEntries = (C_QuestLog and C_QuestLog.GetNumQuestLogEntries) or GetNumQuestLogEntries
+local GetNumQuestLogEntries = GetNumQuestLogEntries
 
-local MAX_QUESTLOG_QUESTS = min(C_QuestLog.GetMaxNumQuestsCanAccept() + (E.Retail and 10 or 0), 35) -- 20 for ERA, 25 for WotLK, 35 for Retail
-local TRACKER_HEADER_QUESTS = TRACKER_HEADER_QUESTS
+local MAX_QUESTLOG_QUESTS = MAX_QUESTLOG_QUESTS -- 20 for ERA, 25 for WotLK, 35 for Retail
+local QUESTS_LABEL = QUESTS_LABEL
 local COMPLETE = COMPLETE
 local INCOMPLETE = INCOMPLETE
 
@@ -27,15 +26,11 @@ local displayString = ''
 local numEntries, numQuests, xpToLevel = 0, 0, 0
 
 local function GetQuestInfo(questIndex)
-	if E.Retail then
-		return C_QuestLog_GetInfo(questIndex)
-	else
-		local info, _ = {}
-		info.title, info.level, info.questTag, info.isHeader, info.isCollapsed, info.isComplete, info.frequency, info.questID, info.startEvent, _, info.isOnMap, info.hasLocalPOI, info.isTask, info.isBounty, info.isStory, info.isHidden, info.isScaling = GetQuestLogTitle(questIndex)
-		SelectQuestLogEntry(questIndex)
+	local info, _ = {}
+	info.title, info.level, info.questTag, info.suggestedGroup, info.isHeader, info.isCollapsed, info.isComplete, info.isDaily, info.questID, info.displayQuestID = GetQuestLogTitle(questIndex)
+	SelectQuestLogEntry(questIndex)
 
-		return info
-	end
+	return info
 end
 
 local function OnEnter()
@@ -44,7 +39,7 @@ local function OnEnter()
 	local totalMoney, totalXP, completedXP = 0, 0, 0
 	local isShiftDown = IsShiftKeyDown()
 
-	DT.tooltip:AddLine(TRACKER_HEADER_QUESTS)
+	DT.tooltip:AddLine(QUESTS_LABEL)
 	DT.tooltip:AddLine(' ')
 
 	for questIndex = 1, numEntries do
@@ -52,7 +47,7 @@ local function OnEnter()
 		if info and not info.isHidden and not info.isHeader then
 			local xp = GetQuestLogRewardXP(info.questID)
 			local money = GetQuestLogRewardMoney(info.questID)
-			local isComplete = info.isComplete or E.Retail and _G.C_QuestLog.ReadyForTurnIn(info.questID)
+			local isComplete = info.isComplete
 
 			totalMoney = totalMoney + money
 			totalXP = totalXP + xp
@@ -74,7 +69,11 @@ local function OnEnter()
 end
 
 local function OnClick()
-	_G.ToggleQuestLog()
+	if not _G.QuestLogFrame:IsShown() then
+		ShowUIPanel(_G.QuestLogFrame)
+	else
+		HideUIPanel(_G.QuestLogFrame)
+	end
 end
 
 local function OnEvent(self)
@@ -92,4 +91,4 @@ local function ApplySettings(_, hex)
 	displayString = strjoin('', 'Quests: ', hex, '%d|r', '/', hex, '%d|r')
 end
 
-DT:RegisterDatatext('Quests', nil, { 'QUEST_ACCEPTED', 'QUEST_REMOVED', 'QUEST_TURNED_IN', 'QUEST_LOG_UPDATE', 'MODIFIER_STATE_CHANGED' }, OnEvent, nil, OnClick, OnEnter, nil, L["Quest Log"], nil, ApplySettings)
+DT:RegisterDatatext('Quests', nil, { 'QUEST_ACCEPTED', 'QUEST_LOG_UPDATE', 'MODIFIER_STATE_CHANGED' }, OnEvent, nil, OnClick, OnEnter, nil, L["Quest Log"], nil, ApplySettings)

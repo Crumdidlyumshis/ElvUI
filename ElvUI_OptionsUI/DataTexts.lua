@@ -1,9 +1,9 @@
 local E, _, V, P, G = unpack(ElvUI)
 local C, L = unpack(E.Config)
 local DT = E:GetModule('DataTexts')
-local Layout = E:GetModule('Layout')
-local Chat = E:GetModule('Chat')
-local Minimap = E:GetModule('Minimap')
+local LO = E:GetModule('Layout')
+local CH = E:GetModule('Chat')
+local MM = E:GetModule('Minimap')
 local ACH = E.Libs.ACH
 
 local _G = _G
@@ -14,7 +14,7 @@ local CopyTable = CopyTable
 
 local currencyList, DTPanelOptions = {}, {}
 
-DTPanelOptions.numPoints = ACH:Range(L["Number of DataTexts"], nil, 2, { min = 1, softMax = 20, step = 1})
+DTPanelOptions.numPoints = ACH:Range(L["Number of DataTexts"], nil, 2, { min = 1, softMax = 20, step = 1}) -- softMax is used in the loop
 DTPanelOptions.growth = ACH:Select(L["Growth"], nil, 3, { HORIZONTAL = L["Horizontal"], VERTICAL = L["Vertical"] })
 DTPanelOptions.width = ACH:Range(L["Width"], nil, 4, { min = 24, max = ceil(E.screenWidth), step = 1})
 DTPanelOptions.height = ACH:Range(L["Height"], nil, 5, { min = 12, max = ceil(E.screenHeight), step = 1})
@@ -140,14 +140,14 @@ local function CreateDTOptions(name, data)
 
 	if data.isCurrency then
 		local currency = E.global.datatexts.customCurrencies[name] -- name is actually the currencyID
-		optionTable = ACH:Group(format('%s |cFF888888[%s]|r', currency.name, name), nil, 1, nil, function(info) return E.global.datatexts.customCurrencies[name][info[#info]] end, function(info, value) E.global.datatexts.customCurrencies[name][info[#info]] = value DT:LoadDataTexts() end)
+		optionTable = ACH:Group(format('|cFF888888[%d]|r', name), nil, 1, nil, function(info) return E.global.datatexts.customCurrencies[name][info[#info]] end, function(info, value) E.global.datatexts.customCurrencies[name][info[#info]] = value DT:LoadDataTexts() end)
 
 		optionTable.args.nameStyle = ACH:Select(L["Name Style"], nil, 1, { full = L["Name"], abbr = L["Abbreviate Name"], none = L["None"] })
 		optionTable.args.showIcon = ACH:Toggle(L["Show Icon"], nil, 2)
 		optionTable.args.showMax = ACH:Toggle(L["Current / Max"], nil, 3)
 		optionTable.args.currencyTooltip = ACH:Toggle(L["Display In Main Tooltip"], L["If enabled, then this currency will be displayed in the main Currencies datatext tooltip."], 4, nil, nil, nil, nil, nil, nil, function() return DT.CurrencyList[tostring(name)] end)
 
-		E.Options.args.datatexts.args.customCurrency.args[currency.name] = optionTable
+		E.Options.args.datatexts.args.customCurrency.args[name] = optionTable
 		return
 	else
 		settings = E.global.datatexts.settings[name]
@@ -297,9 +297,7 @@ DataTexts.args.panels.args.MinimapPanel.args.enable = ACH:Toggle(L["Enable"], ni
 DataTexts.args.panels.args.MinimapPanel.args.numPoints = ACH:Range(L["Number of DataTexts"], nil, 2, { min = 1, max = 2, step = 1 }, nil, nil, function(info, value) E.db.datatexts.panels.MinimapPanel[info[#info]] = value DT:UpdatePanelInfo('MinimapPanel') DT:SetupPanelOptions('MinimapPanel') end)
 DataTexts.args.panels.args.MinimapPanel.args.templateGroup = CopyTable(defaultTemplateGroup)
 
-DataTexts.args.settings = ACH:Group(L["Customization"], nil, 7)
-
---[[ local function addCurrency(_, value)
+local function addCurrency(_, value)
 	local currencyID = tonumber(value)
 	if not currencyID then return end
 	local data = DT:RegisterCustomCurrencyDT(currencyID)
@@ -329,7 +327,7 @@ DataTexts.args.customCurrency.args.delete = ACH:Select(L["Delete"], nil, 2, func
 DataTexts.args.customCurrency.args.spacer = ACH:Spacer(4)
 
 DataTexts.args.settings = ACH:Group(L["Customization"], nil, 7)
- ]]
+
 -- initialize
 for name, data in pairs(DT.RegisteredDataTexts) do
 	CreateDTOptions(name, data)

@@ -68,12 +68,16 @@ G.datatexts = {
 		MovementSpeed = { Label = '', NoLabel = false, decimalLength = 1 },
 		Reputation = { textFormat = 'CUR' },
 		SpellPower = { school = 0 },
+		['Spell Crit Chance'] = { school = 0 },
 		Speed = { Label = '', NoLabel = false, decimalLength = 1 },
 		Stamina = { Label = '', NoLabel = false },
 		Strength = { Label = '', NoLabel = false },
 		System = { NoLabel = false, ShowOthers = true, latency = 'WORLD' },
 		Time = { time24 = _G.GetCVar('portal') ~= 'en', localTime = true, flashInvite = true },
 		Versatility = { Label = '', NoLabel = false, decimalLength = 1 },
+		Dodge = { decimalLength = 1 },
+		Parry = { decimalLength = 1 },
+		Block = { decimalLength = 1 }
 	},
 	newPanelInfo = {
 		growth = 'HORIZONTAL',
