@@ -1,15 +1,17 @@
 --[[-----------------------------------------------------------------------------
 ColorPicker Widget
 -------------------------------------------------------------------------------]]
-local Type, Version = "ColorPicker-ElvUI", 26
+local Type, Version = "ColorPicker-ElvUI", 30
 local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
--- Lua APIs
 local pairs = pairs
 
--- WoW APIs
 local CreateFrame, UIParent = CreateFrame, UIParent
+local OpacitySliderFrame = OpacitySliderFrame
+local ColorPickerFrame = ColorPickerFrame
+
+-- GLOBALS: ColorPPDefault
 
 --[[-----------------------------------------------------------------------------
 Support functions
@@ -19,10 +21,18 @@ local function ColorCallback(self, r, g, b, a, isAlpha)
 	-- which is caused when we set values into the color picker again on `OnValueChanged`
 	if ColorPickerFrame.noColorCallback then return end
 
+	-- no change, skip update
+	if r == self.r and g == self.g and b == self.b and a == self.a then
+		return
+	end
+
+	-- no alpha option
 	if not self.HasAlpha then
 		a = 1
 	end
+
 	self:SetColor(r, g, b, a)
+
 	if ColorPickerFrame:IsVisible() then
 		--colorpicker is still open
 		self:Fire("OnValueChanged", r, g, b, a)
@@ -54,33 +64,46 @@ local function ColorSwatch_OnClick(frame)
 		ColorPickerFrame:SetFrameLevel(frame:GetFrameLevel() + 10)
 		ColorPickerFrame:SetClampedToScreen(true)
 
-		ColorPickerFrame.func = function()
+		ColorPickerFrame.swatchFunc = function()
 			local r, g, b = ColorPickerFrame:GetColorRGB()
-			local a = 1 - OpacitySliderFrame:GetValue()
-			ColorCallback(self, r, g, b, a)
+			local alpha = 1 - OpacitySliderFrame:GetValue()
+			ColorCallback(self, r, g, b, alpha)
 		end
+		-- override default func to avoid error
+		ColorPickerFrame.func = ColorPickerFrame.swatchFunc
 
 		ColorPickerFrame.hasOpacity = self.HasAlpha
 		ColorPickerFrame.opacityFunc = function()
 			local r, g, b = ColorPickerFrame:GetColorRGB()
-			local a = 1 - OpacitySliderFrame:GetValue()
-			ColorCallback(self, r, g, b, a, true)
+			local alpha = 1 - OpacitySliderFrame:GetValue()
+			ColorCallback(self, r, g, b, alpha, true)
 		end
 
 		local r, g, b, a = self.r, self.g, self.b, self.a
 		if self.HasAlpha then
 			ColorPickerFrame.opacity = 1 - (a or 0)
 		end
+
 		ColorPickerFrame:SetColorRGB(r, g, b)
 
+		-- ElvUI
 		if ColorPPDefault and self.dR and self.dG and self.dB then
 			local alpha = 1
-			if self.dA then alpha = 1 - self.dA end
-			if not ColorPPDefault.colors then ColorPPDefault.colors = {} end
+			if self.dA then
+				alpha = 1 - self.dA
+			end
+
+			if not ColorPPDefault.colors then
+				ColorPPDefault.colors = {}
+			end
+
 			ColorPPDefault.colors.r, ColorPPDefault.colors.g, ColorPPDefault.colors.b, ColorPPDefault.colors.a = self.dR, self.dG, self.dB, alpha
 		end
 
 		ColorPickerFrame.cancelFunc = function()
+			ColorPickerFrame.swatchFunc = nil
+			ColorPickerFrame.opacityFunc = nil
+
 			ColorCallback(self, r, g, b, a, true)
 		end
 
@@ -158,7 +181,7 @@ local function Constructor()
 	colorSwatch.background = texture
 	texture:SetWidth(16)
 	texture:SetHeight(16)
-	texture:SetTexture(1, 1, 1)
+	texture:SetColorTexture(1, 1, 1)
 	texture:SetPoint("CENTER", colorSwatch)
 	texture:Show()
 
@@ -180,10 +203,10 @@ local function Constructor()
 	text:SetPoint("LEFT", colorSwatch, "RIGHT", 2, 0)
 	text:SetPoint("RIGHT")
 
-	-- local highlight = frame:CreateTexture(nil, "HIGHLIGHT")
-	-- highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight") -- Interface\\QuestFrame\\UI-QuestTitleHighlight
-	-- highlight:SetBlendMode("ADD")
-	-- highlight:SetAllPoints(frame)
+	--local highlight = frame:CreateTexture(nil, "HIGHLIGHT")
+	--highlight:SetTexture(136810) -- Interface\\QuestFrame\\UI-QuestTitleHighlight
+	--highlight:SetBlendMode("ADD")
+	--highlight:SetAllPoints(frame)
 
 	local widget = {
 		colorSwatch = colorSwatch,
