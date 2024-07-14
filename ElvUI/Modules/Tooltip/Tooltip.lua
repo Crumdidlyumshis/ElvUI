@@ -769,6 +769,37 @@ function TT:SetItemRef(link)
 	_G.ItemRefTooltip:Show()
 end
 
+function TT:SetCurrencyTokenByID(tt, id)
+	if id and TT:IsModKeyDown() then
+		tt:AddLine(' ')
+		tt:AddLine(format(IDLine, _G.ID, id))
+		tt:Show()
+	end
+end
+
+function TT:AddQuestID(frame)
+	local questID = TT:IsModKeyDown() and frame.questID
+	if not questID then return end
+
+	GameTooltip:AddLine(format(IDLine, _G.ID, questID))
+
+	if GameTooltip.ItemTooltip:IsShown() then
+		GameTooltip:AddLine(' ')
+	end
+
+	GameTooltip:Show()
+end
+
+function TT:SetBackpackToken(tt, id)
+	if id and TT:IsModKeyDown() then
+		local info = GetBackpackCurrencyInfo(id)
+		if info and info.currencyTypesID then
+			tt:AddLine(format(IDLine, _G.ID, info.currencyTypesID))
+			tt:Show()
+		end
+	end
+end
+
 function TT:SetTooltipFonts()
 	local font, fontSize, fontOutline = LSM:Fetch('font', TT.db.font), TT.db.textFontSize, TT.db.fontOutline
 	_G.GameTooltipText:FontTemplate(font, fontSize, fontOutline)

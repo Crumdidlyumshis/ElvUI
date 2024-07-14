@@ -304,10 +304,6 @@ do -- WIM replaces Blizzard globals we need to rehook
 		local backdrop = _G[name]
 		if not backdrop then return end
 
-		if backdrop.NineSlice then
-			backdrop = backdrop.NineSlice
-		end
-
 		if not backdrop.template then
 			backdrop:SetTemplate('Transparent')
 		end
@@ -850,6 +846,19 @@ function S:HandleBlizzardRegions(frame, name, kill, zero)
 				object:Hide()
 			end
 		end
+	end
+end
+
+function S:HandleTooltip(tooltip, scale, showHook)
+	S:HandleBlizzardRegions(tooltip)
+	tooltip:SetTemplate(true)
+
+	if showHook then
+		tooltip:HookScript('OnShow', function(tt) S:SetTemplate(tt) end)
+	end
+
+	if scale then
+		tooltip:SetScale(S.UIScale)
 	end
 end
 
