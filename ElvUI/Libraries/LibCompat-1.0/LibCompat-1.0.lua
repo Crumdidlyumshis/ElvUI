@@ -2134,10 +2134,17 @@ do
 		return dateTable
 	end
 
+	local function GetMaxPlayerLevel()
+		local playerMaxLevel = MAX_PLAYER_LEVEL_TABLE[GetAccountExpansionLevel()]
+
+		return playerMaxLevel
+	end
+
 	lib.GetPhysicalScreenSize = GetPhysicalScreenSize
 	lib.GetAverageItemLevel = GetAverageItemLevel
 	lib.GetItemLevelColor = GetItemLevelColor
 	lib.GetCurrentCalendarTime = GetCurrentCalendarTime
+	lib.GetMaxPlayerLevel = GetMaxPlayerLevel
 end
 
 -------------------------------------------------------------------------------
@@ -2248,6 +2255,7 @@ local mixins = {
 	"GetAverageItemLevel",
 	"GetItemLevelColor",
 	"GetCurrentCalendarTime",
+	"GetMaxPlayerLevel",
 }
 
 function lib:Embed(target)
