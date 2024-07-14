@@ -277,7 +277,7 @@ local function GetOptionsTable_AuraBars(updateFunc, groupName)
 			filters = {
 				order = 500,
 				type = "group",
-				name = L["FILTERS"],
+				name = L["Filters"],
 				guiInline = true,
 				args = {}
 			}
@@ -560,7 +560,7 @@ local function GetOptionsTable_Auras(auraType, updateFunc, groupName, numUnits)
 			filters = {
 				order = 100,
 				type = "group",
-				name = L["FILTERS"],
+				name = L["Filters"],
 				guiInline = true,
 				args = {}
 			}

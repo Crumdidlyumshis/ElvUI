@@ -2469,7 +2469,7 @@ local function GetUnitSettings(unit, name)
 					},
 					filtersGroup = {
 						order = 16,
-						name = L["FILTERS"],
+						name = L["Filters"],
 						type = "group",
 						guiInline = true,
 						get = function(info)
@@ -2847,7 +2847,7 @@ local function GetUnitSettings(unit, name)
 					filtersGroup = {
 						order = 16,
 						type = "group",
-						name = L["FILTERS"],
+						name = L["Filters"],
 						get = function(info)
 							return E.db.nameplates.units[unit].debuffs.filters[info[#info]]
 						end,
