@@ -334,7 +334,7 @@ do -- WIM replaces Blizzard globals we need to rehook
 		hooksecurefunc('UIDropDownMenu_SetIconImage', function(icon, texture)
 			if texture:find('Divider') then
 				local r, g, b = unpack(E.media.rgbvaluecolor)
-				icon:SetColorTexture(r, g, b, 0.45)
+				icon:SetTexture(r, g, b, 0.45)
 				icon:Height(1)
 			end
 		end)

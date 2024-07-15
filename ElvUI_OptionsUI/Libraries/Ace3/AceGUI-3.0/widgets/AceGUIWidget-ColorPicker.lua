@@ -181,7 +181,7 @@ local function Constructor()
 	colorSwatch.background = texture
 	texture:SetWidth(16)
 	texture:SetHeight(16)
-	texture:SetColorTexture(1, 1, 1)
+	texture:SetTexture(1, 1, 1)
 	texture:SetPoint("CENTER", colorSwatch)
 	texture:Show()
 

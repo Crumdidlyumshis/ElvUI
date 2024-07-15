@@ -87,7 +87,7 @@ end
 local function UpdateColor()
 	local r, g, b = GetHexColor(_G.ColorPPBoxH)
 	ColorPickerFrame:SetColorRGB(r, g, b)
-	_G.ColorSwatch:SetColorTexture(r, g, b)
+	_G.ColorSwatch:SetTexture(r, g, b)
 end
 
 local function ColorPPBoxA_SetFocus()
@@ -151,7 +151,7 @@ local function onColorSelect(frame, r, g, b)
 		return
 	end
 
-	_G.ColorSwatch:SetColorTexture(r, g, b)
+	_G.ColorSwatch:SetTexture(r, g, b)
 	UpdateColorTexts(r, g, b)
 	-- UpdateAlphaText()
 
@@ -193,7 +193,7 @@ function BL:EnhanceColorPicker()
 	ColorPickerFrame:HookScript('OnShow', function(frame)
 		-- get color that will be replaced
 		local r, g, b = frame:GetColorRGB()
-		_G.ColorPPOldColorSwatch:SetColorTexture(r,g,b)
+		_G.ColorPPOldColorSwatch:SetTexture(r,g,b)
 
 		-- show/hide the alpha box
 		if frame.hasOpacity then
@@ -221,14 +221,14 @@ function BL:EnhanceColorPicker()
 	-- add Color Swatch for original color
 	local originalColor = ColorPickerFrame:CreateTexture('ColorPPOldColorSwatch')
 	originalColor:Size(swatchWidth*0.75, swatchHeight*0.75)
-	originalColor:SetColorTexture(0,0,0)
+	originalColor:SetTexture(0,0,0)
 	-- OldColorSwatch to appear beneath ColorSwatch
 	originalColor:SetDrawLayer('BORDER')
 	originalColor:Point('BOTTOMLEFT', 'ColorSwatch', 'TOPRIGHT', -(swatchWidth*0.5), -(swatchHeight/3))
 
 	-- add Color Swatch for the copied color
 	local copiedColor = ColorPickerFrame:CreateTexture('ColorPPCopyColorSwatch')
-	copiedColor:SetColorTexture(0,0,0)
+	copiedColor:SetTexture(0,0,0)
 	copiedColor:Size(swatchWidth, swatchHeight)
 	copiedColor:Hide()
 
@@ -246,7 +246,7 @@ function BL:EnhanceColorPicker()
 
 		-- enable Paste button and display copied color into swatch
 		_G.ColorPPPaste:Enable()
-		_G.ColorPPCopyColorSwatch:SetColorTexture(colorBuffer.r, colorBuffer.g, colorBuffer.b)
+		_G.ColorPPCopyColorSwatch:SetTexture(colorBuffer.r, colorBuffer.g, colorBuffer.b)
 		_G.ColorPPCopyColorSwatch:Show()
 
 		colorBuffer.a = (ColorPickerFrame.hasOpacity and _G.OpacitySliderFrame:GetValue()) or nil
@@ -262,7 +262,7 @@ function BL:EnhanceColorPicker()
 	classButton:SetScript('OnClick', function()
 		local color = E:ClassColor(E.myclass, true)
 		ColorPickerFrame:SetColorRGB(color.r, color.g, color.b)
-		_G.ColorSwatch:SetColorTexture(color.r, color.g, color.b)
+		_G.ColorSwatch:SetTexture(color.r, color.g, color.b)
 		if ColorPickerFrame.hasOpacity then
 			_G.OpacitySliderFrame:SetValue(0)
 		end
@@ -279,7 +279,7 @@ function BL:EnhanceColorPicker()
 	-- paste color on button click, updating frame components
 	pasteButton:SetScript('OnClick', function()
 		ColorPickerFrame:SetColorRGB(colorBuffer.r, colorBuffer.g, colorBuffer.b)
-		_G.ColorSwatch:SetColorTexture(colorBuffer.r, colorBuffer.g, colorBuffer.b)
+		_G.ColorSwatch:SetTexture(colorBuffer.r, colorBuffer.g, colorBuffer.b)
 		if ColorPickerFrame.hasOpacity then
 			if colorBuffer.a then --color copied had an alpha value
 				_G.OpacitySliderFrame:SetValue(colorBuffer.a)
@@ -301,7 +301,7 @@ function BL:EnhanceColorPicker()
 	defaultButton:SetScript('OnClick', function(btn)
 		local colors = btn.colors
 		ColorPickerFrame:SetColorRGB(colors.r, colors.g, colors.b)
-		_G.ColorSwatch:SetColorTexture(colors.r, colors.g, colors.b)
+		_G.ColorSwatch:SetTexture(colors.r, colors.g, colors.b)
 		if ColorPickerFrame.hasOpacity then
 			if colors.a then
 				_G.OpacitySliderFrame:SetValue(colors.a)
