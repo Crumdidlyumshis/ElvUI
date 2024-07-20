@@ -6,7 +6,7 @@ local UF = E:GetModule("UnitFrames")
 
 function UF:Construct_ResurrectionIcon(frame)
 	local tex = frame.RaisedElementParent.TextureParent:CreateTexture(nil, "OVERLAY")
-	tex:SetTexture([[Interface\AddOns\ElvUI\media\textures\Raid-Icon-Rez]])
+	tex:SetTexture([[Interface\AddOns\ElvUI\media\textures\RaidIconRez]])
 	tex:Point("CENTER", frame.Health, "CENTER")
 	tex:Size(30)
 	tex:Hide()
