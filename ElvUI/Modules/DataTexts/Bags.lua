@@ -95,7 +95,7 @@ local function OnEnter()
 		end
 
 		if info.quantity then
-			iconString = match(info.iconFileID, E.myfaction) and gsub(iconString, '4:60:4:60', '4:38:2:36') or iconString
+			iconString = match(info and info.iconFileID or '', E.myfaction) ~= nil and gsub(iconString, '4:60:4:60', '4:38:2:36') or iconString
 			DT.tooltip:AddDoubleLine(format(iconString, info.iconFileID, name), info.quantity, 1, 1, 1, 1, 1, 1)
 		end
 	end

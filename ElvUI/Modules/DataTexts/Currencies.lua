@@ -52,7 +52,7 @@ local function OnEvent(self)
 		for i = 1, 3 do
 			local info = DT:BackpackCurrencyInfo(i)
 			if info and info.quantity then
-				iconString = match(info.iconFileID, E.myfaction) and gsub(iconString, '4:60:4:60', '4:38:2:36') or iconString
+				iconString = match(info and info.iconFileID or '', E.myfaction) ~= nil and gsub(iconString, '4:60:4:60', '4:38:2:36') or iconString
 				displayString = (i > 1 and displayString..' ' or '')..format('%s %s', format(iconString, info.iconFileID), E:ShortValue(info.quantity))
 			end
 		end

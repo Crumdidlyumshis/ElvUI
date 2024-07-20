@@ -802,8 +802,7 @@ function DT:CurrencyInfo(id)
 	info.maxQuantity = (id == honorID and honorMax) or (id == arenaID and arenaMax) or info.maxQuantity
 	info.iconFileID = (id == honorID and honorTex) or (id == arenaID and arenaTex) or info.iconFileID
 
-	local iconString = strmatch(info.iconFileID, E.myfaction) and gsub(iconString, '4:60:4:60', '4:38:2:36') or iconString
-
+	iconString = strmatch(info and info.iconFileID or '', E.myfaction) ~= nil and gsub(iconString, '4:60:4:60', '4:38:2:36') or iconString
 	return info, info and info.name, format(iconString, info and info.iconFileID or [[Interface\Icons\Spell_Nature_Bloodlust]])
 end
 
