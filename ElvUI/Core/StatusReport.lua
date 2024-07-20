@@ -1,15 +1,16 @@
 local E, L, V, P, G = unpack(ElvUI)
 local LSM = E.Libs.LSM
-local LCS = E.Libs.LCS
 
 local wipe, sort, unpack = wipe, sort, unpack
 local next, pairs, tinsert = next, pairs, tinsert
 
 local CreateFrame = CreateFrame
-local GetAddOnInfo = GetAddOnInfo
-local GetCVarBool = GetCVarBool
-local GetNumAddOns = GetNumAddOns
 local GetRealZoneText = GetRealZoneText
+
+local GetCVarBool = GetCVarBool
+local GetAddOnInfo = GetAddOnInfo
+local GetNumAddOns = GetNumAddOns
+
 local UNKNOWN = UNKNOWN
 
 function E:AreOtherAddOnsEnabled()
@@ -142,6 +143,10 @@ function E:CreateStatusFrame()
 	local titleLogoFrame = CreateFrame('Frame', nil, StatusFrame)
 	titleLogoFrame:SetPoint('CENTER', StatusFrame, 'TOP')
 	titleLogoFrame:SetSize(240, 80)
+	titleLogoFrame:EnableMouse(true)
+	titleLogoFrame:RegisterForDrag('LeftButton')
+	titleLogoFrame:SetScript('OnDragStart', function() StatusFrame:StartMoving() StatusFrame:SetUserPlaced(false) end)
+	titleLogoFrame:SetScript('OnDragStop', function() StatusFrame:StopMovingOrSizing() end)
 	StatusFrame.TitleLogoFrame = titleLogoFrame
 
 	local LogoTop = StatusFrame.TitleLogoFrame:CreateTexture(nil, 'ARTWORK')
@@ -159,7 +164,7 @@ function E:CreateStatusFrame()
 	--Sections
 	StatusFrame.Section1 = E:CreateStatusSection(300, 125, nil, 30, StatusFrame, 'TOP', StatusFrame, 'TOP', -30)
 	StatusFrame.Section2 = E:CreateStatusSection(300, 130, nil, 30, StatusFrame, 'TOP', StatusFrame.Section1, 'BOTTOM', 0)
-	StatusFrame.Section3 = E:CreateStatusSection(300, E.Wrath and 165 or 185, nil, 30, StatusFrame, 'TOP', StatusFrame.Section2, 'BOTTOM', 0)
+	StatusFrame.Section3 = E:CreateStatusSection(300, 185, nil, 30, StatusFrame, 'TOP', StatusFrame.Section2, 'BOTTOM', 0)
 
 	PluginFrame.SectionP = E:CreateStatusSection(280, nil, nil, 30, PluginFrame, 'TOP', PluginFrame, 'TOP', -10)
 
