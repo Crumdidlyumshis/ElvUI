@@ -142,7 +142,10 @@ local function CreateDTOptions(name, data)
 
 	if data.isCurrency then
 		local currency = E.global.datatexts.customCurrencies[name] -- name is actually the currencyID
+
 		currency.name = currency.name or GetItemInfo(name)
+		if currency.name == nil then return end
+
 		optionTable = ACH:Group(format('%s |cFF888888[%s]|r', currency.name, name), nil, 1, nil, function(info) return E.global.datatexts.customCurrencies[name][info[#info]] end, function(info, value) E.global.datatexts.customCurrencies[name][info[#info]] = value DT:LoadDataTexts() end)
 
 		optionTable.args.nameStyle = ACH:Select(L["Name Style"], nil, 1, { full = L["Name"], abbr = L["Abbreviate Name"], none = L["None"] })
