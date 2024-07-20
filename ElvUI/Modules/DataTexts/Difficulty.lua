@@ -9,6 +9,7 @@ local GetRaidDifficulty = GetRaidDifficulty
 local SetDungeonDifficulty = SetDungeonDifficulty
 local SetRaidDifficulty = SetRaidDifficulty
 local GetInstanceInfo = GetInstanceInfo
+local GetZoneText = GetZoneText
 local ResetInstances = ResetInstances
 local EasyMenu = EasyMenu
 
@@ -55,12 +56,12 @@ local function GetDiffRaidInfo(difficultyID)
 end
 
 local function OnEvent(self)
-    local name, instanceType = GetInstanceInfo()
+    local _, instanceType, difficultyID, _, maxPlayers = GetInstanceInfo()
 
     if instanceType == 'none' then
         self.text:SetFormattedText('%s %s %s %s', dungTex, GetDiffDungInfo(GetDungeonDifficulty()), raidTex, GetDiffRaidInfo(GetRaidDifficulty()))
     else
-        self.text:SetFormattedText('%s: %s', name, (instanceType == 'raid') and GetDiffRaidInfo(GetRaidDifficulty()) or GetDiffDungInfo(GetDungeonDifficulty()))
+        self.text:SetFormattedText('%s: %s %s %s', GetZoneText(), maxPlayers, _G.PLAYER, difficultyID > 1 and heroicTex or '')
     end
 end
 
