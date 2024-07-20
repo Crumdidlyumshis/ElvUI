@@ -505,7 +505,7 @@ end)
 E:AddTag('classpowercolor', 'UNIT_DISPLAYPOWER', function(unit)
 	local _, _, r, g, b = GetClassPower(unit)
 	return Hex(r, g, b)
-end, E.Classic)
+end)
 
 
 E:AddTag('permana', 'UNIT_DISPLAYPOWER', function(unit)

@@ -4,7 +4,6 @@ local LC = E.Libs.Compat
 
 local ipairs = ipairs
 local format = format
-local pi = math.pi
 
 local GetInventoryItemLink = GetInventoryItemLink
 local GetInventoryItemTexture = GetInventoryItemTexture
