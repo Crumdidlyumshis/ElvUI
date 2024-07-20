@@ -81,4 +81,4 @@ local function OnEnter()
     DT.tooltip:Show()
 end
 
-DT:RegisterDatatext('Difficulty', nil, {'CHAT_MSG_SYSTEM'}, OnEvent, nil, OnClick, OnEnter, nil, 'Difficulty')
+DT:RegisterDatatext('Difficulty', nil, {'CHAT_MSG_SYSTEM', 'ZONE_CHANGED', 'ZONE_CHANGED_INDOORS', 'ZONE_CHANGED_NEW_AREA'}, OnEvent, nil, OnClick, OnEnter, nil, 'Difficulty')
