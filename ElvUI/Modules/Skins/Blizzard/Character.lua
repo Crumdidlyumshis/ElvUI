@@ -48,6 +48,10 @@ S:AddCallback("Skin_Character", function()
 		S:HandleTab(_G["CharacterFrameTab"..i])
 	end
 
+	if UIParentLoadAddOn("Blizzard_TokenUI") then
+		CharacterFrameTab5:Show()
+	end
+
 	hooksecurefunc("PetPaperDollFrame_UpdateIsAvailable", function()
 		if not PetPaperDollFrame.hidden then
 			CharacterFrameTab3:Point("LEFT", "CharacterFrameTab2", "RIGHT", -15, 0)
