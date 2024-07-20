@@ -769,12 +769,20 @@ function TT:SetItemRef(link)
 	_G.ItemRefTooltip:Show()
 end
 
-function TT:SetCurrencyTokenByID(tt, id)
-	if id and TT:IsModKeyDown() then
-		tt:AddLine(' ')
-		tt:AddLine(format(IDLine, _G.ID, id))
-		tt:Show()
-	end
+function TT:SetCurrencyToken(tt, index)
+	-- print(tt, index)
+	if not TT:IsModKeyDown() then return end
+
+	local id = index and select(9, GetCurrencyListInfo(index))
+	print(id)
+	local link = index and select(2, GetItemInfo(id))
+	print(link)
+	local id = link and tonumber(strmatch(link, ':(%d+)'))
+	if not id then return end
+
+	tt:AddLine(' ')
+	tt:AddLine(format(IDLine, _G.ID, id))
+	tt:Show()
 end
 
 function TT:AddQuestID(frame)
@@ -922,6 +930,9 @@ function TT:Initialize()
 	TT:SecureHookScript(GameTooltip, 'OnTooltipSetItem', TT.GameTooltip_OnTooltipSetItem)
 	TT:SecureHookScript(GameTooltip, 'OnTooltipSetUnit', TT.GameTooltip_OnTooltipSetUnit)
 	TT:SecureHookScript(E.SpellBookTooltip, 'OnTooltipSetSpell', TT.GameTooltip_OnTooltipSetSpell)
+
+	TT:SecureHook(GameTooltip, 'SetCurrencyToken')
+	TT:SecureHook(GameTooltip, 'SetBackpackToken')
 end
 
 local function InitializeCallback()

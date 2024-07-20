@@ -9,14 +9,18 @@ local _G = _G
 local min, max = min, max
 local next, format, type, pcall, unpack = next, format, type, pcall, unpack
 local tinsert, ipairs, pairs, wipe, sort, gsub = tinsert, ipairs, pairs, wipe, sort, gsub
-local tostring, strfind, strsplit = tostring, strfind, strsplit
+local tostring, strfind, strmatch, strsplit = tostring, strfind, strmatch, strsplit
 
 local CloseDropDownMenus = CloseDropDownMenus
 local CreateFrame = CreateFrame
 local EasyMenu = EasyMenu
+local GetArenaCurrency = GetArenaCurrency
+local GetHonorCurrency = GetHonorCurrency
 local GetBackpackCurrencyInfo = GetBackpackCurrencyInfo
 local GetCurrencyListSize = GetCurrencyListSize
 local GetCurrencyListInfo = GetCurrencyListInfo
+local GetExpansionLevel = GetExpansionLevel
+local GetItemCount = GetItemCount
 local GetItemInfo = GetItemInfo
 local ExpandCurrencyList = ExpandCurrencyList
 local GetNumTalentTabs = GetNumTalentTabs
@@ -32,7 +36,13 @@ local LFG_TYPE_DUNGEON = LFG_TYPE_DUNGEON
 local expansion = _G['EXPANSION_NAME'..GetExpansionLevel()]
 local QuickList = {}
 
-local iconString = '|T%s:16:16:0:0:64:64:4:60:4:60|t'
+local iconString = '|T%s:20:20:0:0:64:64:4:60:4:60|t'
+
+local honorID, arenaID = 43308, 43307 -- itemid for Honor and Arena points
+local honorTex = [[Interface\TargetingFrame\UI-PVP-]]..E.myfaction
+local arenaTex = [[Interface\PVPFrame\PVP-ArenaPoints-Icon]]
+local honorCur, honorMax = GetHonorCurrency()
+local arenaCur, arenaMax = GetArenaCurrency()
 
 DT.tooltip = CreateFrame('GameTooltip', 'DataTextTooltip', E.UIParent, 'GameTooltipTemplate')
 
@@ -723,7 +733,6 @@ function DT:PopulateData(currencyOnly)
 			headerIndex = i
 		end
 		if info.name and not info.isHeader then
-			print(info.itemID)
 			local _, currencyLink
 			if info.itemID then
 				_, currencyLink = GetItemInfo(info.itemID)
@@ -778,6 +787,7 @@ end
 
 function DT:CurrencyListInfo(index)
 	local info = {}
+
 	info.name, info.isHeader, info.isHeaderExpanded, info.isUnused, info.isWatched, info.quantity, info.extraCurrencyType, info.iconFileID, info.itemID = GetCurrencyListInfo(index)
 
 	return info
@@ -786,17 +796,22 @@ end
 function DT:CurrencyInfo(id)
 	local info = {}
 
-	info.name, _, _, _, _, info.quantity, _, info.iconFileID, info.itemID = GetCurrencyListInfo(id)
-	if info.itemID then
-		_, _, _, _, _, _, _, info.maxQuantity = GetItemInfo(info.itemID)
-	end
+	info.name, _, _, _, _, _, _, info.maxQuantity, _, info.iconFileID = GetItemInfo(id)
+
+	info.quantity = (id == honorID and honorCur) or (id == arenaID and arenaCur) or GetItemCount(id)
+	info.maxQuantity = (id == honorID and honorMax) or (id == arenaID and arenaMax) or info.maxQuantity
+	info.iconFileID = (id == honorID and honorTex) or (id == arenaID and arenaTex) or info.iconFileID
+
+	local iconString = strmatch(info.iconFileID, E.myfaction) and gsub(iconString, '4:60:4:60', '4:38:2:36') or iconString
 
 	return info, info and info.name, format(iconString, info and info.iconFileID or [[Interface\Icons\Spell_Nature_Bloodlust]])
 end
 
 function DT:BackpackCurrencyInfo(index)
 	local info = {}
+
 	info.name, info.quantity, _, info.iconFileID, info.currencyTypesID = GetBackpackCurrencyInfo(index)
+	info.iconFileID = (info.currencyTypesID == honorID and honorTex) or (info.currencyTypesID == arenaID and arenaTex) or info.iconFileID
 
 	return info, info and info.name
 end

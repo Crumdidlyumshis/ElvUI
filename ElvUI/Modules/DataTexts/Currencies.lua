@@ -3,15 +3,15 @@ local DT = E:GetModule('DataTexts')
 local LC = E.Libs.Compat
 
 local _G = _G
-local format, tonumber, wipe = format, tonumber, wipe
+local format, gsub, match, tonumber, wipe = format, string.gsub, string.match, tonumber, wipe
 local pairs, ipairs, unpack, tostring = pairs, ipairs, unpack, tostring
 
-local GetMoney = GetMoney
 local BreakUpLargeNumbers = LC.BreakUpLargeNumbers
+local GetMoney = GetMoney
 
 local GUILDCONTROL_OPTION16 = GUILDCONTROL_OPTION16
 
-local iconString, db = '|T%s:16:16:0:0:64:64:4:60:4:60|t'
+local iconString, db = '|T%s:20:20:0:0:64:64:4:60:4:60|t'
 DT.CurrencyList = { GOLD = GUILDCONTROL_OPTION16, BACKPACK = 'Backpack' }
 
 local function OnClick()
@@ -22,8 +22,8 @@ local function AddInfo(id)
 	local info, name, icon = DT:CurrencyInfo(id)
 	if name then
 		local textRight = '%s'
-		if db.maxCurrency and info.quantity and info.quantity > 0 then
-			textRight = '%s / '..BreakUpLargeNumbers(info.quantity)
+		if db.maxCurrency and info.maxQuantity and info.maxQuantity > 0 then
+			textRight = '%s / '..E:ShortValue(BreakUpLargeNumbers(info.maxQuantity))
 		end
 
 		DT.tooltip:AddDoubleLine(format('%s %s', icon, name), format(textRight, BreakUpLargeNumbers(info.quantity)), 1, 1, 1, 1, 1, 1)
@@ -52,6 +52,7 @@ local function OnEvent(self)
 		for i = 1, 3 do
 			local info = DT:BackpackCurrencyInfo(i)
 			if info and info.quantity then
+				iconString = match(info.iconFileID, E.myfaction) and gsub(iconString, '4:60:4:60', '4:38:2:36') or iconString
 				displayString = (i > 1 and displayString..' ' or '')..format('%s %s', format(iconString, info.iconFileID), E:ShortValue(info.quantity))
 			end
 		end
@@ -70,9 +71,9 @@ local function OnEvent(self)
 		if style == 'ICON' then
 			self.text:SetFormattedText('%s %s', icon, E:ShortValue(info.quantity))
 		elseif style == 'ICON_TEXT' then
-			self.text:SetFormattedText('%s %s %s', icon, name, E:ShortValue(info.quantity))
+			self.text:SetFormattedText('%s %s: %s', icon, name, E:ShortValue(info.quantity))
 		else --ICON_TEXT_ABBR
-			self.text:SetFormattedText('%s %s %s', icon, E:AbbreviateString(name), E:ShortValue(info.quantity))
+			self.text:SetFormattedText('%s %s: %s', icon, E:AbbreviateString(name), E:ShortValue(info.quantity))
 		end
 	end
 end

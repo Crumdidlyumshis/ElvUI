@@ -9,7 +9,7 @@ local LIS = E.Libs.ItemSearch
 local LC = E.Libs.Compat
 
 local _G = _G
-local strfind, gsub = strfind, string.gsub
+local gsub, match = string.gsub, string.match
 local tinsert, tremove, wipe = tinsert, tremove, wipe
 local type, pairs, ipairs, unpack, select = type, pairs, ipairs, unpack, select
 local ceil, next, max, floor, format, strsub = ceil, next, max, floor, format, strsub
@@ -88,6 +88,10 @@ local TEXTURE_ITEM_QUEST_BORDER = TEXTURE_ITEM_QUEST_BORDER
 local READY_TEX = [[Interface\RaidFrame\ReadyCheck-Ready]]
 local NOT_READY_TEX = [[Interface\RaidFrame\ReadyCheck-NotReady]]
 
+local honorID, arenaID = 43308, 43307 -- itemid for Honor and Arena points
+local honorTex = [[Interface\TargetingFrame\UI-PVP-]]..E.myfaction
+local arenaTex = [[Interface\PVPFrame\PVP-ArenaPoints-Icon]]
+
 do
 	local GetContainerItemInfo = GetContainerItemInfo
 	local GetContainerItemQuestInfo = GetContainerItemQuestInfo
@@ -96,7 +100,10 @@ do
 	function B:GetBackpackCurrencyInfo(index)
 		if _G.GetBackpackCurrencyInfo then
 			local info = {}
+
 			info.name, info.quantity, info.currencyTypesID, info.iconFileID, info.itemID = GetBackpackCurrencyInfo(index)
+			info.iconFileID = (info.itemID == honorID and honorTex) or (info.itemID == arenaID and arenaTex) or info.iconFileID
+
 			return info
 		else
 			return GetBackpackCurrencyInfo(index)
@@ -106,12 +113,14 @@ do
 	function B:GetContainerItemInfo(containerIndex, slotIndex)
 		if _G.GetContainerItemInfo then
 			local info = {}
+
 			info.iconFileID, info.stackCount, info.isLocked, _, info.isReadable, info.hasLoot, info.hyperlink = GetContainerItemInfo(containerIndex, slotIndex)
 			info.itemID = B:GetItemID(containerIndex, slotIndex)
 			if info.itemID then
 				_, _, info.quality, info.itemLevel, _, info.itemType, info.itemSubType, _, _, _, info.itemPrice = GetItemInfo(info.itemID)
 				info.hasNoValue = (info.itemPrice and info.itemPrice == 0)
 			end
+
 			return info
 		else
 			return GetContainerItemInfo(containerIndex, slotIndex) or {}
@@ -121,7 +130,9 @@ do
 	function B:GetContainerItemQuestInfo(containerIndex, slotIndex)
 		if _G.GetContainerItemQuestInfo then
 			local info = {}
+
 			info.isQuestItem, info.questID, info.isActive = GetContainerItemQuestInfo(containerIndex, slotIndex)
+
 			return info
 		else
 			return GetContainerItemQuestInfo(containerIndex, slotIndex)
@@ -1044,7 +1055,7 @@ function B:UpdateTokens()
 		button.currencyID = info.currencyTypesID
 		button:Show()
 
-		if button.currencyID and E.Wrath then
+		if button.currencyID then
 			local tokens = _G.TokenFrameContainer.buttons
 			if tokens then
 				for _, token in next, tokens do
@@ -1058,6 +1069,12 @@ function B:UpdateTokens()
 
 		local icon = button.icon or button.Icon
 		icon:SetTexture(info.iconFileID)
+
+		if info.name == _G.HONOR_POINTS then
+			icon:SetTexCoord(0.06325, 0.59375, 0.03125, 0.57375)
+		elseif info.name == _G.ARENA_POINTS then
+			icon:SetTexCoord(0.06325, 1, 0.03125, 1)
+		end
 
 		if B.db.currencyFormat == 'ICON_TEXT' then
 			button.text:SetText(info.name..': '..BreakUpLargeNumbers(info.quantity))

@@ -10,7 +10,9 @@ local _G = _G
 local pairs, ipairs = pairs, ipairs
 local gsub, next, wipe, ceil = gsub, next, wipe, ceil
 local format, tostring, tonumber = format, tostring, tonumber
+
 local CopyTable = CopyTable
+local GetItemInfo = GetItemInfo
 
 local currencyList, DTPanelOptions = {}, {}
 
@@ -140,14 +142,15 @@ local function CreateDTOptions(name, data)
 
 	if data.isCurrency then
 		local currency = E.global.datatexts.customCurrencies[name] -- name is actually the currencyID
-		optionTable = ACH:Group(format('|cFF888888[%d]|r', name), nil, 1, nil, function(info) return E.global.datatexts.customCurrencies[name][info[#info]] end, function(info, value) E.global.datatexts.customCurrencies[name][info[#info]] = value DT:LoadDataTexts() end)
+		currency.name = currency.name or GetItemInfo(name)
+		optionTable = ACH:Group(format('%s |cFF888888[%s]|r', currency.name, name), nil, 1, nil, function(info) return E.global.datatexts.customCurrencies[name][info[#info]] end, function(info, value) E.global.datatexts.customCurrencies[name][info[#info]] = value DT:LoadDataTexts() end)
 
 		optionTable.args.nameStyle = ACH:Select(L["Name Style"], nil, 1, { full = L["Name"], abbr = L["Abbreviate Name"], none = L["None"] })
 		optionTable.args.showIcon = ACH:Toggle(L["Show Icon"], nil, 2)
 		optionTable.args.showMax = ACH:Toggle(L["Current / Max"], nil, 3)
 		optionTable.args.currencyTooltip = ACH:Toggle(L["Display In Main Tooltip"], L["If enabled, then this currency will be displayed in the main Currencies datatext tooltip."], 4, nil, nil, nil, nil, nil, nil, function() return DT.CurrencyList[tostring(name)] end)
 
-		E.Options.args.datatexts.args.customCurrency.args[name] = optionTable
+		E.Options.args.datatexts.args.customCurrency.args[currency.name] = optionTable
 		return
 	else
 		settings = E.global.datatexts.settings[name]
@@ -190,7 +193,6 @@ local function CreateDTOptions(name, data)
 		end
 
 		if name == 'Bags' then
-			optionTable.args.includeReagents = ACH:Toggle(E.NewSign..L["Include Reagents"], nil, 5)
 			optionTable.args.textFormat.values = { FREE = L["Only Free Slots"], USED = L["Only Used Slots"], FREE_TOTAL = L["Free/Total"], USED_TOTAL = L["Used/Total"] }
 		elseif name == 'Combat' then
 			optionTable.args.TimeFull = ACH:Toggle(L["Full Time"], nil, 5)
