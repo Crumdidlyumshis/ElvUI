@@ -25,7 +25,7 @@ local CURRENCY = CURRENCY
 
 local menuList, myGold = {}, {}
 local totalGold, totalHorde, totalAlliance = 0, 0, 0
-local iconString = '|T%s:16:16:0:0:64:64:4:60:4:60|t'
+local iconString = '|T%s:20:20:0:0:64:64:4:60:4:60|t'
 local db
 
 local function sortFunction(a, b)

@@ -42,7 +42,7 @@ local function OnEvent(self, event)
 		local name, iconFileID, _, isEquipped = C_EquipmentSet_GetEquipmentSetInfo(setID)
 
 		if event == 'ELVUI_FORCE_UPDATE' or event == 'EQUIPMENT_SETS_CHANGED' then
-			tinsert(eqSets, { text = format('|T%s:14:14:0:0:64:64:4:60:4:60|t  %s', iconFileID, name), checked = isEquipped, func = function() C_EquipmentSet_UseEquipmentSet(setID) end, setID = setID, name = name, iconFileID = iconFileID, isEquipped = isEquipped })
+			tinsert(eqSets, { text = format('|T%s:20:20:0:0:64:64:4:60:4:60|t  %s', iconFileID, name), checked = isEquipped, func = function() C_EquipmentSet_UseEquipmentSet(setID) end, setID = setID, name = name, iconFileID = iconFileID, isEquipped = isEquipped })
 		end
 
 		if isEquipped then

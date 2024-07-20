@@ -162,7 +162,7 @@ local function OnEnter()
 			if isRaid or isDungeon then
 				local sortName = name..difficulty
 				local difficultyLetter = difficultyTag[difficulty]
-				local buttonImg = instanceIconByName[name] and format('|T%s:16:16:0:0:96:96:0:64:0:64|t ', instanceIconByName[name]) or ''
+				local buttonImg = instanceIconByName[name] and format('|T%s:20:20:0:0:96:96:0:64:0:64|t ', instanceIconByName[name]) or ''
 
 				tinsert(lockedInstances[isRaid and 'raids' or 'dungeons'], { sortName, difficultyLetter, buttonImg, info })
 			end
