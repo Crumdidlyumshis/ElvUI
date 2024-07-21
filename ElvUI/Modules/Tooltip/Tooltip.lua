@@ -63,6 +63,7 @@ local UnitSex = UnitSex
 
 local PRIEST_COLOR = RAID_CLASS_COLORS.PRIEST
 local UNKNOWN = UNKNOWN
+local NONE = NONE
 
 local GameTooltip, GameTooltipStatusBar = GameTooltip, GameTooltipStatusBar
 -- Custom to find LEVEL string on tooltip
@@ -441,12 +442,15 @@ function TT:AddTargetInfo(tt, unit)
 end
 
 function TT:AddRoleInfo(tt, unit)
-	local r, g, b, role = 1, 1, 1, UnitGroupRolesAssigned(unit)
-	if GetNumPartyMembers() > 0 and (UnitInParty(unit) or UnitInRaid(unit)) and (role ~= 'NONE') then
+	local tank, healer, damage = UnitGroupRolesAssigned(unit)
+	local role = (tank and 'TANK') or (healer and 'HEALER') or (damage and 'DAMAGER') or NONE
+	local r, g, b = 1, 1, 1
+
+	if GetNumPartyMembers() > 0 and (UnitInParty(unit) or UnitInRaid(unit)) then
 		if role == 'HEALER' then
-			role, r, g, b = L['Healer'], 0, 1, .59
+			role, r, g, b = _G.HEALER, 0, 1, .59
 		elseif role == 'TANK' then
-			role, r, g, b = TANK, .16, .31, .61
+			role, r, g, b = _G.TANK, .16, .31, .61
 		elseif role == 'DAMAGER' then
 			role, r, g, b = L['DPS'], .77, .12, .24
 		end
