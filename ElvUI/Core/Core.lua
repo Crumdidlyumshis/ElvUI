@@ -29,6 +29,9 @@ local UIParent = UIParent
 local UnitFactionGroup = UnitFactionGroup
 local UnitGUID = UnitGUID
 
+local IsInRaid = LC.IsInRaid
+local IsInGroup = LC.IsInGroup
+local GetNumGroupMembers = LC.GetNumGroupMembers
 local GetSpecialization = LCS.GetSpecialization
 
 local DisableAddOn = DisableAddOn
@@ -882,10 +885,10 @@ end
 do
 	local SendMessageWaiting -- only allow 1 delay at a time regardless of eventing
 	function E:SendMessage()
-		if GetNumRaidMembers() > 1 then
+		if IsInRaid() then
 			local _, instanceType = IsInInstance()
 			SendAddonMessage('ELVUI_VERSIONCHK', E.version, (instanceType == 'pvp' and 'BATTLEGROUND') or 'RAID')
-		elseif GetNumPartyMembers() > 0 then
+		elseif IsInGroup() then
 			SendAddonMessage('ELVUI_VERSIONCHK', E.version, 'PARTY')
 		elseif IsInGuild() then
 			SendAddonMessage('ELVUI_VERSIONCHK', E.version, 'GUILD')
@@ -917,8 +920,7 @@ do
 				end
 			end
 		elseif event == 'PARTY_MEMBERS_CHANGED' or event == 'RAID_ROSTER_UPDATE' then
-			local numRaid, numParty = GetNumRaidMembers(), GetNumPartyMembers() + 1
-			local num = numRaid > 0 and numRaid or numParty
+			local num = GetNumGroupMembers()
 			if num ~= SendRecieveGroupSize then
 				if num > 1 and num > SendRecieveGroupSize then
 					if not SendMessageWaiting then

@@ -3,6 +3,7 @@ local CH = E:GetModule('Chat')
 local LO = E:GetModule('Layout')
 local S = E:GetModule('Skins')
 local LSM = E.Libs.LSM
+local LC = E.Libs.Compat
 
 --Lua functions
 local _G = _G
@@ -21,8 +22,6 @@ local GetChannelName = GetChannelName
 local GetCursorPosition = GetCursorPosition
 local GetGuildRosterMOTD = GetGuildRosterMOTD
 local GetMouseFocus = GetMouseFocus
-local GetNumPartyMembers = GetNumPartyMembers
-local GetNumRaidMembers = GetNumRaidMembers
 local GetPlayerInfoByGUID = GetPlayerInfoByGUID
 local HasLFGRestrictions = HasLFGRestrictions
 local InCombatLockdown = InCombatLockdown
@@ -40,6 +39,10 @@ local UnitGroupRolesAssigned = UnitGroupRolesAssigned
 local UnitIsUnit = UnitIsUnit
 local UnitName = UnitName
 local hooksecurefunc = hooksecurefunc
+
+local IsInGroup = LC.IsInGroup
+local IsInRaid = LC.IsInRaid
+local GetNumGroupMembers = LC.GetNumGroupMembers
 
 local CHAT_BN_CONVERSATION_GET_LINK = CHAT_BN_CONVERSATION_GET_LINK
 local MAX_WOW_CHAT_CHANNELS = MAX_WOW_CHAT_CHANNELS
@@ -233,8 +236,8 @@ end
 function CH:GetGroupDistribution()
 	local inInstance, instanceType = IsInInstance()
 	if inInstance and (instanceType == 'pvp') then return '/bg ' end
-	if GetNumRaidMembers() > 0 then return '/ra ' end
-	if GetNumPartyMembers() > 0 then return '/p ' end
+	if IsInRaid() then return '/ra ' end
+	if IsInGroup() then return '/p ' end
 	return '/s '
 end
 
@@ -2160,7 +2163,7 @@ function CH:FCF_SetWindowAlpha(frame, alpha)
 end
 
 function CH:CheckLFGRoles()
-	if not CH.db.lfgIcons or (GetNumPartyMembers() <= 0) then return end
+	if not CH.db.lfgIcons or not IsInGroup() then return end
 
 	wipe(lfgRoles)
 
@@ -2169,8 +2172,8 @@ function CH:CheckLFGRoles()
 		lfgRoles[PLAYER_NAME] = CH.RoleIcons[playerRole]
 	end
 
-	local unit = ((GetNumRaidMembers() > 0) and 'raid' or 'party')
-	for i = 1, GetNumPartyMembers() do
+	local unit = (IsInRaid() and 'raid' or 'party')
+	for i = 1, GetNumGroupMembers() do
 		if UnitExists(unit..i) and not UnitIsUnit(unit..i, 'player') then
 			local role = UnitGroupRolesAssigned(unit..i)
 			local name, realm = UnitName(unit..i)

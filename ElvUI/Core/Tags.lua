@@ -1,6 +1,7 @@
 local E, L, V, P, G = unpack(ElvUI)
 local ElvUF = E.oUF
 local Tags = ElvUF.Tags
+local LC = E.Libs.Compat
 
 -- local RangeCheck = E.Libs.RangeCheck
 local Translit = E.Libs.Translit
@@ -16,7 +17,6 @@ local GetQuestDifficultyColor = GetQuestDifficultyColor
 local GetCurrentTitle = GetCurrentTitle
 local GetGuildInfo = GetGuildInfo
 local GetInstanceInfo = GetInstanceInfo
-local GetNumGroupMembers = GetNumGroupMembers
 local GetPVPRankInfo = GetPVPRankInfo
 local GetPVPTimer = GetPVPTimer
 local GetRaidRosterInfo = GetRaidRosterInfo
@@ -25,7 +25,6 @@ local GetTime = GetTime
 local GetTitleName = GetTitleName
 local GetUnitSpeed = GetUnitSpeed
 local HasPetUI = HasPetUI
-local IsInGroup = IsInGroup
 local IsInInstance = IsInInstance
 local IsInRaid = IsInRaid
 local QuestDifficultyColors = QuestDifficultyColors
@@ -56,6 +55,10 @@ local UnitReaction = UnitReaction
 local UnitSex = UnitSex
 
 local GetCVarBool = GetCVarBool
+
+local GetNumGroupMembers = LC.GetNumGroupMembers
+local IsInGroup = LC.IsInGroup
+local IsInRaid = LC.IsInRaid
 
 local LEVEL = strlower(LEVEL)
 local PVP = PVP
@@ -467,21 +470,21 @@ E:AddTag('realm:dash:translit', 'UNIT_NAME_UPDATE', function(unit)
 	end
 end)
 
-E:AddTag('threat:percent', 'UNIT_THREAT_LIST_UPDATE UNIT_THREAT_SITUATION_UPDATE GROUP_ROSTER_UPDATE', function(unit)
+E:AddTag('threat:percent', 'UNIT_THREAT_LIST_UPDATE UNIT_THREAT_SITUATION_UPDATE RAID_ROSTER_UPDATE', function(unit)
 	local _, _, percent = UnitDetailedThreatSituation('player', unit)
 	if percent and percent > 0 and (IsInGroup() or UnitExists('pet')) then
 		return format('%.0f%%', percent)
 	end
 end)
 
-E:AddTag('threat:current', 'UNIT_THREAT_LIST_UPDATE UNIT_THREAT_SITUATION_UPDATE GROUP_ROSTER_UPDATE', function(unit)
+E:AddTag('threat:current', 'UNIT_THREAT_LIST_UPDATE UNIT_THREAT_SITUATION_UPDATE RAID_ROSTER_UPDATE', function(unit)
 	local _, _, percent, _, threatvalue = UnitDetailedThreatSituation('player', unit)
 	if percent and percent > 0 and (IsInGroup() or UnitExists('pet')) then
 		return E:ShortValue(threatvalue)
 	end
 end)
 
-E:AddTag('threatcolor', 'UNIT_THREAT_LIST_UPDATE UNIT_THREAT_SITUATION_UPDATE GROUP_ROSTER_UPDATE', function(unit)
+E:AddTag('threatcolor', 'UNIT_THREAT_LIST_UPDATE UNIT_THREAT_SITUATION_UPDATE RAID_ROSTER_UPDATE', function(unit)
 	local _, status = UnitDetailedThreatSituation('player', unit)
 	if status and (IsInGroup() or UnitExists('pet')) then
 		return Hex(E:GetThreatStatusColor(status, true))
@@ -570,7 +573,7 @@ E:AddTag('guild', 'UNIT_NAME_UPDATE PLAYER_GUILD_UPDATE', function(unit)
 	end
 end)
 
-E:AddTag('group:raid', 'GROUP_ROSTER_UPDATE', function(unit)
+E:AddTag('group:raid', 'RAID_ROSTER_UPDATE', function(unit)
 	if IsInRaid() then
 		local name, realm = UnitName(unit)
 		if name then

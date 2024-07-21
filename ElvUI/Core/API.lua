@@ -13,7 +13,6 @@ local GetBattlefieldArenaFaction = GetBattlefieldArenaFaction
 local GetExpansionLevel = GetExpansionLevel
 local GetInstanceInfo = GetInstanceInfo
 local GetNumPartyMembers = GetNumPartyMembers
-local GetNumRaidMembers = GetNumRaidMembers
 local HideUIPanel = HideUIPanel
 local InCombatLockdown = InCombatLockdown
 local GetActiveTalentGroup = GetActiveTalentGroup
@@ -21,6 +20,7 @@ local GetCVarBool = GetCVarBool
 local GetFunctionCPUUsage = GetFunctionCPUUsage
 local GetTalentTabInfo = GetTalentTabInfo
 local IsAddOnLoaded = IsAddOnLoaded
+local IsInRaid = LC.IsInRaid
 local IsXPUserDisabled = IsXPUserDisabled
 local RequestBattlefieldScoreData = RequestBattlefieldScoreData
 local SetCVar = SetCVar
@@ -234,20 +234,6 @@ do
 	end
 end
 
-
-function E:GetThreatStatusColor(status, nothreat)
-	local color = ElvUF.colors.threat[status]
-	if color then
-		return color.r, color.g, color.b, color.a or 1
-	elseif nothreat then
-		if status == -1 then -- how or why?
-			return 1, 1, 1, 1
-		else
-			return .7, .7, .7, 1
-		end
-	end
-end
-
 function E:GetTalentSpecInfo(isInspect)
 	local talantGroup = GetActiveTalentGroup(isInspect)
 	local maxPoints, specIdx, specName, specIcon = 0, 0
@@ -273,9 +259,24 @@ function E:GetTalentSpecInfo(isInspect)
 	return specIdx, specName, specIcon
 end
 
+function E:GetThreatStatusColor(status, nothreat)
+	local color = ElvUF.colors.threat[status]
+	if color then
+		return color.r, color.g, color.b, color.a or 1
+	elseif nothreat then
+		if status == -1 then -- how or why?
+			return 1, 1, 1, 1
+		else
+			return .7, .7, .7, 1
+		end
+	end
+end
+
 function E:GetPlayerRole()
-	local role = UnitGroupRolesAssigned('player') or 'NONE'
-	return (role ~= 'NONE' and role) or E.myspecRole or 'NONE'
+	local tank, healer, damage = UnitGroupRolesAssigned('player')
+	local role = (tank and 'TANK') or (healer and 'HEALER') or (damage and 'DAMAGER') or NONE
+
+	return (role ~= NONE and role) or E.myspecRole or NONE
 end
 
 function E:CheckRole()
@@ -582,7 +583,7 @@ function E:GetGroupUnit(unit)
 
 	-- returns the unit as raid# or party# when grouped
 	if UnitInParty(unit) or UnitInRaid(unit) then
-		local isInRaid = (GetNumRaidMembers() > 1)
+		local isInRaid = IsInRaid()
 		for i = 1, GetNumPartyMembers() do
 			local groupUnit = (isInRaid and 'raid' or 'party')..i
 			if UnitIsUnit(unit, groupUnit) then
