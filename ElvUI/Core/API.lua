@@ -6,10 +6,11 @@ local LCS = E.Libs.LCS
 local _G = _G
 local type, ipairs, pairs, unpack = type, ipairs, pairs, unpack
 local wipe, max, next, tinsert, date, time = wipe, max, next, tinsert, date, time
-local strfind, strlen, tonumber, tostring = strfind, strlen, tonumber, tostring
+local format, strfind, strlen, strmatch, tonumber, tostring = string.format, strfind, strlen, strmatch, tonumber, tostring
 
 local CreateFrame = CreateFrame
 local GetBattlefieldArenaFaction = GetBattlefieldArenaFaction
+local GetGameTime = GetGameTime
 local GetExpansionLevel = GetExpansionLevel
 local GetInstanceInfo = GetInstanceInfo
 local GetNumPartyMembers = GetNumPartyMembers
@@ -19,18 +20,21 @@ local GetActiveTalentGroup = GetActiveTalentGroup
 local GetCVarBool = GetCVarBool
 local GetFunctionCPUUsage = GetFunctionCPUUsage
 local GetTalentTabInfo = GetTalentTabInfo
+local GetWatchedFactionInfo = GetWatchedFactionInfo
 local IsAddOnLoaded = IsAddOnLoaded
 local IsInRaid = LC.IsInRaid
 local IsXPUserDisabled = IsXPUserDisabled
 local RequestBattlefieldScoreData = RequestBattlefieldScoreData
-local SetCVar = SetCVar
+local UnitInBattleground = UnitInBattleground
+local UnitIsPlayer = UnitIsPlayer
 local UnitFactionGroup = UnitFactionGroup
 local UnitGroupRolesAssigned = UnitGroupRolesAssigned
+local UIParent = UIParent
 local UnitHasVehicleUI = UnitHasVehicleUI
 local UnitInParty = UnitInParty
 local UnitInRaid = UnitInRaid
 local UnitIsUnit = UnitIsUnit
-local GetGameTime = GetGameTime
+local UnitAura = UnitAura
 
 local GetSpecialization = LCS.GetSpecialization
 local GetSpecializationInfo = LCS.GetSpecializationInfo
@@ -45,8 +49,10 @@ local ERR_NOT_IN_COMBAT = ERR_NOT_IN_COMBAT
 local FACTION_HORDE = FACTION_HORDE
 local FACTION_ALLIANCE = FACTION_ALLIANCE
 local PLAYER_FACTION_GROUP = PLAYER_FACTION_GROUP
+local MAX_PLAYER_LEVEL_TABLE = MAX_PLAYER_LEVEL_TABLE
 
 local GameMenuButtonLogout = GameMenuButtonLogout
+local GameMenuButtonAddOns = GameMenuButtonAddOns
 local GameMenuFrame = GameMenuFrame
 local UIErrorsFrame = UIErrorsFrame
 -- GLOBALS: ElvDB, ElvUI
@@ -210,6 +216,10 @@ do
 end
 
 do
+	function E:GetAuraData(unitToken, index, filter)
+		return UnitAura(unitToken, index, filter)
+	end
+
 	local function FindAura(key, value, unit, index, filter, ...)
 		local name, _, _, _, _, _, _, _, _, spellID = ...
 
@@ -221,16 +231,16 @@ do
 			return ...
 		else
 			index = index + 1
-			return FindAura(key, value, unit, index, filter, UnitAura(unit, index, filter))
+			return FindAura(key, value, unit, index, filter, E:GetAuraData(unit, index, filter))
 		end
 	end
 
 	function E:GetAuraByID(unit, spellID, filter)
-		return FindAura('spellID', spellID, unit, 1, filter, UnitAura(unit, 1, filter))
+		return FindAura('spellID', spellID, unit, 1, filter, E:GetAuraData(unit, 1, filter))
 	end
 
 	function E:GetAuraByName(unit, name, filter)
-		return FindAura('name', name, unit, 1, filter, UnitAura(unit, 1, filter))
+		return FindAura('name', name, unit, 1, filter, E:GetAuraData(unit, 1, filter))
 	end
 end
 
@@ -291,7 +301,6 @@ end
 
 function E:IsDispellableByMe(debuffType)
 	if not E.DispelClasses[E.myclass] then return end
-
 	if E.DispelClasses[E.myclass][debuffType] then return true end
 end
 
@@ -474,7 +483,6 @@ end
 
 function E:EnterVehicleHideFrames(_, unit)
 	if unit ~= 'player' then return end
-
 	for object in pairs(E.VehicleLocks) do
 		object:SetParent(E.HiddenFrame)
 	end
@@ -482,9 +490,18 @@ end
 
 function E:ExitVehicleShowFrames(_, unit)
 	if unit ~= 'player' then return end
-
 	for object, originalParent in pairs(E.VehicleLocks) do
 		object:SetParent(originalParent)
+	end
+end
+
+do
+	local watchedInfo = {}
+	function E:GetWatchedFactionInfo()
+		if GetWatchedFactionInfo then
+			watchedInfo.name, watchedInfo.reaction, watchedInfo.currentReactionThreshold, watchedInfo.nextReactionThreshold, watchedInfo.currentStanding = GetWatchedFactionInfo()
+			return watchedInfo
+		end
 	end
 end
 
@@ -506,9 +523,8 @@ function E:PLAYER_ENTERING_WORLD()
 		E.MediaUpdated = true
 	end
 
-	-- Blizzard will set this value to int(60/CVar cameraDistanceMax)+1 at logout if it is manually set higher than that
 	if E.db.general.lockCameraDistanceMax then
-		SetCVar('cameraDistanceMax', E.db.general.cameraDistanceMax)
+		E:SetCVar('cameraDistanceMax', E.db.general.cameraDistanceMax)
 	end
 
 	local _, instanceType = GetInstanceInfo()
@@ -598,30 +614,45 @@ function E:GetUnitBattlefieldFaction(unit)
 
 	-- this might be a rated BG or wargame and if so the player's faction might be altered
 	if unit == 'player' then
-		englishFaction = PLAYER_FACTION_GROUP[GetBattlefieldArenaFaction()]
-		localizedFaction = (englishFaction == 'Alliance' and FACTION_ALLIANCE) or FACTION_HORDE
+		if UnitInBattleground(unit) then
+			englishFaction = PLAYER_FACTION_GROUP[GetBattlefieldArenaFaction()]
+			localizedFaction = (englishFaction == 'Alliance' and FACTION_ALLIANCE) or FACTION_HORDE
+		else
+			if englishFaction == 'Alliance' then
+				englishFaction, localizedFaction = 'Horde', FACTION_HORDE
+			else
+				englishFaction, localizedFaction = 'Alliance', FACTION_ALLIANCE
+			end
+		end
 	end
 
 	return englishFaction, localizedFaction
 end
 
-function E:PositionGameMenuButton()
-	GameMenuFrame:Height(GameMenuFrame:GetHeight() + GameMenuButtonLogout:GetHeight() - 4)
-
-	local button = GameMenuFrame.ElvUI
-	button:SetFormattedText('%s%s|r', E.media.hexvaluecolor, 'ElvUI')
-
-	local _, relTo, _, _, offY = GameMenuButtonLogout:GetPoint()
-	if relTo ~= button then
-		button:ClearAllPoints()
-		button:Point('TOPLEFT', relTo, 'BOTTOMLEFT', 0, -1)
-		GameMenuButtonLogout:ClearAllPoints()
-		GameMenuButtonLogout:Point('TOPLEFT', button, 'BOTTOMLEFT', 0, offY)
-	end
-end
-
 function E:PLAYER_LEVEL_UP(_, level)
 	E.mylevel = level
+end
+
+function E:PositionGameMenuButton()
+	local button = GameMenuFrame.ElvUI
+	if button then
+		button:SetFormattedText('%sElvUI|r', E.media.hexvaluecolor)
+
+		local _, relTo, _, _, offY = GameMenuButtonLogout:GetPoint()
+		if relTo ~= button then
+			button:ClearAllPoints()
+			button:Point('TOPLEFT', relTo, 'BOTTOMLEFT', 0, -1)
+
+			GameMenuButtonLogout:ClearAllPoints()
+			GameMenuButtonLogout:Point('TOPLEFT', button, 'BOTTOMLEFT', 0, offY)
+		end
+	end
+
+	GameMenuFrame:Height(GameMenuFrame:GetHeight() + GameMenuButtonLogout:GetHeight() - 4)
+
+	if GameMenuFrame.ElvUI then
+		GameMenuFrame.ElvUI:SetFormattedText('%sElvUI|r', E.media.hexvaluecolor)
+	end
 end
 
 function E:ClickGameMenu()
@@ -633,10 +664,16 @@ function E:ClickGameMenu()
 end
 
 function E:SetupGameMenu()
-	local button = CreateFrame('Button', nil, GameMenuFrame, 'GameMenuButtonTemplate')
+	if GameMenuFrame.ElvUI then return end
+
+	local button = CreateFrame('Button', 'ElvUI_GameMenuButton', GameMenuFrame, 'GameMenuButtonTemplate')
 	button:SetScript('OnClick', E.ClickGameMenu)
 	GameMenuFrame.ElvUI = button
 
+	button:Size(GameMenuButtonLogout:GetSize())
+	if GameMenuButtonAddOns then
+		button:Point('TOPLEFT', GameMenuButtonAddOns, 'BOTTOMLEFT', 0, -1)
+	end
 	E.PositionGameMenuButton()
 end
 
@@ -734,21 +771,6 @@ function E:ScanTooltip_HyperlinkInfo(link)
 	E.ScanTooltip:Show()
 
 	return E.ScanTooltip:GetTooltipData()
-end
-
-function E:GetClassCoords(classFile, crop, get)
-	local t = _G.CLASS_ICON_TCOORDS[classFile]
-	if not t then return 0, 1, 0, 1 end
-
-	if get then
-		return t
-	elseif type(crop) == 'number' then
-		return t[1] + crop, t[2] - crop, t[3] + crop, t[4] - crop
-	elseif crop then
-		return t[1] + 0.022, t[2] - 0.025, t[3] + 0.022, t[4] - 0.025
-	else
-		return t[1], t[2], t[3], t[4]
-	end
 end
 
 function E:LoadAPI()

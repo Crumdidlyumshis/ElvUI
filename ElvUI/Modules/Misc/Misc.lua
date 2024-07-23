@@ -44,7 +44,6 @@ local IsInGuild = IsInGuild
 local PlaySoundFile = PlaySoundFile
 local GetNumFactions = GetNumFactions
 local GetFactionInfo = GetFactionInfo
-local GetWatchedFactionInfo = GetWatchedFactionInfo
 local ExpandAllFactionHeaders = ExpandAllFactionHeaders
 local SetWatchedFactionIndex = SetWatchedFactionIndex
 
@@ -130,7 +129,8 @@ function M:COMBAT_TEXT_UPDATE(_, messagetype, faction, rep)
 	if not E.db.general.autoTrackReputation then return end
 
 	if messagetype == 'FACTION' then
-		if faction ~= GetWatchedFactionInfo() and rep > 0 then
+		local data = (rep and rep > 0) and E:GetWatchedFactionInfo()
+		if data and faction ~= data.name then
 			ExpandAllFactionHeaders()
 
 			for i = 1, GetNumFactions() do
