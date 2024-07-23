@@ -14,13 +14,18 @@ local strfind, format, strmatch, strsub = strfind, format, strmatch, strsub
 
 local CanInspect = CanInspect
 local CreateFrame = CreateFrame
-local FACTION_BAR_COLORS = FACTION_BAR_COLORS
 local GameTooltip_ClearMoney = GameTooltip_ClearMoney
+local GameTooltip_ClearStatusBars = GameTooltip_ClearStatusBars
+local GetBackpackCurrencyInfo = GetBackpackCurrencyInfo
+local GetCurrencyListInfo = GetCurrencyListInfo
+local CheckInteractDistance = CheckInteractDistance
 local GetGuildInfo = GetGuildInfo
 local GetInventoryItemLink = GetInventoryItemLink
 local GetInventorySlotInfo = GetInventorySlotInfo
 local GetItemCount = GetItemCount
+local GetItemInfo = GetItemInfo
 local GetMouseFocus = GetMouseFocus
+local GetItemQualityColor = GetItemQualityColor
 local GetNumPartyMembers = GetNumPartyMembers
 local GetNumRaidMembers = GetNumRaidMembers
 local GetQuestDifficultyColor = GetQuestDifficultyColor
@@ -374,7 +379,7 @@ end
 
 local lastGUID
 function TT:AddInspectInfo(tt, unit, numTries, r, g, b)
-	if tt.ItemLevelShown or (not unit) or (numTries > 3) or not CanInspect(unit) then return end
+	if tt.ItemLevelShown or (not unit) or (numTries > 3) or not CanInspect(unit) or not CheckInteractDistance(unit, 4) then return end
 
 	local unitGUID = UnitGUID(unit)
 	if not unitGUID then return end
@@ -680,18 +685,6 @@ function TT:CheckBackdropColor(tt)
 	end
 end
 
-function TT:SetBorderColor(tt)
-	if not tt.GetItem then return end
-
-	local _, link = tt:GetItem()
-	if link then
-		local _, _, quality = GetItemInfo(link)
-		if quality and quality > 1 then
-			tt:SetBackdropBorderColor(GetItemQualityColor(quality))
-		end
-	end
-end
-
 function TT:SetStyle(tt)
 	if not tt or (tt == E.ScanTooltip) then return end
 
@@ -774,14 +767,11 @@ function TT:SetItemRef(link)
 end
 
 function TT:SetCurrencyToken(tt, index)
-	-- print(tt, index)
 	if not TT:IsModKeyDown() then return end
 
-	local id = index and select(9, GetCurrencyListInfo(index))
-	print(id)
-	local link = index and select(2, GetItemInfo(id))
-	print(link)
-	local id = link and tonumber(strmatch(link, ':(%d+)'))
+	local itemID = index and select(9, GetCurrencyListInfo(index))
+	local link = select(2, GetItemInfo(itemID))
+	local id = link and tonumber(strmatch(link, 'currency:(%d+)'))
 	if not id then return end
 
 	tt:AddLine(' ')

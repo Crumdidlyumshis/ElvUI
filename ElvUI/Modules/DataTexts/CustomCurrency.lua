@@ -4,6 +4,9 @@ local DT = E:GetModule('DataTexts')
 local _G = _G
 local pairs, strjoin = pairs, strjoin
 
+local GetCurrencyListSize = GetCurrencyListSize
+local GetCurrencyListInfo = GetCurrencyListInfo
+
 local defaults = { showIcon = true, nameStyle = 'full', showMax = true, currencyTooltip = true }
 
 local function OnEvent(self)
@@ -32,10 +35,22 @@ local function OnEvent(self)
 	end
 end
 
+local function GetTokenIDFromItemID(index)
+    local listSize = GetCurrencyListSize()
+    for i = 0, listSize do
+        local _, _, _, _, _, _, _, _, id = GetCurrencyListInfo(i)
+        if id == index then
+            return i
+        end
+    end
+
+    return nil
+end
+
 local function OnEnter(self)
 	DT.tooltip:ClearLines()
 
-	DT.tooltip:SetCurrencyToken(self.name)
+	DT.tooltip:SetCurrencyToken(GetTokenIDFromItemID(self.name))
 
 	DT.tooltip:Show()
 end
