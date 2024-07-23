@@ -1,2 +1,4 @@
 .luacheckcache
 .vscode/lua.booster.lint.json
+.gpt-runner/copilot.gpt.md
+.vscode/settings.json
