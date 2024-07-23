@@ -51,7 +51,7 @@ local roles = {
 }
 
 local buttonEvents = {
-	'GROUP_ROSTER_UPDATE',
+	'RAID_ROSTER_UPDATE',
 	'PARTY_LEADER_CHANGED'
 }
 
@@ -224,7 +224,7 @@ function RU:CreateRoleIcons()
 	RoleIcons:Size(PANEL_WIDTH * 0.5, BUTTON_HEIGHT + 8)
 	RoleIcons:SetTemplate('Transparent')
 	RoleIcons:RegisterEvent('PLAYER_ENTERING_WORLD')
-	RoleIcons:RegisterEvent('GROUP_ROSTER_UPDATE')
+	RoleIcons:RegisterEvent('RAID_ROSTER_UPDATE')
 	RoleIcons:SetScript('OnEvent', RU.OnEvent_RoleIcons)
 	RoleIcons.icons = {}
 
@@ -675,7 +675,8 @@ function RU:Initialize()
 	-- end
 
 	-- Automatically show/hide the frame if we have RaidLeader or RaidOfficer
-	RU:RegisterEvent('GROUP_ROSTER_UPDATE', 'ToggleRaidUtil')
+	RU:RegisterEvent('RAID_ROSTER_UPDATE', 'ToggleRaidUtil')
+	RU:RegisterEvent('PARTY_MEMBERS_CHANGED', 'ToggleRaidUtil')
 	RU:RegisterEvent('PLAYER_ENTERING_WORLD', 'ToggleRaidUtil')
 end
 
