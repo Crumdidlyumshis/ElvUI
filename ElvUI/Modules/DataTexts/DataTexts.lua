@@ -785,6 +785,18 @@ function DT:CURRENCY_DISPLAY_UPDATE(_, currencyID)
 	end
 end
 
+function DT:GetTokenIDFromItemID(index)
+    local listSize = GetCurrencyListSize()
+    for i = 0, listSize do
+        local _, _, _, _, _, _, _, _, id = GetCurrencyListInfo(i)
+        if id == index then
+            return i
+        end
+    end
+
+    return nil
+end
+
 function DT:CurrencyListInfo(index)
 	local info = {}
 

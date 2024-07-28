@@ -35,23 +35,12 @@ local function OnEvent(self)
 	end
 end
 
-local function GetTokenIDFromItemID(index)
-    local listSize = GetCurrencyListSize()
-    for i = 0, listSize do
-        local _, _, _, _, _, _, _, _, id = GetCurrencyListInfo(i)
-        if id == index then
-            return i
-        end
-    end
-
-    return nil
-end
-
 local function OnEnter(self)
+	local tokenID = DT:GetTokenIDFromItemID(self.name)
+	if not tokenID then return end
+
 	DT.tooltip:ClearLines()
-
-	DT.tooltip:SetCurrencyToken(GetTokenIDFromItemID(self.name))
-
+	DT.tooltip:SetCurrencyToken(tokenID)
 	DT.tooltip:Show()
 end
 
