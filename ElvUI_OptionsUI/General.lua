@@ -212,6 +212,11 @@ blizz.general.args.vehicleSeatIndicatorSize = ACH:Range(L["Vehicle Seat Indicato
 blizz.general.args.durabilityScale = ACH:Range(L["Durability Scale"], nil, 16, { min = .5, max = 8, step = .5 }, nil, nil, function(info, value) E.db.general[info[#info]] = value BL:UpdateDurabilityScale() end)
 blizz.general.inline = true
 
+blizz.raidControl = ACH:Group(L["RAID_CONTROL"], nil, 10, nil, function(info) return E.db.general.raidUtility[info[#info]] end, function(info, value) E.db.general.raidUtility[info[#info]] = value RU:TargetIcons_Update() end)
+blizz.raidControl.args.raidUtility = ACH:Toggle(L["Enable"], L["Enables the ElvUI Raid Control panel."], 1, nil, nil, nil, function(info) return E.private.general[info[#info]] end, function(info, value) E.private.general[info[#info]] = value E.ShowPopup = true end)
+blizz.raidControl.args.showTooltip = ACH:Toggle(L["Tooltip"], L["Display Tooltip on Raid Markers."], 2, nil, nil, nil, function(info) return E.db.general.raidUtility[info[#info]] end, function(info, value) E.db.general.raidUtility[info[#info]] = value end)
+blizz.raidControl.inline = true
+
 -- blizz.quest = ACH:Group(L["Quests"], nil, 2)
 -- blizz.quest.args.questRewardMostValueIcon = ACH:Toggle(L["Mark Quest Reward"], L["Marks the most valuable quest reward with a gold coin."], 1)
 -- blizz.quest.args.questXPPercent = ACH:Toggle(L["XP Quest Percent"], nil, 2)

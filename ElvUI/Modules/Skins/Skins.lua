@@ -955,13 +955,8 @@ function S:HandleSearchBox(frame, unskinned)
 	frame.backdrop:Point("BOTTOMRIGHT", 2, -12)
 end
 
-function S:HandleDropDownBox(frame, width, pos, template)
+function S:HandleDropDownBox(frame, width, template, old)
 	assert(frame, "doesn't exist!")
-
-	local frameName = frame.GetName and frame:GetName()
-	local button = frame.Button or frameName and (_G[frameName.."Button"] or _G[frameName.."_Button"])
-	local text = frameName and _G[frameName.."Text"] or frame.Text
-	local icon = frame.Icon
 
 	if not width then
 		width = 155
@@ -969,18 +964,22 @@ function S:HandleDropDownBox(frame, width, pos, template)
 
 	frame:Width(width)
 	frame:StripTextures()
-	frame:CreateBackdrop(template)
-	frame:SetFrameLevel(frame:GetFrameLevel() + 2)
+
+	if not frame.backdrop then
+		frame:CreateBackdrop(template)
+		frame:SetFrameLevel(frame:GetFrameLevel() + 2)
+	end
+
+	local frameName = frame.GetName and frame:GetName()
+	local button = frame.Button or frameName and (_G[frameName.."Button"] or _G[frameName.."_Button"])
+	local text = frameName and _G[frameName.."Text"] or frame.Text
+	local icon = frame.Icon
+
 	frame.backdrop:Point("TOPLEFT", 20, -2)
 	frame.backdrop:Point("BOTTOMRIGHT", button, "BOTTOMRIGHT", 2, -2)
 
 	button:ClearAllPoints()
-
-	if pos then
-		button:Point("TOPRIGHT", frame.Right, -20, -21)
-	else
-		button:Point("RIGHT", frame, "RIGHT", -10, 3)
-	end
+	button:Point("RIGHT", frame, "RIGHT", -10, 3)
 
 	button.SetPoint = E.noop
 	S:HandleNextPrevButton(button, "down")
