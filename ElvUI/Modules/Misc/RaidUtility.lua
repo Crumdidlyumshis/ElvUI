@@ -24,6 +24,8 @@ local SecureHandlerSetFrameRef = SecureHandlerSetFrameRef
 local SecureHandler_OnClick = SecureHandler_OnClick
 local ToggleFriendsFrame = ToggleFriendsFrame
 local UnitGroupRolesAssigned = UnitGroupRolesAssigned
+local SetDungeonDifficulty = SetDungeonDifficulty
+local SetRaidDifficulty = SetRaidDifficulty
 local SetRaidTarget = SetRaidTarget
 local ResetInstances = ResetInstances
 local UnitClass = UnitClass
@@ -56,15 +58,15 @@ local groupMenuList = {
 
 local raidMenuList = {
 	{ text = _G.RAID_DIFFICULTY, isTitle = true, notCheckable = true},
-	{ text = _G.RAID_DIFFICULTY1, checked = function() return GetRaidDifficulty() == 1 end, func = function() SetRaidDifficulty(1) end },
-	{ text = _G.RAID_DIFFICULTY2, checked = function() return GetRaidDifficulty() == 2 end, func = function() SetRaidDifficulty(2) end },
-	{ text = _G.RAID_DIFFICULTY3, checked = function() return GetRaidDifficulty() == 3 end, func = function() SetRaidDifficulty(3) end },
-	{ text = _G.RAID_DIFFICULTY4, checked = function() return GetRaidDifficulty() == 4 end, func = function() SetRaidDifficulty(4) end },
+    { text = _G.RAID_DIFFICULTY1, checked = function() return GetRaidDifficulty() == 1 end, func = function() SetRaidDifficulty(1) end },
+    { text = _G.RAID_DIFFICULTY2, checked = function() return GetRaidDifficulty() == 2 end, func = function() SetRaidDifficulty(2) end },
+    { text = _G.RAID_DIFFICULTY3, checked = function() return GetRaidDifficulty() == 3 end, func = function() SetRaidDifficulty(3) end },
+    { text = _G.RAID_DIFFICULTY4, checked = function() return GetRaidDifficulty() == 4 end, func = function() SetRaidDifficulty(4) end },
 	{ text = '', isTitle = true, notCheckable = true },
 	{ text = _G.RESET_INSTANCES, notCheckable = true, func = function() ResetInstances() end},
 }
 
-RU.RoleIcons = {
+local roleIcons = {
 	TANK = E:TextureString(E.Media.Textures.Tank, ':15:15:0:0:64:64:2:56:2:56'),
 	HEALER = E:TextureString(E.Media.Textures.Healer, ':15:15:0:0:64:64:2:56:2:56'),
 	DAMAGER = E:TextureString(E.Media.Textures.DPS, ':15:15')
@@ -532,7 +534,7 @@ function RU:OnClick_RoleCheckButton()
 	if self.enabled and RU:InGroup() then
 		local tank, healer, damager = RU:GetRoleCount()
 		local total = tank + healer + damager
-		E:Print(format("%s %s: %d | %s %s: %d | %s %s: %d", RU.RoleIcons.TANK, _G.TANK, tank, RU.RoleIcons.HEALER, _G.HEALER, healer, RU.RoleIcons.DAMAGER, _G.DAMAGER, damager))
+		E:Print(format("%s %s: %d | %s %s: %d | %s %s: %d", roleIcons.TANK, _G.TANK, tank, roleIcons.HEALER, _G.HEALER, healer, roleIcons.DAMAGER, _G.DAMAGER, damager))
 		E:Print(format('%s: %d', L["Total"], total))
 	end
 end
@@ -557,20 +559,6 @@ end
 
 function RU:OnEvent_MainAssistButton()
 	RU:SetEnabled(self, RU:HasPermission())
-end
-
-function RU:GetDifficultyText()
-    local isRaid = IsInRaid()
-	local dungID = GetDungeonDifficulty()
-	local raidID = GetRaidDifficulty()
-
-    local id = isRaid and raidID or dungID
-	local diffID = isRaid and (id > 2 and 2 or 1) or id
-    local playerDiff = _G['PLAYER_DIFFICULTY'..diffID]
-    local diffSize = gsub(_G[(isRaid and 'RAID_DIFFICULTY' or 'DUNGEON_DIFFICULTY')..id], '%D+', '')
-    local difficulty = format('%s %s', playerDiff, diffSize)
-
-    return difficulty
 end
 
 function RU:UpdateDifficultyDropdown()
@@ -605,7 +593,7 @@ end
 function RU:OnSelect_DungeonDifficulty(dropdown, text)
     if not dropdown or not dropdown.label then return end
 
-    dropdown.text:SetText(RU:GetDifficultyText() or text or '')
+    dropdown.text:SetText(E:GetDifficultyText(IsInRaid()) or text or '')
 end
 
 function RU.OnEvent_DungeonDifficulty(self, event, ...)
@@ -681,7 +669,7 @@ function RU:OnEnter_Role()
 	local GameTooltip = _G.GameTooltip
 	GameTooltip:SetOwner(E.UIParent, 'ANCHOR_NONE')
 	GameTooltip:Point(anchor1, self, anchor2, anchorX, 0)
-	GameTooltip:SetText(RU.RoleIcons[iconRole] .. _G[iconRole])
+	GameTooltip:SetText(roleIcons[iconRole] .. _G[iconRole])
 
 	for group, list in next, roleRoster do
 		sort(list, RU.RoleIcons_SortNames)
@@ -900,7 +888,7 @@ function RU:Initialize()
 	RU:CreateRoleIcons()
 
 	local menuList = IsInRaid() and raidMenuList or groupMenuList
-	RU:CreateDropdown('RaidUtility_DungeonDifficulty', RaidUtilityPanel, 'UIDropDownMenuTemplate', BUTTON_WIDTH * 0.5 + 28.5, 'TOPLEFT', RaidCountdownButton, 'BOTTOMLEFT', -20, -2, L["Difficulty"], RU:GetDifficultyText(), { 'CHAT_MSG_SYSTEM', 'RAID_ROSTER_UPDATE' }, RU.OnEvent_DungeonDifficulty, RU.OnSelect_DungeonDifficulty, menuList)
+	RU:CreateDropdown('RaidUtility_DungeonDifficulty', RaidUtilityPanel, 'UIDropDownMenuTemplate', BUTTON_WIDTH * 0.5 + 28.5, 'TOPLEFT', RaidCountdownButton, 'BOTTOMLEFT', -20, -2, L["Difficulty"], E:GetDifficultyText(IsInRaid()), { 'CHAT_MSG_SYSTEM', 'RAID_ROSTER_UPDATE' }, RU.OnEvent_DungeonDifficulty, RU.OnSelect_DungeonDifficulty, menuList)
 	RU:UpdateDifficultyDropdown() -- Ensure the correct menu is set initially
 
 	-- Automatically show/hide the frame if we have RaidLeader or RaidOfficer

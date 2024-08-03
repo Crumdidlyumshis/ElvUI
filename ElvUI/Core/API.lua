@@ -6,7 +6,7 @@ local LCS = E.Libs.LCS
 local _G = _G
 local type, ipairs, pairs, unpack = type, ipairs, pairs, unpack
 local wipe, max, next, tinsert, date, time = wipe, max, next, tinsert, date, time
-local format, strfind, strlen, strmatch, tonumber, tostring = string.format, strfind, strlen, strmatch, tonumber, tostring
+local format, gsub, strfind, strlen, strmatch, tonumber, tostring = string.format, string.gsub, strfind, strlen, strmatch, tonumber, tostring
 
 local CreateFrame = CreateFrame
 local GetBattlefieldArenaFaction = GetBattlefieldArenaFaction
@@ -18,6 +18,8 @@ local HideUIPanel = HideUIPanel
 local InCombatLockdown = InCombatLockdown
 local GetActiveTalentGroup = GetActiveTalentGroup
 local GetCVarBool = GetCVarBool
+local GetDungeonDifficulty = GetDungeonDifficulty
+local GetRaidDifficulty = GetRaidDifficulty
 local GetFunctionCPUUsage = GetFunctionCPUUsage
 local GetTalentTabInfo = GetTalentTabInfo
 local GetWatchedFactionInfo = GetWatchedFactionInfo
@@ -297,6 +299,19 @@ function E:CheckRole()
 	end
 
 	E.myrole = E:GetPlayerRole()
+end
+
+function E:GetDifficultyText(isRaid)
+	local dungID = GetDungeonDifficulty()
+	local raidID = GetRaidDifficulty()
+
+    local id = isRaid and raidID or dungID
+	local diffID = isRaid and (id > 2 and 2 or 1) or id
+    local playerDiff = _G['PLAYER_DIFFICULTY'..diffID]
+    local diffSize = gsub(_G[(isRaid and 'RAID_DIFFICULTY' or 'DUNGEON_DIFFICULTY')..id], '%D+', '')
+    local difficulty = format('%s %s', playerDiff, diffSize)
+
+    return difficulty
 end
 
 function E:IsDispellableByMe(debuffType)
