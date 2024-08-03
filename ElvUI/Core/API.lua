@@ -649,7 +649,7 @@ function E:PLAYER_LEVEL_UP(_, level)
 	E.mylevel = level
 end
 
-local gameMenuButtonIsShown = false
+local gameMenuFrameIsShown = false
 function E:PositionGameMenuButton()
 	local button = GameMenuFrame.ElvUI
 	if button then
@@ -665,9 +665,9 @@ function E:PositionGameMenuButton()
 		end
 	end
 
-	if not gameMenuButtonIsShown then
+	if not gameMenuFrameIsShown then
 		GameMenuFrame:Height(GameMenuFrame:GetHeight() + GameMenuButtonLogout:GetHeight() - 4)
-		gameMenuButtonIsShown = true
+		gameMenuFrameIsShown = true
 	end
 end
 
