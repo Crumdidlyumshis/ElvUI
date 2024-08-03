@@ -7,6 +7,7 @@ local _G = _G
 local type, ipairs, pairs, unpack = type, ipairs, pairs, unpack
 local wipe, max, next, tinsert, date, time = wipe, max, next, tinsert, date, time
 local format, gsub, strfind, strlen, strmatch, tonumber, tostring = string.format, string.gsub, strfind, strlen, strmatch, tonumber, tostring
+local hooksecurefunc = hooksecurefunc
 
 local CreateFrame = CreateFrame
 local GetBattlefieldArenaFaction = GetBattlefieldArenaFaction
@@ -648,6 +649,7 @@ function E:PLAYER_LEVEL_UP(_, level)
 	E.mylevel = level
 end
 
+local gameMenuButtonIsShown = false
 function E:PositionGameMenuButton()
 	local button = GameMenuFrame.ElvUI
 	if button then
@@ -663,10 +665,9 @@ function E:PositionGameMenuButton()
 		end
 	end
 
-	GameMenuFrame:Height(GameMenuFrame:GetHeight() + GameMenuButtonLogout:GetHeight() - 4)
-
-	if GameMenuFrame.ElvUI then
-		GameMenuFrame.ElvUI:SetFormattedText('%sElvUI|r', E.media.hexvaluecolor)
+	if not gameMenuButtonIsShown then
+		GameMenuFrame:Height(GameMenuFrame:GetHeight() + GameMenuButtonLogout:GetHeight() - 4)
+		gameMenuButtonIsShown = true
 	end
 end
 
@@ -678,6 +679,10 @@ function E:ClickGameMenu()
 	end
 end
 
+function E:ScaleGameMenu()
+	GameMenuFrame:SetScale(E.db.general.gameMenuScale or 1)
+end
+
 function E:SetupGameMenu()
 	if GameMenuFrame.ElvUI then return end
 
@@ -685,11 +690,11 @@ function E:SetupGameMenu()
 	button:SetScript('OnClick', E.ClickGameMenu)
 	GameMenuFrame.ElvUI = button
 
+	E:ScaleGameMenu()
+
 	button:Size(GameMenuButtonLogout:GetSize())
-	if GameMenuButtonAddOns then
-		button:Point('TOPLEFT', GameMenuButtonAddOns, 'BOTTOMLEFT', 0, -1)
-	end
-	E.PositionGameMenuButton()
+	button:Point('TOPLEFT', GameMenuButtonAddOns, 'BOTTOMLEFT', 0, -1)
+	hooksecurefunc(GameMenuFrame, 'Show', E.PositionGameMenuButton)
 end
 
 function E:CompatibleTooltip(tt) -- knock off compatibility

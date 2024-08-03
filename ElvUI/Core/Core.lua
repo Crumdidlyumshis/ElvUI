@@ -1245,6 +1245,13 @@ do
 	end
 end
 
+function E:DBConvertDev()
+	if E.private.general.gameMenuScale ~= nil then
+		E.db.general.gameMenuScale = E.private.general.gameMenuScale
+		E.private.general.gameMenuScale = nil
+	end
+end
+
 function E:UpdateDB()
 	E.private = E.charSettings.profile
 	E.db = E.data.profile

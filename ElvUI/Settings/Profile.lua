@@ -31,6 +31,7 @@ P.general = {
 	questRewardMostValueIcon = true,
 	questXPPercent = true,
 	durabilityScale = 1,
+	gameMenuScale = 1,
 	lockCameraDistanceMax = true,
 	cameraDistanceMax = 15,
 	afk = true,
