@@ -373,5 +373,5 @@ function AB:SetupMicroBar()
 
 	AB:SecureHook('UpdateMicroButtons')
 
-	E:CreateMover(microBar, 'MicrobarMover', L['Micro Bar'], nil, nil, nil, 'ALL,ACTIONBARS', nil, 'actionbar,microbar')
+	E:CreateMover(microBar, 'MicrobarMover', L["Micro Bar"], nil, nil, nil, 'ALL,ACTIONBARS', nil, 'actionbar,microbar')
 end

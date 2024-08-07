@@ -76,8 +76,8 @@ local LEVEL1 = strlower(_G.TOOLTIP_UNIT_LEVEL:gsub('%s?%%s%s?%-?',''))
 local LEVEL2 = strlower(_G.TOOLTIP_UNIT_LEVEL_CLASS:gsub('^%%2$s%s?(.-)%s?%%1$s','%1'):gsub('^%-?г?о?%s?',''):gsub('%s?%%s%s?%-?',''))
 local IDLine = '|cFFCA3C3C%s|r %d'
 local targetList, TAPPED_COLOR = {}, { r=0.6, g=0.6, b=0.6 }
-local AFK_LABEL = ' |cffFFFFFF[|r|cffFF9900'..L['AFK']..'|r|cffFFFFFF]|r'
-local DND_LABEL = ' |cffFFFFFF[|r|cffFF3333'..L['DND']..'|r|cffFFFFFF]|r'
+local AFK_LABEL = ' |cffFFFFFF[|r|cffFF9900'..L["AFK"]..'|r|cffFFFFFF]|r'
+local DND_LABEL = ' |cffFFFFFF[|r|cffFF3333'..L["DND"]..'|r|cffFFFFFF]|r'
 local genderTable = { _G.UNKNOWN..' ', _G.MALE..' ', _G.FEMALE..' ' }
 
 function TT:IsModKeyDown(db)
@@ -304,7 +304,7 @@ function TT:SetUnitText(tt, unit, isPlayerUnit)
 			local addonUser = E.UserList[nameRealm]
 			if addonUser then
 				local same = addonUser == E.version
-				tt:AddDoubleLine(L['ElvUI Version:'], format('%.2f', addonUser), nil, nil, nil, same and 0.2 or 1, same and 1 or 0.2, 0.2)
+				tt:AddDoubleLine(L["ElvUI Version:"], format('%.2f', addonUser), nil, nil, nil, same and 0.2 or 1, same and 1 or 0.2, 0.2)
 			end
 		end
 
@@ -342,7 +342,7 @@ function TT:PopulateInspectGUIDCache(unitGUID, itemLevel)
 		end
 
 		GameTooltip.ItemLevelShown = true
-		GameTooltip:AddDoubleLine(L['Item Level:'], itemLevel, nil, nil, nil, 1, 1, 1)
+		GameTooltip:AddDoubleLine(L["Item Level:"], itemLevel, nil, nil, nil, 1, 1, 1)
 		GameTooltip:Show()
 	end
 end
@@ -387,7 +387,7 @@ function TT:AddInspectInfo(tt, unit, numTries, r, g, b)
 
 	if unitGUID == E.myguid then
 		tt.ItemLevelShown = true
-		tt:AddDoubleLine(L['Item Level:'], E:GetUnitItemLevel(unit), nil, nil, nil, 1, 1, 1)
+		tt:AddDoubleLine(L["Item Level:"], E:GetUnitItemLevel(unit), nil, nil, nil, 1, 1, 1)
 	elseif cache and cache.time then
 		local itemLevel = cache.itemLevel
 		if not itemLevel or (GetTime() - cache.time > 120) then
@@ -396,7 +396,7 @@ function TT:AddInspectInfo(tt, unit, numTries, r, g, b)
 		end
 
 		tt.ItemLevelShown = true
-		tt:AddDoubleLine(L['Item Level:'], itemLevel, nil, nil, nil, 1, 1, 1)
+		tt:AddDoubleLine(L["Item Level:"], itemLevel, nil, nil, nil, 1, 1, 1)
 	elseif unitGUID then
 		if not inspectGUIDCache[unitGUID] then
 			inspectGUIDCache[unitGUID] = { unitColor = {r, g, b} }
@@ -440,7 +440,7 @@ function TT:AddTargetInfo(tt, unit)
 
 		local numList = #targetList
 		if numList > 0 then
-			tt:AddLine(format('%s (|cffffffff%d|r): %s', L['Targeted By:'], numList, tconcat(targetList, ', ')), nil, nil, nil, true)
+			tt:AddLine(format('%s (|cffffffff%d|r): %s', L["Targeted By:"], numList, tconcat(targetList, ', ')), nil, nil, nil, true)
 			wipe(targetList)
 		end
 	end
@@ -457,7 +457,7 @@ function TT:AddRoleInfo(tt, unit)
 		elseif role == 'TANK' then
 			role, r, g, b = _G.TANK, .16, .31, .61
 		elseif role == 'DAMAGER' then
-			role, r, g, b = L['DPS'], .77, .12, .24
+			role, r, g, b = L["DPS"], .77, .12, .24
 		end
 
 		tt:AddDoubleLine(format('%s:', _G.ROLE), role, nil, nil, nil, r, g, b)
@@ -621,12 +621,12 @@ function TT:GameTooltip_OnTooltipSetItem(data)
 			local count = GetItemCount(link)
 			local total = GetItemCount(link, true)
 			if TT.db.itemCount == 'BAGS_ONLY' then
-				bagCount = format(IDLine, L['Count'], count)
+				bagCount = format(IDLine, L["Count"], count)
 			elseif TT.db.itemCount == 'BANK_ONLY' then
-				bankCount = format(IDLine, L['Bank'], total - count)
+				bankCount = format(IDLine, L["Bank"], total - count)
 			elseif TT.db.itemCount == 'BOTH' then
-				bagCount = format(IDLine, L['Count'], count)
-				bankCount = format(IDLine, L['Bank'], total - count)
+				bagCount = format(IDLine, L["Count"], count)
+				bankCount = format(IDLine, L["Bank"], total - count)
 			end
 		end
 	elseif modKey then
@@ -876,7 +876,7 @@ function TT:Initialize()
 	_G.FrameStackTooltip:SetScale(E.uiscale)
 
 	_G.BNToastFrame:Point('TOPRIGHT', _G.MinimapCluster, 'BOTTOMRIGHT', 0, -10)
-	E:CreateMover(_G.BNToastFrame, 'BNETMover', L['BNet Frame'], nil, nil, PostBNToastMove)
+	E:CreateMover(_G.BNToastFrame, 'BNETMover', L["BNet Frame"], nil, nil, PostBNToastMove)
 	self:SecureHook(_G.BNToastFrame, 'SetPoint', 'RepositionBNET')
 
 	if not E.private.tooltip.enable then return end
@@ -903,10 +903,10 @@ function TT:Initialize()
 	TT:SetTooltipFonts()
 
 	local GameTooltipAnchor = CreateFrame('Frame', 'GameTooltipAnchor', E.UIParent)
-	GameTooltipAnchor:Point('BOTTOMRIGHT', RightChatToggleButton, 'BOTTOMRIGHT')
+	GameTooltipAnchor:Point('BOTTOMRIGHT', _G.RightChatToggleButton, 'BOTTOMRIGHT')
 	GameTooltipAnchor:Size(130, 20)
 	GameTooltipAnchor:SetFrameLevel(GameTooltipAnchor:GetFrameLevel() + 400)
-	E:CreateMover(GameTooltipAnchor, 'TooltipMover', L['Tooltip'], nil, nil, nil, nil, nil, 'tooltip,general')
+	E:CreateMover(GameTooltipAnchor, 'TooltipMover', L["Tooltip"], nil, nil, nil, nil, nil, 'tooltip,general')
 
 	TT:RegisterEvent('MODIFIER_STATE_CHANGED')
 

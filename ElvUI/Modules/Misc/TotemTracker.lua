@@ -129,7 +129,7 @@ function TM:Initialize()
 	TM:RegisterEvent('PLAYER_ENTERING_WORLD', 'Update')
 	TM:RegisterEvent('ACTIVE_TALENT_GROUP_CHANGED', 'Update')
 
-	E:CreateMover(bar, 'TotemTrackerMover', L['Totem Tracker'], nil, nil, nil, nil, nil, 'general,totems')
+	E:CreateMover(bar, 'TotemTrackerMover', L["Totem Tracker"], nil, nil, nil, nil, nil, 'general,totems')
 end
 
 local function InitializeCallback()

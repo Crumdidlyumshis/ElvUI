@@ -246,5 +246,5 @@ function AB:CreateBarShapeShift()
 
 	E:DelayedUpdate(AB.StyleShapeShift, AB)
 
-	E:CreateMover(bar, 'ShiftAB', L['Stance Bar'], nil, -3, nil, 'ALL,ACTIONBARS', nil, 'actionbar,stanceBar')
+	E:CreateMover(bar, 'ShiftAB', L["Stance Bar"], nil, -3, nil, 'ALL,ACTIONBARS', nil, 'actionbar,stanceBar')
 end

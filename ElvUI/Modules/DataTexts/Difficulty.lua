@@ -49,7 +49,7 @@ end
 local function OnEnter()
     DT.tooltip:ClearLines()
 
-    DT.tooltip:AddLine(L['Current Difficulty'])
+    DT.tooltip:AddLine(L["Current Difficulty"])
     DT.tooltip:AddLine(' ')
     DT.tooltip:AddDoubleLine(_G.DUNGEON_DIFFICULTY, E:GetDifficultyText(), 1, 1, 1)
     DT.tooltip:AddDoubleLine(_G.RAID_DIFFICULTY, E:GetDifficultyText(true), 1, 1, 1)

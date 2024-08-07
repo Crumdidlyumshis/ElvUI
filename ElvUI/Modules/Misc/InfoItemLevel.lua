@@ -181,10 +181,10 @@ function M:UpdateAverageString(frame, which, iLevelDB)
 
 	if avgItemLevel then
 		if charPage then
-			frame.ItemLevelText:SetFormattedText(L['Avg: %.2f'], avgItemLevel)
+			frame.ItemLevelText:SetFormattedText(L["Avg: %.2f"], avgItemLevel)
 			frame.ItemLevelText:SetTextColor(GetItemLevelColor(frame.unit))
 		else
-			frame.ItemLevelText:SetFormattedText(L['Item level: %.2f'], avgItemLevel)
+			frame.ItemLevelText:SetFormattedText(L["Item level: %.2f"], avgItemLevel)
 		end
 
 		-- we have to wait to do this on inspect so handle it in here

@@ -127,7 +127,7 @@ function DB:ReputationBar()
 		return (DB.db.reputation.hideBelowMaxLevel and not E:XPIsLevelMax()) or not E:GetWatchedFactionInfo()
 	end
 
-	E:CreateMover(Reputation.holder, 'ReputationBarMover', L['Reputation Bar'], nil, nil, nil, nil, nil, 'databars,reputation')
+	E:CreateMover(Reputation.holder, 'ReputationBarMover', L["Reputation Bar"], nil, nil, nil, nil, nil, 'databars,reputation')
 
 	DB:ReputationBar_Toggle()
 end

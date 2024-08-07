@@ -179,7 +179,7 @@ function DB:ExperienceBar_OnEnter()
 		GameTooltip:AddDoubleLine(L["XP:"], format(' %s / %s (%.2f%%)', E:ShortValue(CurrentXP), E:ShortValue(XPToLevel), PercentXP), 1, 1, 1)
 	end
 	if RemainXP then
-		GameTooltip:AddDoubleLine(L["Remaining:"], format(' %s (%.2f%% - %.2f '..L['Bars']..')', RemainXP, RemainTotal, RemainBars), 1, 1, 1)
+		GameTooltip:AddDoubleLine(L["Remaining:"], format(' %s (%.2f%% - %.2f '..L["Bars"]..')', RemainXP, RemainTotal, RemainBars), 1, 1, 1)
 	end
 	if QuestLogXP > 0 then
 		GameTooltip:AddDoubleLine(L["Quest Log XP:"], format(' %d (%.2f%%)', QuestLogXP, (QuestLogXP / XPToLevel) * 100), 1, 1, 1)
@@ -261,7 +261,7 @@ function DB:ExperienceBar()
 	Quest.barTexture:SetDrawLayer('ARTWORK')
 	Experience.Quest = Quest
 
-	E:CreateMover(Experience.holder, 'ExperienceBarMover', L['Experience Bar'], nil, nil, nil, nil, nil, 'databars,experience')
+	E:CreateMover(Experience.holder, 'ExperienceBarMover', L["Experience Bar"], nil, nil, nil, nil, nil, 'databars,experience')
 
 	DB:RegisterEvent('UPDATE_EXPANSION_LEVEL', 'ExperienceBar_Toggle')
 	DB:RegisterEvent('DISABLE_XP_GAIN', 'ExperienceBar_Toggle')
