@@ -85,13 +85,6 @@ function TT:IsModKeyDown(db)
 	return k == 'SHOW' or ((k == 'SHIFT' and IsShiftKeyDown()) or (k == 'CTRL' and IsControlKeyDown()) or (k == 'ALT' and IsAltKeyDown()))
 end
 
-local classification = {
-	worldboss = format('|cffAF5050 %s|r', BOSS),
-	rareelite = format('|cffAF5050 %s %s|r', ELITE, ITEM_QUALITY3_DESC),
-	elite = format('|cffAF5050 %s|r', ELITE),
-	rare = format('|cffAF5050 %s|r', ITEM_QUALITY3_DESC)
-}
-
 local inventorySlots = {
 	'HeadSlot', 'NeckSlot', 'ShoulderSlot', 'BackSlot', 'ChestSlot', 'WristSlot',
 	'HandsSlot', 'WaistSlot', 'LegsSlot', 'FeetSlot', 'Finger0Slot', 'Finger1Slot',
@@ -312,17 +305,21 @@ function TT:SetUnitText(tt, unit, isPlayerUnit)
 	else
 		local levelLine = TT:GetLevelLine(tt, 2)
 		if levelLine then
+			local pvpFlag, classificationString = '', ''
 			local level = UnitLevel(unit)
 			local creatureClassification = UnitClassification(unit)
 			local creatureType = UnitCreatureType(unit)
-			local pvpFlag = ''
 			local diffColor = GetQuestDifficultyColor(level)
 
 			if UnitIsPVP(unit) then
 				pvpFlag = format(' (%s)', _G.PVP)
 			end
 
-			levelLine:SetFormattedText('|cff%02x%02x%02x%s|r%s %s%s', diffColor.r * 255, diffColor.g * 255, diffColor.b * 255, level > 0 and level or '??', classification[creatureClassification] or '', creatureType or '', pvpFlag)
+			if creatureClassification == 'rare' or creatureClassification == 'elite' or creatureClassification == 'rareelite' or creatureClassification == 'worldboss' then
+				classificationString = format('%s %s|r', E:CallTag('classificationcolor', unit), E:CallTag('classification', unit))
+			end
+
+			levelLine:SetFormattedText('|cff%02x%02x%02x%s|r%s %s%s', diffColor.r * 255, diffColor.g * 255, diffColor.b * 255, level > 0 and level or '??', classificationString, creatureType or '', pvpFlag)
 		end
 	end
 

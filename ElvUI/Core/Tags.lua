@@ -92,6 +92,9 @@ function E:CallTag(tag, ...)
 	end
 end
 
+function E:TagUpdateRate(second)
+	Tags:SetEventUpdateTimer(second)
+end
 
 ------------------------------------------------------------------------
 --	Tag Functions
