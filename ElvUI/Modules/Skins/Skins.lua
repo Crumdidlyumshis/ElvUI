@@ -975,6 +975,8 @@ function S:HandleDropDownBox(frame, width, template, old)
 	local text = frameName and _G[frameName.."Text"] or frame.Text
 	local icon = frame.Icon
 
+	if not button then return end
+
 	frame.backdrop:Point("TOPLEFT", 20, -2)
 	frame.backdrop:Point("BOTTOMRIGHT", button, "BOTTOMRIGHT", 2, -2)
 
@@ -1198,7 +1200,7 @@ do
 		local Normal, Disabled, Pushed = btn:GetNormalTexture(), btn:GetDisabledTexture(), btn:GetPushedTexture()
 
 		if noBackdrop then
-			btn:Size(20)
+			btn:Size(24)
 			Disabled:SetVertexColor(.5, .5, .5)
 			btn.Texture = Normal
 
@@ -1207,7 +1209,7 @@ do
 				btn:HookScript("OnLeave", closeOnLeave)
 			end
 		else
-			btn:Size(18)
+			btn:Size(22)
 			Disabled:SetVertexColor(.3, .3, .3)
 		end
 
@@ -1416,7 +1418,7 @@ do -- Handle collapse
 		if skip then return end
 
 		if type(texture) == "number" then -- 130821 minus, 130838 plus
-			button:SetNormalTexture(texture == 130838 and E.Media.Textures.PlusButton or E.Media.Textures.MinusButton, true)
+			button:SetNormalTexture(texture == [[Interface\Buttons\UI-PlusButton-UP]] and E.Media.Textures.PlusButton or E.Media.Textures.MinusButton, true)
 		elseif strfind(texture, "Plus") or strfind(texture, "Closed") then
 			button:SetNormalTexture(E.Media.Textures.PlusButton, true)
 		elseif strfind(texture, "Minus") or strfind(texture, "Open") then

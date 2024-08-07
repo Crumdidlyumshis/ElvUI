@@ -41,6 +41,10 @@ function E:Grid(msg)
 	end
 end
 
+function E:HDCheck(msg)
+	E:Print(E:IsHDClient() and L["You have the HD patch 'Interface Windows' Enabled. Disable the Interface patch (patch-xxxx-9.mpq) if you are experiencing any interface issues."] or L["HD patch 'Interface Windows' (patch-xxxx-9.mpq) Disabled"])
+end
+
 local AddOns = {
 	ElvUI = true,
 	ElvUI_OptionsUI = true,
@@ -101,7 +105,7 @@ function E:DelayScriptCall(msg)
 end
 
 function E:DisplayCommands()
-	print(L['EHELP_COMMANDS'])
+	print(L["EHELP_COMMANDS"])
 end
 
 local BLIZZARD_ADDONS = {
@@ -156,7 +160,7 @@ function E:BGStats()
 	DT.ForceHideBGStats = nil
 	DT:LoadDataTexts()
 
-	E:Print(L['Battleground datatexts will now show again if you are inside a battleground.'])
+	E:Print(L["Battleground datatexts will now show again if you are inside a battleground."])
 end
 
 -- make this a locale later?
@@ -256,6 +260,8 @@ function E:LoadCommands()
 	self:RegisterChatCommand('estatus', 'ShowStatusReport')
 	self:RegisterChatCommand('efixdb', 'DBConvertProfile')
 	self:RegisterChatCommand('egrid', 'Grid')
+
+	self:RegisterChatCommand('ishd', 'HDCheck')
 
 	-- older commands
 	self:RegisterChatCommand('bgstats', 'BGStats')

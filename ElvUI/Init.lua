@@ -71,6 +71,14 @@ E.InfoColor = "|cff1784d1" -- blue
 E.InfoColor2 = "|cff9b9b9b" -- silver
 E.twoPixelsPlease = false -- changing this option is not supported! :P
 
+do -- WotLK HD Client Check
+	local hdFrames = _G['CharacterAttributesFrameer'] or _G['NNewSpellBookPageNavigationFrame']
+
+    function E:IsHDClient()
+        return hdFrames ~= nil
+    end
+end
+
 do -- this is different from E.locale because we need to convert for ace locale files
 	local convert = {enGB = "enUS", esES = "esMX", itIT = "enUS"}
 	local gameLocale = convert[E.locale] or E.locale or "enUS"

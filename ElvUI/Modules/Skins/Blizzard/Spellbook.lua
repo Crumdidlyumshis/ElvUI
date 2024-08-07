@@ -1,101 +1,132 @@
 local E, L, V, P, G = unpack(ElvUI)
-local S = E:GetModule("Skins")
+local S = E:GetModule('Skins')
 
---Lua functions
 local _G = _G
 local unpack = unpack
---WoW API / Variables
---local SpellBook_GetCurrentPage = SpellBook_GetCurrentPage
---local BOOKTYPE_SPELL = BOOKTYPE_SPELL
-local MAX_SKILLLINE_TABS = MAX_SKILLLINE_TABS
+local hooksecurefunc = hooksecurefunc
 
-S:AddCallback("Skin_Spellbook", function()
+local IsPassiveSpell = IsPassiveSpell
+
+S:AddCallback('Skin_Spellbook', function()
 	if not E.private.skins.blizzard.enable or not E.private.skins.blizzard.spellbook then return end
 
-	SpellBookFrame:StripTextures(true)
-	SpellBookFrame:CreateBackdrop("Transparent")
-	SpellBookFrame.backdrop:Point("TOPLEFT", 11, -12)
-	SpellBookFrame.backdrop:Point("BOTTOMRIGHT", -32, 76)
+	_G.SpellBookFrame:StripTextures(true)
+	_G.SpellBookFrame:CreateBackdrop('Transparent')
+	_G.SpellBookFrame.backdrop:Point('TOPLEFT', 11, -12)
+	_G.SpellBookFrame.backdrop:Point('BOTTOMRIGHT', -32, 76)
 
-	S:SetUIPanelWindowInfo(SpellBookFrame, "width", nil, 31)
-	S:SetBackdropHitRect(SpellBookFrame)
+	S:SetUIPanelWindowInfo(_G.SpellBookFrame, 'width', nil, E:IsHDClient() and 50 or 31)
+	S:SetBackdropHitRect(_G.SpellBookFrame)
 
---[[
-	SpellBookFrame:EnableMouseWheel(true)
-	SpellBookFrame:SetScript("OnMouseWheel", function(_, value)
-		--do nothing if not on an appropriate book type
-		if SpellBookFrame.bookType ~= BOOKTYPE_SPELL then
-			return
-		end
+	S:HandleNextPrevButton(_G.SpellBookPrevPageButton, nil, nil, true)
+	S:HandleNextPrevButton(_G.SpellBookNextPageButton, nil, nil, true)
 
-		local currentPage, maxPages = SpellBook_GetCurrentPage()
+	_G.SpellBookPageText:ClearAllPoints()
+	_G.SpellBookPageText:Point('RIGHT', _G.SpellBookPrevPageButton, 'LEFT', -5, -1)
 
-		if value > 0 then
-			if currentPage > 1 then
-				SpellBookPrevPageButton_OnClick()
-			end
-		else
-			if currentPage < maxPages then
-				SpellBookNextPageButton_OnClick()
-			end
-		end
-	end)
-]]
-
-	for i = 1, 3 do
-		local tab = _G["SpellBookFrameTabButton"..i]
-		tab:Size(122, 32)
-		tab:GetNormalTexture():SetTexture(nil)
-		tab:GetDisabledTexture():SetTexture(nil)
-		tab:GetRegions():SetPoint("CENTER", 0, 2)
-		S:HandleTab(tab)
+	if E.private.skins.parchmentRemoverEnable then
+		_G.SpellBookPageText:SetTextColor(0.6, 0.6, 0.6)
+	else
+		_G.SpellBookPageText:SetTextColor(1, 1, 1)
 	end
 
-	SpellBookFrameTabButton1:Point("CENTER", SpellBookFrame, "BOTTOMLEFT", 72, 62)
-	SpellBookFrameTabButton2:Point("LEFT", SpellBookFrameTabButton1, "RIGHT", -15, 0)
-	SpellBookFrameTabButton3:Point("LEFT", SpellBookFrameTabButton2, "RIGHT", -15, 0)
+	S:HandleCloseButton(_G.SpellBookFrameCloseButton or _G.SpellBookCloseButton, _G.SpellBookFrame.backdrop)
 
-	S:HandleNextPrevButton(SpellBookPrevPageButton, nil, nil, true)
-	S:HandleNextPrevButton(SpellBookNextPageButton, nil, nil, true)
+	S:HandleCheckBox(_G.ShowAllSpellRanksCheckBox)
 
-	S:HandleCloseButton(SpellBookCloseButton, SpellBookFrame.backdrop)
-
-	S:HandleCheckBox(ShowAllSpellRanksCheckBox)
-
-	for i = 1, SPELLS_PER_PAGE do
-		local button = _G["SpellButton"..i]
-		local autoCast = _G["SpellButton"..i.."AutoCastable"]
+	for i = 1, _G.SPELLS_PER_PAGE do
+		local button = _G['SpellButton'..i]
+		local autoCast = _G['SpellButton'..i..'AutoCastable']
+		local cooldown = _G['SpellButton'..i..'Cooldown']
+		local icon = _G['SpellButton'..i..'IconTexture']
 		button:StripTextures()
 
 		autoCast:SetTexture([[Interface\Buttons\UI-AutoCastableOverlay]])
 		autoCast:SetOutside(button, 16, 16)
 
-		button:CreateBackdrop("Default", true)
+		button:CreateBackdrop('Default', true)
 
-		_G["SpellButton"..i.."IconTexture"]:SetTexCoord(unpack(E.TexCoords))
+		icon:SetTexCoord(unpack(E.TexCoords))
 
-		E:RegisterCooldown(_G["SpellButton"..i.."Cooldown"])
+		E:RegisterCooldown(cooldown)
 	end
 
-	hooksecurefunc("SpellButton_UpdateButton", function(self)
+	hooksecurefunc('SpellButton_UpdateButton', function(self)
 		local name = self:GetName()
-		_G[name.."SpellName"]:SetTextColor(1, 0.80, 0.10)
-		_G[name.."SubSpellName"]:SetTextColor(1, 1, 1)
-		_G[name.."Highlight"]:SetTexture(1, 1, 1, 0.3)
+		_G[name..'SpellName']:SetTextColor(1, 0.80, 0.10)
+		_G[name..'SubSpellName']:SetTextColor(0.5, 0.5, 0.5)
+		_G[name..'Highlight']:SetTexture(1, 1, 1, 0.3)
 	end)
 
-	for i = 1, MAX_SKILLLINE_TABS do
-		local tab = _G["SpellBookSkillLineTab"..i]
+	for i = 1, _G.MAX_SKILLLINE_TABS do
+		local tab = _G['SpellBookSkillLineTab'..i]
 
 		tab:StripTextures()
 		tab:StyleButton(nil, true)
-		tab:SetTemplate("Default", true)
+		tab:SetTemplate('Default', true)
 
 		tab:GetNormalTexture():SetInside()
 		tab:GetNormalTexture():SetTexCoord(unpack(E.TexCoords))
 	end
 
-	SpellBookSkillLineTab1:Point("TOPLEFT", SpellBookFrame, "TOPRIGHT", -33, -65)
+	_G.SpellBookSkillLineTab1:Point('TOPLEFT', '$parent', 'TOPRIGHT', -33, -46)
 
-	SpellBookPageText:SetTextColor(1, 1, 1)
+	-- Bottom Tabs
+	for i = 1, 3 do
+		local tab = _G['SpellBookFrameTabButton'..i]
+		tab:Size(122, 32)
+		tab:GetNormalTexture():SetTexture(nil)
+		tab:GetDisabledTexture():SetTexture(nil)
+		tab:GetRegions():SetPoint('CENTER', 0, 2)
+		S:HandleTab(tab)
+	end
+
+	-- Reposition Tabs
+	hooksecurefunc('SpellBookFrame_Update', function()
+		local tab = _G.SpellBookFrameTabButton1
+		local index, lastTab = 1, tab
+		while tab do
+			tab:ClearAllPoints()
+			S:SetBackdropHitRect(tab)
+
+			if index == 1 then
+				tab:Point('TOPLEFT', _G.SpellBookFrame, 'BOTTOMLEFT', 10, 78)
+			else
+				tab:Point('TOPLEFT', lastTab, 'TOPRIGHT', -15.5, 0)
+				lastTab = tab
+			end
+
+			index = index + 1
+			tab = _G['SpellBookFrameTabButton'..index]
+		end
+	end)
+
+	if E:IsHDClient() then
+		local spellFrame = _G.SpellBookFrame
+		spellFrame:Height(spellFrame:GetHeight() + 85)
+
+		S:HandlePointXY(_G.SpellButton1, 100, -80)
+		S:HandlePointXY(_G.ShowAllSpellRanksCheckBox, 30, -30)
+		S:HandlePointXY(_G.SpellBookPrevPageButton, -95, 100)
+		S:HandlePointXY(_G.SpellBookNextPageButton, -60, 100)
+		S:HandlePointXY(_G.SpellBookTitleText, 5, 280)
+
+		local type = type
+		local function HookMicroButtonTooltipText() -- temp fix for HD Interface Windows patch error
+			hooksecurefunc('MicroButtonTooltipText', function(binding)
+				if binding and type(binding) == 'string' then
+					-- This will replace the global GetBindingKey only for this function call
+					local originalGetBindingKey = _G.GetBindingKey
+					_G.GetBindingKey = function(b)
+						if b and type(b) == 'string' then
+							return originalGetBindingKey(b)
+						end
+						return nil
+					end
+				end
+			end)
+		end
+
+		HookMicroButtonTooltipText()
+	end
 end)

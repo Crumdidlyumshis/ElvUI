@@ -1,6 +1,7 @@
 local E, L, V, P, G = unpack(ElvUI)
 local LSM = E.Libs.LSM
 
+local format = string.format
 local wipe, sort, unpack = wipe, sort, unpack
 local next, pairs, tinsert = next, pairs, tinsert
 
@@ -253,6 +254,8 @@ function E:UpdateStatusFrame()
 	Section3.Content.Line4.Text:SetFormattedText('Level: |cff4beb2c%s|r', E.mylevel)
 	Section3.Content.Line5.Text:SetFormattedText('Zone: |cff4beb2c%s|r', GetRealZoneText() or UNKNOWN)
 	Section3.Content.Line6.Text:SetFormattedText('Specialization: |cff4beb2c%s|r', GetSpecName() or UNKNOWN)
+
+	Section3.Content.Line6.Text:SetFormattedText('HD Client: |cff4beb2c%s|r', E:IsHDClient() and L["Enabled"] or L["Disabled"])
 
 	StatusFrame.TitleLogoFrame.LogoTop:SetVertexColor(unpack(E.media.rgbvaluecolor))
 end
