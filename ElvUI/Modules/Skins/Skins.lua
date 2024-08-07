@@ -1417,8 +1417,12 @@ do -- Handle collapse
 	local function UpdateCollapseTexture(button, texture, skip)
 		if skip then return end
 
-		if type(texture) == "number" then -- 130821 minus, 130838 plus
-			button:SetNormalTexture(texture == [[Interface\Buttons\UI-PlusButton-UP]] and E.Media.Textures.PlusButton or E.Media.Textures.MinusButton, true)
+		if type(texture) == "number" then
+			if texture == [[Interface\Buttons\UI-PlusButton-UP]] then -- Interface\Buttons\UI-PlusButton-UP
+				button:SetNormalTexture(E.Media.Textures.PlusButton, true)
+			elseif texture == [[Interface\Buttons\UI-MinusButton-UP]] then -- Interface\Buttons\UI-MinusButton-UP
+				button:SetNormalTexture(E.Media.Textures.MinusButton, true)
+			end
 		elseif strfind(texture, "Plus") or strfind(texture, "Closed") then
 			button:SetNormalTexture(E.Media.Textures.PlusButton, true)
 		elseif strfind(texture, "Minus") or strfind(texture, "Open") then
@@ -1433,15 +1437,18 @@ do -- Handle collapse
 		button:SetPushedTexture(normal, true)
 	end
 
-	function S:HandleCollapseTexture(button, syncPushed)
+	function S:HandleCollapseTexture(button, syncPushed, ignorePushed)
+		if button.collapsedSkinned then return end
+		button.collapsedSkinned = true -- little bit of a safety precaution
+
 		if syncPushed then -- not needed always
-			hooksecurefunc(button, "SetPushedTexture", syncPushTexture)
+			hooksecurefunc(button, 'SetPushedTexture', syncPushTexture)
 			syncPushTexture(button)
-		else
+		elseif not ignorePushed then
 			button:SetPushedTexture(E.ClearTexture)
 		end
 
-		hooksecurefunc(button, "SetNormalTexture", UpdateCollapseTexture)
+		hooksecurefunc(button, 'SetNormalTexture', UpdateCollapseTexture)
 		UpdateCollapseTexture(button, button:GetNormalTexture():GetTexture())
 	end
 end
