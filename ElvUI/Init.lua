@@ -74,7 +74,7 @@ E.twoPixelsPlease = false -- changing this option is not supported! :P
 do -- WotLK HD Client Check
 	local hdFrames = _G['CharacterAttributesFrameer'] or _G['NNewSpellBookPageNavigationFrame']
 
-    function E:IsHDClient()
+    function E:IsHDPatch()
         return hdFrames ~= nil
     end
 end

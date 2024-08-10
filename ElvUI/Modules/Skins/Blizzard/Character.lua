@@ -58,7 +58,7 @@ local function HandleTabs(frameCheck)
 		tab:ClearAllPoints()
 
 		if index == 1 then
-			tab:Point('TOPLEFT', _G.CharacterFrame, 'BOTTOMLEFT', 10, E.private.enhanced.character.enable and not E:IsHDClient() and 80 or 78) -- check if using ElvUI_Enhanced
+			tab:Point('TOPLEFT', _G.CharacterFrame, 'BOTTOMLEFT', 10, E.private.enhanced.character.enable and not E:IsHDPatch() and 80 or 78) -- check if using ElvUI_Enhanced
 		else
 			tab:Point('TOPLEFT', lastTab, 'TOPRIGHT', -15.5, 0)
 		end
@@ -87,8 +87,6 @@ local function HandleHappiness(frame)
 end
 
 local function HandleResistanceFrame(frameName)
-	if not _G[frameName..'1'] then return end
-
 	for i = 1, 5 do
 		local frame, icon, text = _G[frameName..i], _G[frameName..i]:GetRegions()
 		frame:Size(24)
@@ -96,7 +94,7 @@ local function HandleResistanceFrame(frameName)
 
 		if i ~= 1 then
 			frame:ClearAllPoints()
-			if not E:IsHDClient() or frameName == 'PetMagicResFrame' then
+			if not E:IsHDPatch() or frameName == 'PetMagicResFrame' then
 				frame:Point('TOP', _G[frameName..i - 1], 'BOTTOM', 0, -1)
 			else
 				frame:Point('LEFT', _G[frameName..i - 1], 'RIGHT', -1, 0)
@@ -325,9 +323,10 @@ S:AddCallback('Skin_Character', function()
 		_G.CharacterTabardSlot,
 		_G.CharacterAmmoSlot
 	}
+	HandleResistanceFrame(E:IsHDPatch() and 'MagicResFrameer' or 'MagicResFrame')
 
 	for i, slot in ipairs(slots) do
-		slot = _G[slot:GetName()..'9'] or slot -- WotLK HD Interface
+		slot = _G[slot:GetName()..'9'] or slot -- WotLK HD 'Interface Windows' patch-xxxx-9.mpq
 
 		local icon = _G[slot:GetName()..'IconTexture']
 		local cooldown = _G[slot:GetName()..'Cooldown']
@@ -756,7 +755,7 @@ S:AddCallback('Skin_Character', function()
 	HandleTabs()
 
 	-- Handle other HD interface frames
-	if E:IsHDClient() then
+	if E:IsHDPatch() then
 		S:HandleButton(_G.MostrarStatPaperDollLeftDropDown)
 		S:HandleButton(_G.MostrarStatPaperDollRightDropDown)
 

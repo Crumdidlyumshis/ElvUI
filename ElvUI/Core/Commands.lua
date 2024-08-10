@@ -42,7 +42,7 @@ function E:Grid(msg)
 end
 
 function E:HDCheck(msg)
-	E:Print(E:IsHDClient() and L["You have the HD patch 'Interface Windows' Enabled. Disable the Interface patch (patch-xxxx-9.mpq) if you are experiencing any interface issues."] or L["HD patch 'Interface Windows' (patch-xxxx-9.mpq) Disabled"])
+	E:Print(E:IsHDPatch() and L["You have the HD patch 'Interface Windows' Enabled. Disable the Interface patch (patch-xxxx-9.mpq) if you are experiencing any interface issues."] or L["HD patch 'Interface Windows' (patch-xxxx-9.mpq) Disabled"])
 end
 
 local AddOns = {

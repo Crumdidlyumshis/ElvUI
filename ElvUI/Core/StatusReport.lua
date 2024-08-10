@@ -249,7 +249,7 @@ function E:UpdateStatusFrame()
 	local Section2 = StatusFrame.Section2
 	Section2.Content.Line3.Text:SetFormattedText('Display Mode: |cff4beb2c%s|r', E:GetDisplayMode())
 	Section2.Content.Line4.Text:SetFormattedText('Resolution: |cff4beb2c%s|r', E.resolution)
-	Section2.Content.Line5.Text:SetFormattedText('HD Client: |cff4beb2c%s|r', E:IsHDClient() and L["Enabled"] or L["Disabled"])
+	Section2.Content.Line5.Text:SetFormattedText('HD Interface Patch: |cff4beb2c%s|r', E:IsHDPatch() and L["Enabled"] or L["Disabled"])
 
 	local Section3 = StatusFrame.Section3
 	Section3.Content.Line4.Text:SetFormattedText('Level: |cff4beb2c%s|r', E.mylevel)

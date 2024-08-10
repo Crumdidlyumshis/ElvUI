@@ -15,7 +15,7 @@ S:AddCallback('Skin_Spellbook', function()
 	_G.SpellBookFrame.backdrop:Point('TOPLEFT', 11, -12)
 	_G.SpellBookFrame.backdrop:Point('BOTTOMRIGHT', -32, 76)
 
-	S:SetUIPanelWindowInfo(_G.SpellBookFrame, 'width', nil, E:IsHDClient() and 50 or 31)
+	S:SetUIPanelWindowInfo(_G.SpellBookFrame, 'width', nil, E:IsHDPatch() and 50 or 31)
 	S:SetBackdropHitRect(_G.SpellBookFrame)
 
 	S:HandleNextPrevButton(_G.SpellBookPrevPageButton, nil, nil, true)
@@ -101,7 +101,7 @@ S:AddCallback('Skin_Spellbook', function()
 		end
 	end)
 
-	if E:IsHDClient() then
+	if E:IsHDPatch() then
 		local spellFrame = _G.SpellBookFrame
 		spellFrame:Height(spellFrame:GetHeight() + 85)
 
