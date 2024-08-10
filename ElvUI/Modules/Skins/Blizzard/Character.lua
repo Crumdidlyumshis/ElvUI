@@ -769,7 +769,7 @@ S:AddCallback('Skin_Character', function()
 
 		for i, frame in ipairs({ PetAttributesFrame:GetChildren() }) do
 			if frame:IsObjectType('Frame') then
-				frame:Width(frame:GetWidth() - 12)
+				frame:Width(frame:GetWidth() + 40)
 			end
 		end
 

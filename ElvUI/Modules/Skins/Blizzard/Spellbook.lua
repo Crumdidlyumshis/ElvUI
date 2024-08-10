@@ -110,23 +110,5 @@ S:AddCallback('Skin_Spellbook', function()
 		S:HandlePointXY(_G.SpellBookPrevPageButton, -95, 100)
 		S:HandlePointXY(_G.SpellBookNextPageButton, -60, 100)
 		S:HandlePointXY(_G.SpellBookTitleText, 5, 280)
-
-		local type = type
-		local function HookMicroButtonTooltipText() -- temp fix for HD Interface Windows patch error
-			hooksecurefunc('MicroButtonTooltipText', function(binding)
-				if binding and type(binding) == 'string' then
-					-- This will replace the global GetBindingKey only for this function call
-					local originalGetBindingKey = _G.GetBindingKey
-					_G.GetBindingKey = function(b)
-						if b and type(b) == 'string' then
-							return originalGetBindingKey(b)
-						end
-						return nil
-					end
-				end
-			end)
-		end
-
-		HookMicroButtonTooltipText()
 	end
 end)
