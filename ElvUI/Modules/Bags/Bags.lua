@@ -1053,6 +1053,7 @@ function B:UpdateTokens()
 
 		local button = currencies[i]
 		button.currencyID = info.currencyTypesID
+		button.itemID = info.itemID
 		button:Show()
 
 		if button.currencyID then
