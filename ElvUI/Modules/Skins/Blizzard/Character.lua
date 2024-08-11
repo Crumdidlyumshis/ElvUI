@@ -2,12 +2,13 @@ local E, L, V, P, G = unpack(ElvUI)
 local S = E:GetModule('Skins')
 
 local _G = _G
-local getmetatable = getmetatable
 local ipairs = ipairs
 local select = select
 local unpack, next = unpack, next
+local getmetatable = getmetatable
 local hooksecurefunc = hooksecurefunc
 
+local CreateFrame = CreateFrame
 local GetCurrencyListInfo = GetCurrencyListInfo
 local GetInventoryItemQuality = GetInventoryItemQuality
 local GetInventoryItemTexture = GetInventoryItemTexture
@@ -27,6 +28,29 @@ local ResistanceCoords = {
 	{ 0.21875, 0.8125, 0.4765625, 0.55078125},	--Shadow
 }
 
+local slots = {
+	_G.CharacterHeadSlot9 or CharacterHeadSlot,
+	_G.CharacterNeckSlot9 or _G.CharacterNeckSlot,
+	_G.CharacterShoulderSlot9 or _G.CharacterShoulderSlot,
+	_G.CharacterShirtSlot9 or _G.CharacterShirtSlot,
+	_G.CharacterChestSlot9 or _G.CharacterChestSlot,
+	_G.CharacterWaistSlot9 or _G.CharacterWaistSlot,
+	_G.CharacterLegsSlot9 or _G.CharacterLegsSlot,
+	_G.CharacterFeetSlot9 or _G.CharacterFeetSlot,
+	_G.CharacterWristSlot9 or _G.CharacterWristSlot,
+	_G.CharacterHandsSlot9 or _G.CharacterHandsSlot,
+	_G.CharacterFinger0Slot9 or _G.CharacterFinger0Slot,
+	_G.CharacterFinger1Slot9 or _G.CharacterFinger1Slot,
+	_G.CharacterTrinket0Slot9 or _G.CharacterTrinket0Slot,
+	_G.CharacterTrinket1Slot9 or _G.CharacterTrinket1Slot,
+	_G.CharacterBackSlot9 or _G.CharacterBackSlot,
+	_G.CharacterMainHandSlot9 or _G.CharacterMainHandSlot,
+	_G.CharacterSecondaryHandSlot9 or _G.CharacterSecondaryHandSlot,
+	_G.CharacterRangedSlot9 or _G.CharacterRangedSlot,
+	_G.CharacterTabardSlot9 or _G.CharacterTabardSlot,
+	_G.CharacterAmmoSlot9 or _G.CharacterAmmoSlot9
+}
+
 local function HandleCompanionsPerPage()
 	for i = 1, _G.NUM_COMPANIONS_PER_PAGE do
 		local button = _G['CompanionButton'..i]
@@ -39,16 +63,31 @@ local function HandleCompanionsPerPage()
 	end
 end
 
-local function PaperDollItemSlotButtonUpdate(frame)
-	if not frame.SetBackdropBorderColor then return end
-
-	local id = frame:GetID()
-	local rarity = id and GetInventoryItemQuality('player', id)
+local function HandleItemButtonQuality(button, rarity)
 	if rarity and rarity > 1 then
 		local r, g, b = GetItemQualityColor(rarity)
-		frame:SetBackdropBorderColor(r, g, b)
+		button:SetBackdropBorderColor(r, g, b)
 	else
-		frame:SetBackdropBorderColor(unpack(E.media.bordercolor))
+		button:SetBackdropBorderColor(unpack(E.media.bordercolor))
+	end
+end
+
+local function PaperDollItemButtonQuality(button, event, slotID, exists)
+	button = event and slots[slotID] or button
+
+	if exists then
+		local rarity = GetInventoryItemQuality('player', slotID)
+
+		HandleItemButtonQuality(button, rarity)
+	else
+		button:SetBackdropBorderColor(unpack(E.media.bordercolor))
+	end
+end
+
+local function ColorItemBorder()
+	for _, slotFrame in ipairs(slots) do
+		local slotID = slotFrame:GetID()
+		PaperDollItemButtonQuality(slotFrame, nil, slotID, GetInventoryItemTexture('player', slotID) ~= nil)
 	end
 end
 
@@ -113,67 +152,79 @@ local function HandleResistanceFrame(frameName)
 	end
 end
 
-local function HandleTokenButton(button)
-	if not button.isSkinned then
-		button.categoryLeft:Kill()
-		button.categoryRight:Kill()
-		button.highlight:Kill()
-
-		button.expandIcon:Size(16)
-		button.expandIcon:SetTexCoord(0, 1, 0, 1)
-		button.expandIcon.SetTexCoord = E.noop
-
-		button.isSkinned = true
+local function UpdateCurrencySkins()
+	local TokenFramePopup = _G.TokenFramePopup
+	if TokenFramePopup then
+		TokenFramePopup:ClearAllPoints()
+		TokenFramePopup:Point('TOPLEFT', _G.TokenFrame, 'TOPRIGHT', -33, -12)
+		TokenFramePopup:StripTextures()
+		TokenFramePopup:SetTemplate('Transparent')
 	end
-end
 
-local tokenSkinned = 0
+	local TokenFrameContainer = _G.TokenFrameContainer
+	if not TokenFrameContainer.buttons then return end
 
-local function HandleTokenContainerFrame()
-	local offset = _G.HybridScrollFrame_GetOffset(_G.TokenFrameContainer)
-	local buttons = _G.TokenFrameContainer.buttons
-	local numButtons = #buttons
-	local index, button
-	local _, name, isHeader, isExpanded, extraCurrencyType, icon
+	for i, button in next, TokenFrameContainer.buttons do
+		if button.highlight then button.highlight:Kill() end
+		if button.categoryLeft then button.categoryLeft:Kill() end
+		if button.categoryRight then button.categoryRight:Kill() end
+		if button.categoryMiddle then button.categoryMiddle:Kill() end
 
-	if numButtons > tokenSkinned then
-		for i = tokenSkinned + 1, numButtons do
-			HandleTokenButton(_G.TokenFrameContainer.buttons[i])
+		if not button.backdrop then
+			button:CreateBackdrop(nil, nil, nil, true)
 		end
 
-		tokenSkinned = numButtons
-	end
+		if button.icon then
+			if button.itemID == 43308 and E.myfaction then
+				button.icon:SetTexCoord(0.06325, 0.59375, 0.03125, 0.57375)
+			else
+				button.icon:SetTexCoord(unpack(E.TexCoords))
+			end
 
-	for i = 1, numButtons do
-		index = offset + i
-		button = buttons[i]
+			button.icon:Size(17)
+			button.icon:SetParent(button.backdrop)
 
-		name, isHeader, isExpanded, _, _, _, extraCurrencyType, icon = GetCurrencyListInfo(index)
+			button.backdrop:SetOutside(button.icon, 1, 1)
+			button.backdrop:Show()
+		else
+			button.backdrop:Hide()
+		end
 
-		if name then
-			if isHeader then
-				if isExpanded then
+		if button.expandIcon then
+			if not button.highlightTexture then
+				button.highlightTexture = button:CreateTexture(button:GetName()..'HighlightTexture', 'HIGHLIGHT')
+				button.highlightTexture:SetTexture([[Interface\Buttons\UI-PlusButton-Hilight]])
+				button.highlightTexture:SetBlendMode('ADD')
+				button.highlightTexture:SetInside(button.expandIcon)
+
+				-- these two only need to be called once
+				-- adding them here will prevent additional calls
+				button.expandIcon:ClearAllPoints()
+				button.expandIcon:Point('LEFT', 4, 0)
+				button.expandIcon:Size(15)
+			end
+
+			if button.isHeader then
+				button.backdrop:Hide()
+
+				for _, region in next, { button:GetRegions() } do
+					if region:IsObjectType('FontString') and region:GetText() then
+						region:ClearAllPoints()
+						region:Point('LEFT', 25, 0)
+					end
+				end
+
+				if button.isExpanded then
 					button.expandIcon:SetTexture(E.Media.Textures.MinusButton)
+					button.expandIcon:SetTexCoord(0,1,0,1)
 				else
 					button.expandIcon:SetTexture(E.Media.Textures.PlusButton)
+					button.expandIcon:SetTexCoord(0,1,0,1)
 				end
-			else
-				if extraCurrencyType == 1 then
-					button.icon:SetTexCoord(unpack(E.TexCoords))
-				elseif extraCurrencyType == 2 then
-					local factionGroup = UnitFactionGroup('player')
 
-					if factionGroup then
-						button.icon:SetTexture([[Interface\TargetingFrame\UI-PVP-]]..factionGroup)
-						-- texWidth, texHeight, cropWidth, cropHeight, offsetX, offsetY = 64, 64, 36, 36, 4, 1
-						button.icon:SetTexCoord(0.0625, 0.625, 0.015625, 0.578125)
-					else
-						button.icon:SetTexCoord(unpack(E.TexCoords))
-					end
-				else
-					button.icon:SetTexture(icon)
-					button.icon:SetTexCoord(unpack(E.TexCoords))
-				end
+				button.highlightTexture:Show()
+			else
+				button.highlightTexture:Hide()
 			end
 		end
 	end
@@ -295,39 +346,9 @@ S:AddCallback('Skin_Character', function()
 
 	_G.CharacterAttributesFrame:Point('TOPLEFT', 66, -292)
 
-	local popoutButtonOnEnter = function(self) self.icon:SetVertexColor(unpack(E.media.rgbvaluecolor)) end
-	local popoutButtonOnLeave = function(self) self.icon:SetVertexColor(1, 1, 1) end
-
-	HandleResistanceFrame('MagicResFrame')
-	HandleResistanceFrame('MagicResFrameer') -- WotLK HD Interface
-
-	local slots = {
-		_G.CharacterHeadSlot,
-		_G.CharacterNeckSlot,
-		_G.CharacterShoulderSlot,
-		_G.CharacterShirtSlot,
-		_G.CharacterChestSlot,
-		_G.CharacterWaistSlot,
-		_G.CharacterLegsSlot,
-		_G.CharacterFeetSlot,
-		_G.CharacterWristSlot,
-		_G.CharacterHandsSlot,
-		_G.CharacterFinger0Slot,
-		_G.CharacterFinger1Slot,
-		_G.CharacterTrinket0Slot,
-		_G.CharacterTrinket1Slot,
-		_G.CharacterBackSlot,
-		_G.CharacterMainHandSlot,
-		_G.CharacterSecondaryHandSlot,
-		_G.CharacterRangedSlot,
-		_G.CharacterTabardSlot,
-		_G.CharacterAmmoSlot
-	}
 	HandleResistanceFrame(E:IsHDPatch() and 'MagicResFrameer' or 'MagicResFrame')
 
 	for i, slot in ipairs(slots) do
-		slot = _G[slot:GetName()..'9'] or slot -- WotLK HD 'Interface Windows' patch-xxxx-9.mpq
-
 		local icon = _G[slot:GetName()..'IconTexture']
 		local cooldown = _G[slot:GetName()..'Cooldown']
 
@@ -345,7 +366,17 @@ S:AddCallback('Skin_Character', function()
 		end
 	end
 
-	hooksecurefunc('PaperDollItemSlotButton_Update', PaperDollItemSlotButtonUpdate)
+	hooksecurefunc(_G.CharacterAmmoSlotIconTexture, 'SetTexture', function(self, texture)
+		local parent = self:GetParent()
+		PaperDollItemButtonQuality(parent, nil, 0, texture ~= parent.backgroundTextureName)
+	end)
+
+	local f = CreateFrame('Frame')
+	f:RegisterEvent('PLAYER_EQUIPMENT_CHANGED')
+	f:SetScript('OnEvent', PaperDollItemButtonQuality)
+
+	CharacterFrame:HookScript('OnShow', ColorItemBorder)
+	ColorItemBorder()
 
 	local nStripped = 0
 	hooksecurefunc('PaperDollFrameItemFlyout_Show', function()
@@ -375,9 +406,8 @@ S:AddCallback('Skin_Character', function()
 		if not button.location or button.location >= _G.PDFITEMFLYOUT_FIRST_SPECIAL_LOCATION then return end
 
 		local id = _G.EquipmentManager_GetItemInfoByLocation(button.location)
-		local _, _, quality = GetItemInfo(id)
-
-		button:SetBackdropBorderColor(GetItemQualityColor(quality))
+		local rarity = select(3, GetItemInfo(id))
+		HandleItemButtonQuality(button, rarity)
 	end)
 
 	-- GearManager Dialog
@@ -732,8 +762,8 @@ S:AddCallback('Skin_Character', function()
 		getmetatable(self).__index.Hide(self)
 	end
 
-	hooksecurefunc('TokenFrame_Update', HandleTokenContainerFrame)
-	hooksecurefunc(_G.TokenFrameContainer, 'update', HandleTokenContainerFrame)
+	hooksecurefunc(_G.TokenFrameContainer, 'update', UpdateCurrencySkins)
+	hooksecurefunc('TokenFrame_Update', UpdateCurrencySkins)
 
 	-- Token Frame Popup
 	_G.TokenFramePopup:StripTextures()
@@ -745,7 +775,6 @@ S:AddCallback('Skin_Character', function()
 	S:HandleCheckBox(_G.TokenFramePopupBackpackCheckBox)
 
 	_G.TokenFramePopup:Point('TOPLEFT', _G.TokenFrame, 'TOPRIGHT', -33, -12)
-
 	-- Tabs
 	for i = 1, #CHARACTERFRAME_SUBFRAMES do
 		S:HandleTab(_G['CharacterFrameTab'..i])
