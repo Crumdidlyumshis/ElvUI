@@ -990,7 +990,7 @@ function B:OnEvent(event, ...)
 			B:SetBagAssignments(holder, true)
 			self.notPurchased[containerID] = nil
 		end
-	elseif event == 'PLAYERBANKSLOTS_CHANGED' or event == 'PLAYERBANKSLOTS_UPDATED' then
+	elseif event == 'PLAYERBANKSLOTS_CHANGED' then
 		local slotID = ...
 		local index = (slotID <= NUM_BANKGENERIC_SLOTS) and BANK_CONTAINER or (slotID - NUM_BANKGENERIC_SLOTS)
 		local default = index == BANK_CONTAINER
