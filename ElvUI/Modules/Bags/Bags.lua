@@ -898,26 +898,18 @@ function B:BankFrameItemButton_Update(holder)
     local texture = holder.icon
     local inventoryID = holder.BagID and ContainerIDToInventoryID(holder.BagID)
     local buttonID = holder:GetID()
-    local textureName
-    local itemCount
+    local textureName = GetInventoryItemTexture('player', inventoryID)
     local slotName = holder:GetName()
     local _, slotTextureName
-    holder.hasItem = nil
 
     if holder.isBag then
         _, slotTextureName = GetInventorySlotInfo('Bag'..buttonID)
-        textureName = GetInventoryItemTexture('player', inventoryID)
-        itemCount = GetInventoryItemCount('player', inventoryID)
     else
-        textureName = GetContainerItemInfo(holder.BagID, buttonID)
-        itemCount = select(2, GetContainerItemInfo(holder.BagID, buttonID))
-
         local questInfo = B:GetContainerItemQuestInfo(holder.BagID, buttonID)
         local isQuestItem = questInfo.isQuestItem
         local questId = questInfo.questID
         local isActive = questInfo.isActive
-        local questTexture = holder.IconQuestTexture
-
+        local questTexture = holder['IconQuestTexture']
         if questId and not isActive then
             questTexture:SetTexture(TEXTURE_ITEM_QUEST_BANG)
             questTexture:Show()
@@ -932,20 +924,16 @@ function B:BankFrameItemButton_Update(holder)
     if textureName then
         texture:SetTexture(textureName)
         texture:Show()
-        SetItemButtonCount(holder, itemCount)
-        holder.hasItem = 1
-    elseif slotTextureName then
+    elseif slotTextureName and holder.isBag then
         texture:SetTexture(slotTextureName)
         texture:Show()
-        SetItemButtonCount(holder, 0)
     else
+        texture:SetTexture(E.ClearTexture)
         texture:Hide()
-        SetItemButtonCount(holder, 0)
-        holder.hasItem = nil
     end
 
     BankFrameItemButton_UpdateLocked(holder)
-    BankFrame_UpdateCooldown(holder.BagID or BANK_CONTAINER, holder)
+    BankFrame_UpdateCooldown(holder.BagID, holder)
 end
 
 function B:UpdateBankBagIcon(holder)
