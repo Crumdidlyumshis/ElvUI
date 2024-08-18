@@ -184,7 +184,7 @@ B.IsEquipmentSlot = {
 
 local bagIDs, bankIDs = {0, 1, 2, 3, 4}, { -1 }
 local bankOffset, maxBankSlots = 4, 11
-local bankEvents = {'BAG_UPDATE', 'ITEM_LOCK_CHANGED', 'PLAYERBANKBAGSLOTS_CHANGED', 'PLAYERBANKBAGSLOTS_UPDATED', 'PLAYERBANKSLOTS_CHANGED'}
+local bankEvents = {'BAG_UPDATE', 'ITEM_LOCK_CHANGED', 'PLAYERBANKBAGSLOTS_CHANGED', 'PLAYERBANKSLOTS_CHANGED'}
 local bagEvents = {'BAG_UPDATE', 'ITEM_LOCK_CHANGED', 'QUEST_ACCEPTED', 'QUEST_REMOVED', 'QUEST_LOG_UPDATE'}
 local presistentEvents = {
 	PLAYERBANKSLOTS_CHANGED = true,
@@ -637,10 +637,12 @@ end
 function B:Slot_OnLeave() end
 
 function B:Holder_OnReceiveDrag()
+	if self.BagID == BANK_CONTAINER then return end
 	PutItemInBag(self.isBank and ContainerIDToInventoryID(self.BagID) or self:GetID())
 end
 
 function B:Holder_OnDragStart()
+	if self.BagID == BANK_CONTAINER then return end
 	PickupBagFromSlot(self.isBank and ContainerIDToInventoryID(self.BagID) or self:GetID())
 end
 
@@ -650,7 +652,7 @@ function B:Holder_OnClick()
 	elseif self.BagID == KEYRING_CONTAINER then
 		B:BagItemAction(self, PutKeyInKeyRing)
 	elseif self.isBank then
-		B:BagItemAction(self, PutItemInBag, ContainerIDToInventoryID(self.BagID))
+		B:BagItemAction(self, PutItemInBag, self:GetInventorySlot())
 	else
 		B:BagItemAction(self, PutItemInBag, self:GetID())
 	end
@@ -1000,7 +1002,6 @@ function B:OnEvent(event, ...)
 		if self:IsShown() then -- when its shown we only want to update the default bank bags slot
 			if default then -- the other bags are handled by BAG_UPDATE
 				B:UpdateSlot(B.BankFrame, bagID, slotID)
-				B:UpdateContainerIcons()
 			end
 		else
 			local bag = self.Bags[bagID]
@@ -1910,7 +1911,7 @@ function B:CloseBank()
 	B:CloseBags()
 end
 
-function B:updateContainerFrameAnchors()
+function B:UpdateContainerFrameAnchors()
 	local xOffset, yOffset, screenHeight, freeScreenHeight, leftMostPoint, column
 	local screenWidth = E.screenWidth
 	local bags = _G.ContainerFrame1.bags
@@ -2217,7 +2218,7 @@ function B:Initialize()
 		BagFrameHolder:Point('BOTTOMRIGHT', _G.RightChatPanel, 'BOTTOMRIGHT', -(E.Border*2), 22 + E.Border*4 - E.Spacing*2)
 		E:CreateMover(BagFrameHolder, 'ElvUIBagMover', L["Bags"], nil, nil, B.PostBagMove, nil, nil, 'bags,general')
 		CONTAINER_SPACING = E.private.skins.blizzard.enable and E.private.skins.blizzard.bags and (E.Border*2) or 0
-		B:SecureHook('updateContainerFrameAnchors')
+		B:SecureHook('UpdateContainerFrameAnchors')
 		return
 	end
 
