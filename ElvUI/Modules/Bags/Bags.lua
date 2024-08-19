@@ -66,7 +66,6 @@ local UseContainerItem = UseContainerItem
 
 local CONTAINER_OFFSET_X, CONTAINER_OFFSET_Y = CONTAINER_OFFSET_X, CONTAINER_OFFSET_Y
 
-local BACKPACK_TOOLTIP = BACKPACK_TOOLTIP
 local BINDING_NAME_TOGGLEKEYRING = BINDING_NAME_TOGGLEKEYRING
 local CONTAINER_OFFSET_X, CONTAINER_OFFSET_Y = CONTAINER_OFFSET_X, CONTAINER_OFFSET_Y
 local ITEM_ACCOUNTBOUND = ITEM_ACCOUNTBOUND
@@ -184,11 +183,12 @@ B.IsEquipmentSlot = {
 
 local bagIDs, bankIDs = {0, 1, 2, 3, 4}, { -1 }
 local bankOffset, maxBankSlots = 4, 11
-local bankEvents = {'BAG_UPDATE', 'ITEM_LOCK_CHANGED', 'PLAYERBANKBAGSLOTS_CHANGED', 'PLAYERBANKSLOTS_CHANGED'}
-local bagEvents = {'BAG_UPDATE', 'ITEM_LOCK_CHANGED', 'QUEST_ACCEPTED', 'QUEST_REMOVED', 'QUEST_LOG_UPDATE'}
+local bankEvents = {'BAG_UPDATE', 'BAG_CLOSED', 'ITEM_LOCK_CHANGED', 'PLAYERBANKBAGSLOTS_CHANGED', 'PLAYERBANKSLOTS_CHANGED'}
+local bagEvents = {'BAG_UPDATE', 'BAG_CLOSED', 'ITEM_LOCK_CHANGED', 'QUEST_ACCEPTED', 'QUEST_REMOVED', 'QUEST_LOG_UPDATE'}
 local presistentEvents = {
 	PLAYERBANKSLOTS_CHANGED = true,
 	BAG_UPDATE = true,
+	BAG_CLOSED = true
 }
 
 for bankID = bankOffset + 1, maxBankSlots do
@@ -667,7 +667,7 @@ function B:Holder_OnEnter()
 
 	if self.BagID == BACKPACK_CONTAINER then
 		local kb = GetBindingKey('TOGGLEBACKPACK')
-		GameTooltip:AddLine(kb and format('%s |cffffd200(%s)|r', BACKPACK_TOOLTIP, kb) or BACKPACK_TOOLTIP, 1, 1, 1)
+		GameTooltip:AddLine(kb and format('%s |cffffd200(%s)|r', _G.BACKPACK_TOOLTIP, kb) or _G.BACKPACK_TOOLTIP, 1, 1, 1)
 	elseif self.BagID == BANK_CONTAINER then
 		GameTooltip:AddLine(L["Bank"], 1, 1, 1)
 	elseif self.BagID == KEYRING_CONTAINER then
@@ -877,11 +877,6 @@ function B:TotalSlotsChanged(bagFrame)
 	return bagFrame.totalSlots ~= total
 end
 
-function B:PLAYER_ENTERING_WORLD(event)
-	B:UpdateLayout(B.BagFrame)
-	B:UnregisterEvent(event)
-end
-
 function B:UpdateLayouts()
 	B:Layout()
 	B:Layout(true)
@@ -897,41 +892,23 @@ end
 
 -- Taken from WoW API, modified by Crum
 function B:BankFrameItemButton_Update(holder)
-    local texture = holder.icon
-    local inventoryID = holder.BagID and ContainerIDToInventoryID(holder.BagID)
+    local inventoryID = ContainerIDToInventoryID(holder.BagID)
     local buttonID = holder:GetID()
     local textureName = GetInventoryItemTexture('player', inventoryID)
-    local slotName = holder:GetName()
-    local _, slotTextureName
-
-    if holder.isBag then
-        _, slotTextureName = GetInventorySlotInfo('Bag'..buttonID)
-    else
-        local questInfo = B:GetContainerItemQuestInfo(holder.BagID, buttonID)
-        local isQuestItem = questInfo.isQuestItem
-        local questId = questInfo.questID
-        local isActive = questInfo.isActive
-        local questTexture = holder['IconQuestTexture']
-        if questId and not isActive then
-            questTexture:SetTexture(TEXTURE_ITEM_QUEST_BANG)
-            questTexture:Show()
-        elseif questId or isQuestItem then
-            questTexture:SetTexture(TEXTURE_ITEM_QUEST_BORDER)
-            questTexture:Show()
-        else
-            questTexture:Hide()
-        end
-    end
+    local _, slotTextureName = GetInventorySlotInfo('Bag'..buttonID)
+	holder.hasItem = false
 
     if textureName then
-        texture:SetTexture(textureName)
-        texture:Show()
+        holder.icon:SetTexture(textureName)
+        holder.icon:Show()
+        holder.hasItem = true
     elseif slotTextureName and holder.isBag then
-        texture:SetTexture(slotTextureName)
-        texture:Show()
+        holder.icon:SetTexture(slotTextureName)
+        holder.icon:Show()
+        holder.hasItem = false
     else
-        texture:SetTexture(E.ClearTexture)
-        texture:Hide()
+        holder.icon:Hide()
+        holder.hasItem = false
     end
 
     BankFrameItemButton_UpdateLocked(holder)
@@ -985,6 +962,35 @@ function B:SetBagAssignments(holder, skip)
 	end
 end
 
+function B:UpdateDelayedContainer(frame)
+	for bagID, container in next, frame.DelayedContainers do
+		if bagID ~= BACKPACK_CONTAINER then
+			B:SetBagAssignments(container)
+		end
+
+		local bag = frame.Bags[bagID]
+		if bag and bag.needsUpdate then
+			B:UpdateBagSlots(frame, bagID)
+			bag.needsUpdate = nil
+		end
+
+		frame.DelayedContainers[bagID] = nil
+	end
+end
+
+function B:DelayedContainer(bagFrame, event, bagID)
+	local container = bagID and bagFrame.ContainerHolderByBagID[bagID]
+	if container then
+		bagFrame.DelayedContainers[bagID] = container
+
+		if event == 'BAG_CLOSED' then -- let it call layout
+			bagFrame.totalSlots = 0
+		else
+			bagFrame.Bags[bagID].needsUpdate = true
+		end
+	end
+end
+
 function B:OnEvent(event, ...)
 	if event == 'PLAYERBANKBAGSLOTS_CHANGED' then
 		local containerID, holder = next(self.notPurchased)
@@ -1011,11 +1017,22 @@ function B:OnEvent(event, ...)
 				bag.staleSlots[slotID] = true
 			end
 		end
-	elseif event == 'BAG_UPDATE' then
+	elseif event == 'BAG_UPDATE' or event == 'BAG_CLOSED' then
 		local id = ...
-		B:UpdateContainerIcons()
-		B:SetBagAssignments(self.ContainerHolderByBagID[id])
-		B:UpdateBagSlots(self, id)
+
+		if event == 'BAG_UPDATE' then
+			B:UpdateContainerIcons()
+			B:SetBagAssignments(self.ContainerHolderByBagID[id])
+			B:UpdateBagSlots(self, id)
+		end
+
+		if not self.isBank or self:IsShown() then
+			B:DelayedContainer(self, event, id)
+		end
+
+		if event == 'BAG_CLOSED' then
+			E:Delay(0.1, B.UpdateDelayedContainer, B, self) --Delay it to next frame to allow other addons to update their bag frames first. hook B:UpdateDelayedContainer(self)
+		end
 	elseif (event == 'QUEST_ACCEPTED' or event == 'QUEST_REMOVED' or event == 'QUEST_LOG_UPDATE') and self:IsShown() then
 		for slot in next, B.QuestSlots do
 			B:UpdateSlot(self, slot.BagID, slot.SlotID)
@@ -1172,7 +1189,7 @@ end
 function B:VendorGrayCheck()
 	local value = B:GetGraysValue()
 	if value == 0 then
-		E:Print(L["No gray items to delete."])
+		E:Print(L["No gray items to sell."])
 	elseif not _G.MerchantFrame:IsShown() then
 		E.PopupDialogs.DELETE_GRAYS.Money = value
 		E:StaticPopup_Show('DELETE_GRAYS')
@@ -1181,23 +1198,25 @@ function B:VendorGrayCheck()
 	end
 end
 
-function B:SetButtonTexture(button, texture)
+function B:SetButtonTexture(button, texture, left, right, top, bottom)
 	button:SetNormalTexture(texture)
 	button:SetPushedTexture(texture)
 	button:SetDisabledTexture(texture)
 
 	local Normal, Pushed, Disabled = button:GetNormalTexture(), button:GetPushedTexture(), button:GetDisabledTexture()
 
-	local left, right, top, bottom = unpack(E.TexCoords)
-	Normal:SetTexCoord(left, right, top, bottom)
 	Normal:SetInside()
-
-	Pushed:SetTexCoord(left, right, top, bottom)
 	Pushed:SetInside()
-
-	Disabled:SetTexCoord(left, right, top, bottom)
 	Disabled:SetInside()
 	Disabled:SetDesaturated(true)
+
+	if not left then
+		left, right, top, bottom = unpack(E.TexCoords)
+	end
+
+	Normal:SetTexCoord(left, right, top, bottom)
+	Pushed:SetTexCoord(left, right, top, bottom)
+	Disabled:SetTexCoord(left, right, top, bottom)
 end
 
 function B:BagItemAction(holder, func, id)
@@ -1237,8 +1256,6 @@ function B:UpdateContainerIcon(holder, bagID)
 	if not holder or not bagID or bagID == BACKPACK_CONTAINER or bagID == KEYRING_CONTAINER then return end
 
 	holder.icon:SetTexture(GetInventoryItemTexture('player', holder:GetID()) or [[Interface\PaperDoll\UI-PaperDoll-Slot-Bag]])
-
-	B:UpdateContainerIconQuality(holder, bagID)
 end
 
 function B:UpdateContainerIconQuality(holder, bagID)
@@ -1263,111 +1280,111 @@ end
 
 function B:ConstructContainerHolder(f, bagID, isBank, name, index)
 	local bagNum = isBank and (bagID == BANK_CONTAINER and 0 or (bagID - bankOffset)) or (bagID - 1)
-		local holderName = bagID == BACKPACK_CONTAINER and 'ElvUIMainBagBackpack' or bagID == KEYRING_CONTAINER and 'ElvUIKeyRing' or B:ConstructContainerName(isBank, bagNum)
-		local inherit = isBank and 'BankItemButtonBagTemplate' or (bagID == BACKPACK_CONTAINER or bagID == KEYRING_CONTAINER) and 'ItemButtonTemplate' or 'BagSlotButtonTemplate'
+	local holderName = bagID == BACKPACK_CONTAINER and 'ElvUIMainBagBackpack' or bagID == KEYRING_CONTAINER and 'ElvUIKeyRing' or B:ConstructContainerName(isBank, bagNum)
+	local inherit = isBank and 'BankItemButtonBagTemplate' or (bagID == BACKPACK_CONTAINER or bagID == KEYRING_CONTAINER) and 'ItemButtonTemplate' or 'BagSlotButtonTemplate'
 
-		local holder = CreateFrame('CheckButton', holderName, f.ContainerHolder, inherit)
-		f.ContainerHolderByBagID[bagID] = holder
-		f.ContainerHolder[index] = holder
+	local holder = CreateFrame('CheckButton', holderName, f.ContainerHolder, inherit)
+	f.ContainerHolderByBagID[bagID] = holder
+	f.ContainerHolder[index] = holder
 
-		holder.name = holderName
-		holder.isBank = isBank
-		holder.bagFrame = f
-		holder.UpdateTooltip = nil -- This is needed to stop constant updates. It will still get updated by OnEnter.
+	holder.name = holderName
+	holder.isBank = isBank
+	holder.bagFrame = f
+	holder.UpdateTooltip = nil -- This is needed to stop constant updates. It will still get updated by OnEnter.
 
-		holder:SetTemplate(B.db.transparent and 'Transparent', true)
-		holder:StyleButton()
+	holder:SetTemplate(B.db.transparent and 'Transparent', true)
+	holder:StyleButton()
 
-		holder:SetNormalTexture(E.ClearTexture)
-		holder:SetPushedTexture(E.ClearTexture)
-		if holder.SetCheckedTexture then
-			holder:SetCheckedTexture(E.ClearTexture)
-		end
+	holder:SetNormalTexture(E.ClearTexture)
+	holder:SetPushedTexture(E.ClearTexture)
+	if holder.SetCheckedTexture then
+		holder:SetCheckedTexture(E.ClearTexture)
+	end
 
-		holder:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
-		holder:SetScript('OnEnter', B.Holder_OnEnter)
-		holder:SetScript('OnLeave', B.Holder_OnLeave)
-		holder:SetScript('OnClick', B.Holder_OnClick)
+	holder:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
+	holder:SetScript('OnEnter', B.Holder_OnEnter)
+	holder:SetScript('OnLeave', B.Holder_OnLeave)
+	holder:SetScript('OnClick', B.Holder_OnClick)
 
-		if not holder.animIcon then
-			holder.animIcon = CreateFrame('Model', '$parentItemAnim', holder, 'ItemAnimTemplate')
-			holder.animIcon:SetPoint('BOTTOMRIGHT', -10, 0)
-		end
+	if not holder.animIcon then
+		holder.animIcon = CreateFrame('Model', '$parentItemAnim', holder, 'ItemAnimTemplate')
+		holder.animIcon:SetPoint('BOTTOMRIGHT', -10, 0)
+	end
 
-		holder.icon = holder:CreateTexture(nil, 'ARTWORK')
-		holder.icon:SetTexCoord(unpack(E.TexCoords))
-		holder.icon:SetTexture(bagID == KEYRING_CONTAINER and [[Interface\ICONS\INV_Misc_Key_03]] or E.Media.Textures.Backpack)
-		holder.icon:SetInside()
+	holder.icon = holder:CreateTexture(nil, 'ARTWORK')
+	holder.icon:SetTexCoord(unpack(E.TexCoords))
+	holder.icon:SetTexture(bagID == KEYRING_CONTAINER and [[Interface\ICONS\INV_Misc_Key_03]] or E.Media.Textures.Backpack)
+	holder.icon:SetInside()
 
-		if holder.IconBorder then -- added by HD Interface patch
-			holder.IconBorder:SetAlpha(0)
-		end
+	if holder.IconBorder then -- added by HD Interface patch
+		holder.IconBorder:SetAlpha(0)
+	end
 
-		_G[holder:GetName()..'IconTexture']:SetDrawLayer('BACKGROUND')
+	_G[holder:GetName()..'IconTexture']:SetDrawLayer('BACKGROUND')
 
-		if holder.backgroundTextureName then -- added by HD Interface patch
-			holder.backgroundTextureName = nil
-		end
+	if holder.backgroundTextureName then -- added by HD Interface patch
+		holder.backgroundTextureName = nil
+	end
 
-		holder.shownIcon = holder:CreateTexture(nil, 'OVERLAY', nil, 1)
-		holder.shownIcon:Size(16)
-		holder.shownIcon:Point('BOTTOMLEFT', 1, 1)
+	holder.shownIcon = holder:CreateTexture(nil, 'OVERLAY', nil, 1)
+	holder.shownIcon:Size(16)
+	holder.shownIcon:Point('BOTTOMLEFT', 1, 1)
 
-		B:SetBagShownTexture(holder.shownIcon, B.db.shownBags['bag'..bagID])
+	B:SetBagShownTexture(holder.shownIcon, B.db.shownBags['bag'..bagID])
 
-		if bagID == BACKPACK_CONTAINER then
-			holder:SetScript('OnReceiveDrag', PutItemInBackpack)
-		elseif bagID == KEYRING_CONTAINER then
-			holder:SetScript('OnReceiveDrag', PutKeyInKeyRing)
+	if bagID == BACKPACK_CONTAINER then
+		holder:SetScript('OnReceiveDrag', PutItemInBackpack)
+	elseif bagID == KEYRING_CONTAINER then
+		holder:SetScript('OnReceiveDrag', PutKeyInKeyRing)
+	else
+		holder:RegisterForDrag('LeftButton')
+		holder:SetScript('OnDragStart', B.Holder_OnDragStart)
+		holder:SetScript('OnReceiveDrag', B.Holder_OnReceiveDrag)
+
+		if isBank then
+			holder:SetID(index == 1 and BANK_CONTAINER or (bagID - bankOffset))
+			holder:RegisterEvent('PLAYERBANKSLOTS_CHANGED')
+			holder:SetScript('OnEvent', BankFrameItemButton_UpdateLocked)
 		else
-			holder:RegisterForDrag('LeftButton')
-			holder:SetScript('OnDragStart', B.Holder_OnDragStart)
-			holder:SetScript('OnReceiveDrag', B.Holder_OnReceiveDrag)
+			holder:SetID(ContainerIDToInventoryID(bagID))
 
-			if isBank then
-				holder:SetID(index == 1 and BANK_CONTAINER or (bagID - bankOffset))
-				holder:RegisterEvent('PLAYERBANKSLOTS_CHANGED')
-				holder:SetScript('OnEvent', BankFrameItemButton_UpdateLocked)
-			else
-				holder:SetID(ContainerIDToInventoryID(bagID))
-
-				B:UpdateContainerIcon(holder, bagID)
-			end
+			B:UpdateContainerIcon(holder, bagID)
 		end
+	end
 
-		if index == 1 then
-			holder:Point('BOTTOMLEFT', f, 'TOPLEFT', 4, 5)
-		else
-			holder:Point('LEFT', f.ContainerHolder[index - 1], 'RIGHT', 4, 0)
-		end
+	if index == 1 then
+		holder:Point('BOTTOMLEFT', f, 'TOPLEFT', 4, 5)
+	else
+		holder:Point('LEFT', f.ContainerHolder[index - 1], 'RIGHT', 4, 0)
+	end
 
-		if index == f.ContainerHolder.totalBags then
-			f.ContainerHolder:Point('TOPRIGHT', holder, 4, 4)
-		end
+	if index == f.ContainerHolder.totalBags then
+		f.ContainerHolder:Point('TOPRIGHT', holder, 4, 4)
+	end
 
-		local bagName = format('%sBag%d', name, bagNum)
-		local bag = CreateFrame('Frame', bagName, f.holderFrame)
+	local bagName = format('%sBag%d', name, bagNum)
+	local bag = CreateFrame('Frame', bagName, f.holderFrame)
 
-		bag.holder = holder
-		bag.name = bagName
-		bag:SetID(bagID)
+	bag.holder = holder
+	bag.name = bagName
+	bag:SetID(bagID)
 
-		holder.BagID = bagID
-		holder.bag = bag
-		holder.frame = f
-		holder.index = index
+	holder.BagID = bagID
+	holder.bag = bag
+	holder.frame = f
+	holder.index = index
 
-		f.Bags[bagID] = bag
+	f.Bags[bagID] = bag
 
-		if bagID == BANK_CONTAINER then
-			bag.staleSlots = {}
-		end
+	if bagID == BANK_CONTAINER then
+		bag.staleSlots = {}
+	end
 
-		for slotID = 1, MAX_CONTAINER_ITEMS do
-			bag[slotID] = B:ConstructContainerButton(f, bagID, slotID)
-		end
+	for slotID = 1, MAX_CONTAINER_ITEMS do
+		bag[slotID] = B:ConstructContainerButton(f, bagID, slotID)
+	end
 
-		return holder
+	return holder
 end
 
 function B:CoverButton_ClickBank()
@@ -1387,6 +1404,7 @@ function B:ConstructContainerFrame(name, isBank)
 	f:SetFrameStrata(strata)
 
 	f.events = (isBank and bankEvents) or bagEvents
+	f.DelayedContainers = {}
 	f.firstOpen = true
 	f:Hide()
 
@@ -1897,6 +1915,11 @@ function B:OpenBank()
 	end
 end
 
+function B:PLAYER_ENTERING_WORLD(event)
+	B:UpdateLayout(B.BagFrame)
+	B:UnregisterEvent(event)
+end
+
 function B:PLAYERBANKBAGSLOTS_CHANGED()
 	B:Layout(true)
 end
@@ -1911,13 +1934,12 @@ function B:CloseBank()
 	B:CloseBags()
 end
 
-function B:UpdateContainerFrameAnchors()
+function B:GetContainerFrameScale()
+	local containerFrameOffsetX = CONTAINER_OFFSET_X
 	local xOffset, yOffset, screenHeight, freeScreenHeight, leftMostPoint, column
 	local screenWidth = E.screenWidth
-	local bags = _G.ContainerFrame1.bags
 	local containerScale = 1
 	local leftLimit = 0
-
 	if _G.BankFrame:IsShown() then
 		leftLimit = _G.BankFrame:GetRight() - 25
 	end
@@ -1925,64 +1947,79 @@ function B:UpdateContainerFrameAnchors()
 	while containerScale > CONTAINER_SCALE do
 		screenHeight = E.screenHeight / containerScale
 		-- Adjust the start anchor for bags depending on the multibars
-		xOffset = CONTAINER_OFFSET_X / containerScale
+		xOffset = containerFrameOffsetX / containerScale
 		yOffset = CONTAINER_OFFSET_Y / containerScale
 		-- freeScreenHeight determines when to start a new column of bags
 		freeScreenHeight = screenHeight - yOffset
 		leftMostPoint = screenWidth - xOffset
 		column = 1
 
-		for _, name in ipairs(bags) do
-			local frame = _G[name]
-			local frameHeight = frame:GetHeight()
-			if freeScreenHeight < frameHeight then
-				column = column + 1 -- Start a new column
-				leftMostPoint = screenWidth - (column * CONTAINER_WIDTH * containerScale) - xOffset
-				freeScreenHeight = screenHeight - yOffset
+		local frameHeight
+		local framesInColumn = 0
+		local forceScaleDecrease = false
+		for _, frame in ipairs(_G.ContainerFrame1.bags) do
+			if type(frame) == 'string' then
+				frame = _G[frame]
 			end
 
-			freeScreenHeight = freeScreenHeight - frameHeight - VISIBLE_CONTAINER_SPACING
+			framesInColumn = framesInColumn + 1
+			frameHeight = frame:GetHeight(true)
+			if freeScreenHeight < frameHeight then
+				if framesInColumn == 1 then -- If this is the only frame in the column and it doesn't fit, then scale must be reduced and the iteration restarted
+					forceScaleDecrease = true
+					break
+				else -- Start a new column
+					column = column + 1
+					framesInColumn = 0 -- kind of a lie, at this point there's actually a single frame in the new column, but this simplifies where to increment.
+					leftMostPoint = screenWidth - ( column * frame:GetWidth(true) * containerScale ) - xOffset
+					freeScreenHeight = screenHeight - yOffset
+				end
+			end
+
+			freeScreenHeight = freeScreenHeight - frameHeight
 		end
 
-		if leftMostPoint < leftLimit then
+		if forceScaleDecrease or (leftMostPoint < leftLimit) then
 			containerScale = containerScale - 0.01
 		else
 			break
 		end
 	end
 
-	if containerScale < CONTAINER_SCALE then
-		containerScale = CONTAINER_SCALE
-	end
+	return max(containerScale, CONTAINER_SCALE)
+end
 
-	screenHeight = E.screenHeight / containerScale
+function B:UpdateContainerFrameAnchors()
+	local containerScale = B:GetContainerFrameScale()
+	local screenHeight = E.screenHeight / containerScale
+
 	-- Adjust the start anchor for bags depending on the multibars
-	yOffset = CONTAINER_OFFSET_Y / containerScale
+	--local xOffset = GetInitialContainerFrameOffsetX() / containerScale
+	local yOffset = CONTAINER_OFFSET_Y / containerScale
 	-- freeScreenHeight determines when to start a new column of bags
-	freeScreenHeight = screenHeight - yOffset
-	column = 0
+	local freeScreenHeight = screenHeight - yOffset
+	local previousBag, recentBagColumn
 
-	local bagsPerColumn = 0
-	for index, name in ipairs(bags) do
-		local frame = _G[name]
-		local frameHeight = frame:GetHeight()
-
-		frame:SetScale(1)
-
-		if index == 1 then -- First bag
-			frame:Point('BOTTOMRIGHT', _G.ElvUIBagMover, 'BOTTOMRIGHT', E.Spacing, -E.Border)
-			bagsPerColumn = bagsPerColumn + 1
-		elseif freeScreenHeight < frameHeight then -- Start a new column
-			column = column + 1
-			freeScreenHeight = screenHeight - yOffset
-			frame:Point('BOTTOMRIGHT', bags[(index - bagsPerColumn) - (column > 1 and 1 or 0)], 'BOTTOMLEFT', -CONTAINER_SPACING, 0 )
-			bagsPerColumn = 0
-		else -- Anchor to the previous bag
-			frame:Point('BOTTOMRIGHT', bags[index - 1], 'TOPRIGHT', 0, CONTAINER_SPACING)
-			bagsPerColumn = bagsPerColumn + 1
+	for index, frame in ipairs(_G.ContainerFrame1.bags) do
+		if type(frame) == 'string' then
+			frame = _G[frame]
 		end
 
-		freeScreenHeight = freeScreenHeight - frameHeight - VISIBLE_CONTAINER_SPACING
+		frame:SetScale(containerScale)
+
+		if index == 1 then -- First bag
+			frame:SetPoint('BOTTOMRIGHT', _G.ElvUIBagMover, 'BOTTOMRIGHT', E.Spacing, -E.Border)
+			recentBagColumn = frame
+		elseif (freeScreenHeight < frame:GetHeight()) then -- Start a new column
+			freeScreenHeight = screenHeight - yOffset
+			frame:SetPoint('BOTTOMRIGHT', recentBagColumn, 'BOTTOMLEFT', -11, 0)
+			recentBagColumn = frame
+		else -- Anchor to the previous bag
+			frame:SetPoint('BOTTOMRIGHT', previousBag, 'TOPRIGHT', 0, CONTAINER_SPACING)
+		end
+
+		previousBag = frame
+		freeScreenHeight = freeScreenHeight - frame:GetHeight()
 	end
 end
 
@@ -2123,21 +2160,31 @@ B.QuestKeys = {
 }
 
 B.AutoToggleEvents = {
-	guildBank = { GUILDBANKFRAME_OPENED = 'OpenBags', GUILDBANKFRAME_CLOSED = 'CloseBags' },
-	auctionHouse = { AUCTION_HOUSE_SHOW = 'OpenBags', AUCTION_HOUSE_CLOSED = 'CloseBags' },
-	professions = { TRADE_SKILL_SHOW = 'OpenBags', TRADE_SKILL_CLOSE = 'CloseBags' },
-	trade = { TRADE_SHOW = 'OpenBags', TRADE_CLOSED = 'CloseBags' },
+	AUCTION_HOUSE_SHOW = 'auctionHouse',
+	AUCTION_HOUSE_CLOSED = 'auctionHouse',
+	GUILDBANKFRAME_OPENED = 'guildBank',
+	GUILDBANKFRAME_CLOSED = 'guildBank',
+	TRADE_SKILL_SHOW = 'professions',
+	TRADE_SKILL_CLOSE = 'professions',
+	TRADE_SHOW = 'trade',
+	TRADE_CLOSED = 'trade'
 }
 
-function B:AutoToggle()
-	for option, eventTable in next, B.AutoToggleEvents do
-		for event, func in next, eventTable do
-			if B.db.autoToggle[option] then
-				B:RegisterEvent(event, func)
-			else
-				B:UnregisterEvent(event)
-			end
-		end
+B.AutoToggleClose = {
+	AUCTION_HOUSE_CLOSED = true,
+	GUILDBANKFRAME_CLOSED = true,
+	TRADE_SKILL_CLOSE = true,
+	TRADE_CLOSED = true,
+}
+
+function B:AutoToggleFunction()
+	local option = B.AutoToggleEvents[self]
+	if not option or not B.db.autoToggle[option] then return end
+
+	if not B.AutoToggleClose[self] then
+		B:OpenBags()
+	else
+		B:CloseBags()
 	end
 end
 
@@ -2273,7 +2320,9 @@ function B:Initialize()
 	B:RegisterEvent('PLAYERBANKBAGSLOTS_CHANGED')
 	B:RegisterEvent('GUILDBANKBAGSLOTS_CHANGED')
 
-	B:AutoToggle()
+	for event in next, B.AutoToggleEvents do
+		B:RegisterEvent(event, B.AutoToggleFunction)
+	end
 end
 
 local function InitializeCallback()
