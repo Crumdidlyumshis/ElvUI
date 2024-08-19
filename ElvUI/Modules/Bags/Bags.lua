@@ -1017,22 +1017,17 @@ function B:OnEvent(event, ...)
 				bag.staleSlots[slotID] = true
 			end
 		end
-	elseif event == 'BAG_UPDATE' or event == 'BAG_CLOSED' then
+	elseif event == 'BAG_UPDATE' then
 		local id = ...
-
-		if event == 'BAG_UPDATE' then
-			B:UpdateContainerIcons()
-			B:SetBagAssignments(self.ContainerHolderByBagID[id])
-			B:UpdateBagSlots(self, id)
-		end
+		B:UpdateContainerIcons()
+		B:SetBagAssignments(self.ContainerHolderByBagID[id])
+		B:UpdateBagSlots(self, id)
 
 		if not self.isBank or self:IsShown() then
 			B:DelayedContainer(self, event, id)
 		end
-
-		if event == 'BAG_CLOSED' then
-			E:Delay(0.05, B.UpdateDelayedContainer, B, self) --Delay it to next frame to allow other addons to update their bag frames first. hook B:UpdateDelayedContainer(self)
-		end
+	elseif event == 'BAG_CLOSED' then
+		E:Delay(0.05, B.UpdateDelayedContainer, B, self) --Delay it to next frame to allow other addons to update their bag frames first. hook B:UpdateDelayedContainer(self)
 	elseif (event == 'QUEST_ACCEPTED' or event == 'QUEST_REMOVED' or event == 'QUEST_LOG_UPDATE') and self:IsShown() then
 		for slot in next, B.QuestSlots do
 			B:UpdateSlot(self, slot.BagID, slot.SlotID)
