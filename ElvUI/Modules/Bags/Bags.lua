@@ -1031,7 +1031,7 @@ function B:OnEvent(event, ...)
 		end
 
 		if event == 'BAG_CLOSED' then
-			E:Delay(0.1, B.UpdateDelayedContainer, B, self) --Delay it to next frame to allow other addons to update their bag frames first. hook B:UpdateDelayedContainer(self)
+			E:Delay(0.05, B.UpdateDelayedContainer, B, self) --Delay it to next frame to allow other addons to update their bag frames first. hook B:UpdateDelayedContainer(self)
 		end
 	elseif (event == 'QUEST_ACCEPTED' or event == 'QUEST_REMOVED' or event == 'QUEST_LOG_UPDATE') and self:IsShown() then
 		for slot in next, B.QuestSlots do
