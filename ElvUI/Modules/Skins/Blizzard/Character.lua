@@ -97,7 +97,7 @@ local function HandleTabs(frameCheck)
 		tab:ClearAllPoints()
 
 		if index == 1 then
-			tab:Point('TOPLEFT', _G.CharacterFrame, 'BOTTOMLEFT', 10, E.private.enhanced.character.enable and not E:IsHDPatch() and 80 or 78) -- check if using ElvUI_Enhanced
+			tab:Point('TOPLEFT', _G.CharacterFrame, 'BOTTOMLEFT', 10, IsAddOnLoaded('ElvUI_Enhanced') and E.private.enhanced.character.enable and not E:IsHDPatch() and 80 or 78) -- check if using ElvUI_Enhanced
 		else
 			tab:Point('TOPLEFT', lastTab, 'TOPRIGHT', -15.5, 0)
 		end
