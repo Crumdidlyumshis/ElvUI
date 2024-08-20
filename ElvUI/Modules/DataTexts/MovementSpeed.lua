@@ -40,7 +40,7 @@ end
 
 local function OnUpdate(self, elapsed)
 	self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
-	if self.timeSinceLastUpdate >= 0.5 then
+	if self.timeSinceLastUpdate >= 1 then
 		UpdateSpeed(self)
 		self.timeSinceLastUpdate = 0
 	end
