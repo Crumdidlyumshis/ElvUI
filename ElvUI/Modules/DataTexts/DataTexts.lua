@@ -35,6 +35,7 @@ local MISCELLANEOUS = MISCELLANEOUS
 local LFG_TYPE_DUNGEON = LFG_TYPE_DUNGEON
 local expansion = _G['EXPANSION_NAME'..GetExpansionLevel()]
 local QuickList = {}
+local Collapsed = {}
 
 local iconString = '|T%s:20:20:0:0:64:64:4:60:4:60|t'
 
@@ -716,7 +717,6 @@ do
 end
 
 function DT:PopulateData(currencyOnly)
-	local Collapsed = {}
 	local listSize, i = GetCurrencyListSize(), 1
 
 	local headerIndex
@@ -725,14 +725,15 @@ function DT:PopulateData(currencyOnly)
 		if info.isHeader and not info.isHeaderExpanded then
 			ExpandCurrencyList(i, true)
 			Collapsed[info.name] = true
+
+			listSize = GetCurrencyListSize()
 		end
 		if info.isHeader then
 			G.datatexts.settings.Currencies.tooltipData[i] = { info.name, nil, nil, (info.name == expansion or info.name == MISCELLANEOUS) or strfind(info.name, LFG_TYPE_DUNGEON) }
 			E.global.datatexts.settings.Currencies.tooltipData[i] = { info.name, nil, nil, E.global.datatexts.settings.Currencies.headers }
 
 			headerIndex = i
-		end
-		if info.name and not info.isHeader then
+		elseif info.name then
 			local _, currencyLink
 			if info.itemID then
 				_, currencyLink = GetItemInfo(info.itemID)
