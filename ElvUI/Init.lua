@@ -195,6 +195,32 @@ function E:OnEnable()
 	E:Initialize()
 end
 
+do
+	local info = {
+		Auras = 'auras',
+		ActionBars = 'actionbar',
+		Bags = 'bags',
+		Chat = 'chat',
+		DataBars = 'databars',
+		DataTexts = 'datatexts',
+		NamePlates = 'nameplates',
+		Tooltip = 'tooltip',
+		UnitFrames = 'unitframe'
+	}
+
+	function E:SetupDB()
+		for key, value in next, info do
+			local module = E[key]
+			if module then
+				module.db = E.db[value]
+			end
+		end
+
+		E.TotemTracker.db = E.db.general.totems
+		E.Skins.db = E.private.skins
+	end
+end
+
 function E:OnInitialize()
 	if not ElvCharacterDB then
 		ElvCharacterDB = {}

@@ -1257,20 +1257,11 @@ function E:UpdateDB()
 	E.db = E.data.profile
 	E.global = E.data.global
 
-	E:DBConversions()
+	E:SetupDB()
 
-	ActionBars.db = E.db.actionbar
-	Auras.db = E.db.auras
-	Bags.db = E.db.bags
-	Chat.db = E.db.chat
-	DataBars.db = E.db.databars
-	DataTexts.db = E.db.datatexts
-	NamePlates.db = E.db.nameplates
-	Tooltip.db = E.db.tooltip
-	UnitFrames.db = E.db.unitframe
-	TotemTracker.db = E.db.general.totems
-
-	--Not part of staggered update
+	-- default the non thing pixel border color to 191919, otherwise its 000000
+	if not E.PixelMode then P.general.bordercolor = { r = 0.1, g = 0.1, b = 0.1 } end
+	if not E.db.unitframe.thinBorders then P.unitframe.colors.borderColor = { r = 0.1, g = 0.1, b = 0.1 } end
 end
 
 function E:UpdateMoverPositions()
@@ -1738,15 +1729,6 @@ function E:ConvertActionBarKeybinds()
 	end
 end
 
-function E:RefreshModulesDB()
-	-- this function is specifically used to reference the new database
-	-- onto the unitframe module, its useful dont delete! D:
-	if UnitFrames.db then
-		wipe(UnitFrames.db) --old ref, dont need so clear it
-		UnitFrames.db = E.db.unitframe --new ref
-	end
-end
-
 do
 	-- Shamelessly taken from AceDB-3.0 and stripped down by Simpy
 	function E:CopyDefaults(dest, src)
@@ -1806,21 +1788,13 @@ function E:Initialize()
 	E.charSettings.RegisterCallback(E, 'OnProfileChanged', ReloadUI)
 	E.charSettings.RegisterCallback(E, 'OnProfileCopied', ReloadUI)
 	E.charSettings.RegisterCallback(E, 'OnProfileReset', 'OnPrivateProfileReset')
-	E.private = E.charSettings.profile
-	E.global = E.data.global
-	E.db = E.data.profile
 
-	-- default the non thing pixel border color to 191919, otherwise its 000000
-	if not E.PixelMode then P.general.bordercolor = { r = 0.1, g = 0.1, b = 0.1 } end
-	if not E.db.unitframe.thinBorders then P.unitframe.colors.borderColor = { r = 0.1, g = 0.1, b = 0.1 } end
-
-	E:DBConversions()
+	E:UpdateDB()
 	E:UIScale()
 	E:BuildPrefixValues()
 	E:LoadAPI()
 	E:LoadCommands()
 	E:InitializeModules()
-	E:RefreshModulesDB()
 	E:LoadMovers()
 	E:UpdateMedia()
 	E:UpdateDispelColors()
