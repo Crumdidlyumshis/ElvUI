@@ -2,6 +2,7 @@ local E, L, V, P, G = unpack(ElvUI)
 local LSM = E.Libs.LSM
 
 local _G = _G
+local next = next
 local strsub = strsub
 local strmatch = strmatch
 
@@ -129,7 +130,15 @@ function E:UpdateBlizzardFonts()
 
 	-- custom font settings
 	for name, data in next, FontMap do
-		E:SetFontMap(data.object, E.db.general.fonts[name], data, replaceFonts)
+		local font = E.db.general.fonts[name]
+
+		if data.objects then
+			for _, object in next, data.objects do
+				E:SetFontMap(object, font, data, replaceFonts)
+			end
+		elseif data.object then
+			E:SetFontMap(data.object, font, data, replaceFonts)
+		end
 	end
 
 	-- handle replace blizzard, when needed
@@ -204,6 +213,7 @@ function E:UpdateBlizzardFonts()
 		E:SetFont(_G.SystemFont_Shadow_Huge3,				NORMAL, (blizz and 25) or unscale or mega, 'SHADOW')		-- FlightMap
 		E:SetFont(_G.ZoneTextString,						NORMAL, (blizz and 25) or unscale or mega, outline)
 		E:SetFont(_G.SubZoneTextFont,						NORMAL, (blizz and 26) or unscale or mega, outline)			-- WorldMap, SubZone
+		E:SetFont(_G.WorldMapTextFont,						NORMAL, (blizz and 32) or unscale or massive, outline)		-- WorldMap, MainZone
 		E:SetFont(_G.SystemFont_OutlineThick_Huge4,			NORMAL, (blizz and 26) or unscale or mega, thick)
 		E:SetFont(_G.SystemFont_OutlineThick_WTF,			NORMAL, (blizz and 32) or unscale or enormous, outline)		-- WorldMap
 	end
