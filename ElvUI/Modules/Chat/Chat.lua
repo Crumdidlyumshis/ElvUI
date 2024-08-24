@@ -158,6 +158,7 @@ do --this can save some main file locals
 	local PalmTree		= E:TextureString(E.Media.ChatLogos.PalmTree,x)
 	local TyroneBiggums = E:TextureString(E.Media.ChatLogos.TyroneBiggums,x)
 	local SuperBear		= E:TextureString(E.Media.ChatLogos.SuperBear,x)
+	local AngryUnicorn	= E:TextureString(E.Media.ChatLogos.AngryUnicorn,x)
 
 		--[[ Simpys Thing: new icon color every message, in order then reversed back, repeating of course
 		local a, b, c = 0, false, {ElvRed, ElvOrange, ElvYellow, ElvGreen, ElvBlue, ElvPurple, ElvPink}
@@ -186,7 +187,7 @@ do --this can save some main file locals
 		--Repooc: Monk, Demon Hunter, Paladin, Warlock colors
 		local PoocsColors = function(t) return specialText(t, 0,1,0.6, 0.64,0.19,0.79, 0.96,0.55,0.73, 0.53,0.53,0.93) end
 
-		itsSimpy = function() return ElvSimpy, SimpyColors end
+		itsSimpy = function() return AngryUnicorn, SimpyColors end
 		itsElv = function() return ElvBlue, ElvColors end
 		itsMel = function() return Hibiscus, MelColors end
 		itsMis = function() return Rainbow, MisColors end
@@ -197,7 +198,24 @@ do --this can save some main file locals
 	local z = {}
 	specialChatIcons = z
 
-	z["Крольчонак-x100"] = ElvPink
+	local portal = GetCVar('portal')
+	if portal == 'en' then
+	-- Bunny
+		z['Крольчонак-x100'] 			= ElvPink
+	-- Crum
+		-- Lordaeron
+		z['Bobaganuesh-Lordaeron']		= ElvBlue
+		z['Syleta-Lordaeron']			= ElvBlue
+		z['Sophopia-Lordaeron']			= ElvBlue
+		z['Kelaraele-Lordaeron']		= ElvBlue
+		z['Retaebreggin-Lordaeron']		= ElvBlue
+		z['Elsina-Lordaeron']			= ElvBlue
+		z['Fearful-Lordaeron']			= ElvBlue
+		z['Bonkers-Lordaeron']			= ElvBlue
+		z['Shanamana-Lordaeron']		= ElvBlue
+		-- Onyxia
+		z['Crum-Onyxia']				= ElvBlue
+	end
 end
 
 function CH:ChatFrame_OnMouseScroll(delta)
@@ -674,14 +692,23 @@ local function colorizeLine(text, r, g, b)
 	return format('%s%s|r', hexCode, text)
 end
 
+local chatTypeIndexToName = {}
 local copyLines = {}
+
+for chatType in pairs(_G.ChatTypeInfo) do
+	chatTypeIndexToName[_G.GetChatTypeIndex(chatType)] = chatType
+end
+
 function CH:GetLines(frame)
 	local index = 1
+	local _, message, lineID, info, r, g, b
+
 	for i = 1, frame:GetNumMessages() do
-		local message, r, g, b = frame:GetMessageInfo(i)
+		local message, _, lineID = frame:GetMessageInfo(i)
 		if message and not CH:MessageIsProtected(message) then
 			--Set fallback color values
-			r, g, b = r or 1, g or 1, b or 1
+			info = _G.ChatTypeInfo[chatTypeIndexToName[lineID]]
+			r, g, b = info and info.r or 1, info and info.g or 1, info and info.b or 1
 
 			--Remove icons
 			message = removeIconFromLine(message)
@@ -698,17 +725,15 @@ function CH:GetLines(frame)
 end
 
 function CH:CopyChat(frame)
-	if not _G.CopyChatFrame:IsShown() then
-		local _, fontSize = _G.FCF_GetChatWindowInfo(frame:GetID())
+	if not CH.CopyChatFrame:IsShown() then
+		local count = CH:GetLines(frame)
+		local text = tconcat(copyLines, ' \n', 1, count)
 
-		_G.FCF_SetChatWindowFontSize(frame, frame, 0.01)
-		_G.CopyChatFrame:Show()
-		local lineCt = CH:GetLines(frame)
-		local text = tconcat(copyLines, ' \n', 1, lineCt)
-		_G.FCF_SetChatWindowFontSize(frame, frame, fontSize)
-		_G.CopyChatFrameEditBox:SetText(text)
+		CH.CopyChatFrameEditBox:SetText(text)
+		CH.CopyChatFrame:Show()
 	else
-		_G.CopyChatFrame:Hide()
+		CH.CopyChatFrameEditBox:SetText('')
+		CH.CopyChatFrame:Hide()
 	end
 end
 
@@ -821,9 +846,16 @@ function CH:ChatEdit_DeactivateChat(editbox)
 	if style == 'im' then editbox:Hide() end
 end
 
+function CH:CVAR_UPDATE(_, cvar, value)
+	if cvar == 'chatStyle' then
+		CH:UpdateEditboxAnchors(cvar, value)
+	end
+end
+
 function CH:UpdateEditboxAnchors(event, cvar, value)
-	if event and cvar ~= 'chatStyle' then return
-	elseif not cvar then value = GetCVar('chatStyle') end
+	if not cvar then
+		value = GetCVar('chatStyle')
+	end
 
 	local classic = value == 'classic'
 	local leftChat = classic and _G.LeftChatPanel
@@ -942,12 +974,6 @@ function CH:UpdateChatTab(chat)
 		else
 			CH:HandleFadeTabs(chat, CH.db.fadeUndockedTabs and CH:IsUndocked(chat, docker))
 		end
-	end
-
-	-- reparenting chat changes the strata of the resize button
-	if chat.EditModeResizeButton then
-		chat.EditModeResizeButton:SetFrameStrata('HIGH')
-		chat.EditModeResizeButton:SetFrameLevel(6)
 	end
 end
 
@@ -1202,7 +1228,7 @@ local function MouseIsOver(frame)
 	end
 end
 
-local function BorderManipulation(...)
+local function FindMessageLineIndexAtRegion(...)
 	for l = 1, select('#', ...) do
 		local obj = select(l, ...)
 		if(obj:GetObjectType() == 'FontString' and MouseIsOver(obj)) then
@@ -1216,7 +1242,7 @@ local function HyperLinkedCPL(data)
 	local chat = _G[format('ChatFrame%d', chatID)]
 	if not chat then return end
 
-	local msg = BorderManipulation(chat:GetRegions())
+	local msg = FindMessageLineIndexAtRegion(chat:GetRegions())
 	if msg and not CH:MessageIsProtected(msg) then
 		msg = gsub(msg,'|c(%x-)|H(.-)|h(.-)|h|r','\10c%1\10H%2\10h%3\10h\10r') -- strip colors and trim but not hyperlinks
 		msg = gsub(msg,'||','\11') -- for printing item lines from /dump, etc
@@ -2472,36 +2498,40 @@ function CH:BuildCopyChatFrame()
 		end
 	end)
 	frame:SetFrameStrata('DIALOG')
+	CH.CopyChatFrame = frame
 
-	local scrollArea = CreateFrame('ScrollFrame', 'CopyChatScrollFrame', frame, 'UIPanelScrollFrameTemplate')
-	scrollArea:Point('TOPLEFT', frame, 'TOPLEFT', 8, -30)
-	scrollArea:Point('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -30, 8)
-	S:HandleScrollBar(_G.CopyChatScrollFrameScrollBar)
-	scrollArea:SetScript('OnSizeChanged', function(scroll)
-		_G.CopyChatFrameEditBox:Width(scroll:GetWidth())
-		_G.CopyChatFrameEditBox:Height(scroll:GetHeight())
-	end)
-	scrollArea:HookScript('OnVerticalScroll', function(scroll, offset)
-		_G.CopyChatFrameEditBox:SetHitRectInsets(0, 0, offset, (_G.CopyChatFrameEditBox:GetHeight() - offset - scroll:GetHeight()))
-	end)
-
-	local editBox = CreateFrame('EditBox', 'CopyChatFrameEditBox', frame)
+	local editBox = CreateFrame('EditBox', 'ElvUI_CopyChatFrameEditBox', frame)
+	editBox:Height(200)
 	editBox:SetMultiLine(true)
 	editBox:SetMaxLetters(99999)
 	editBox:EnableMouse(true)
 	editBox:SetAutoFocus(false)
 	editBox:SetFontObject('ChatFontNormal')
-	editBox:Width(scrollArea:GetWidth())
-	editBox:Height(200)
-	editBox:SetScript('OnEscapePressed', function() _G.CopyChatFrame:Hide() end)
-	scrollArea:SetScrollChild(editBox)
-	_G.CopyChatFrameEditBox:SetScript('OnTextChanged', function(_, userInput)
+	editBox:SetScript('OnEscapePressed', function() CH.CopyChatFrame:Hide() end)
+	editBox:SetScript('OnTextChanged', function(_, userInput)
 		if userInput then return end
-		local _, Max = _G.CopyChatScrollFrameScrollBar:GetMinMaxValues()
-		for _ = 1, Max do
-			_G.ScrollFrameTemplate_OnMouseWheel(_G.CopyChatScrollFrame, -1)
+		local _, maxValue = CH.CopyChatScrollFrame.ScrollBar:GetMinMaxValues()
+		for _ = 1, maxValue do
+			_G.ScrollFrameTemplate_OnMouseWheel(CH.CopyChatScrollFrame, -1)
 		end
 	end)
+	CH.CopyChatFrameEditBox = editBox
+
+	local scrollFrame = CreateFrame('ScrollFrame', 'ElvUI_CopyChatScrollFrame', frame, 'UIPanelScrollFrameTemplate')
+	scrollFrame.ScrollBar = _G[scrollFrame:GetName()..'ScrollBar']
+	scrollFrame:Point('TOPLEFT', frame, 'TOPLEFT', 8, -30)
+	scrollFrame:Point('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -30, 8)
+	scrollFrame:SetScript('OnSizeChanged', function(_, width, height)
+		CH.CopyChatFrameEditBox:Size(width, height)
+	end)
+	scrollFrame:HookScript('OnVerticalScroll', function(scroll, offset)
+		CH.CopyChatFrameEditBox:SetHitRectInsets(0, 0, offset, (CH.CopyChatFrameEditBox:GetHeight() - offset - scroll:GetHeight()))
+	end)
+	CH.CopyChatScrollFrame = scrollFrame
+
+	scrollFrame:SetScrollChild(editBox)
+	editBox:Width(scrollFrame:GetWidth())
+	S:HandleScrollBar(scrollFrame.ScrollBar)
 
 	local close = CreateFrame('Button', 'CopyChatFrameCloseButton', frame, 'UIPanelCloseButton')
 	close:Point('TOPRIGHT')
@@ -2771,7 +2801,7 @@ function CH:Initialize()
 	CH:RegisterEvent('RAID_ROSTER_UPDATE', 'CheckLFGRoles')
 	CH:RegisterEvent('PARTY_MEMBERS_CHANGED', 'CheckLFGRoles')
 	CH:RegisterEvent('PLAYER_REGEN_DISABLED', 'ChatEdit_PleaseUntaint')
-	CH:RegisterEvent('CVAR_UPDATE', 'UpdateEditboxAnchors')
+	CH:RegisterEvent('CVAR_UPDATE')
 
 	if _G.WIM then
 		_G.WIM.RegisterWidgetTrigger('chat_display', 'whisper,chat,w2w,demo', 'OnHyperlinkClick', function(self) CH.clickedframe = self end)
