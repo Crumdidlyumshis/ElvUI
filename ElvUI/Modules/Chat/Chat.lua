@@ -139,7 +139,7 @@ end
 
 local specialChatIcons
 do --this can save some main file locals
-	local x, y = ':16:16',':13:25'
+	local x, y = ':22:22',':20:34'
 
 	local ElvBlue		= E:TextureString(E.Media.ChatLogos.ElvBlue,y)
 	local ElvGreen		= E:TextureString(E.Media.ChatLogos.ElvGreen,y)
@@ -692,19 +692,18 @@ local function colorizeLine(text, r, g, b)
 	return format('%s%s|r', hexCode, text)
 end
 
-local chatTypeIndexToName = {}
-local copyLines = {}
 
+local chatTypeIndexToName = {}
 for chatType in pairs(_G.ChatTypeInfo) do
 	chatTypeIndexToName[_G.GetChatTypeIndex(chatType)] = chatType
 end
 
+local copyLines = {}
 function CH:GetLines(frame)
 	local index = 1
-	local _, message, lineID, info, r, g, b
-
 	for i = 1, frame:GetNumMessages() do
-		local message, _, lineID = frame:GetMessageInfo(i)
+		local message, _, lineID, extra = frame:GetMessageInfo(i)
+		local r, g, b, info
 		if message and not CH:MessageIsProtected(message) then
 			--Set fallback color values
 			info = _G.ChatTypeInfo[chatTypeIndexToName[lineID]]
