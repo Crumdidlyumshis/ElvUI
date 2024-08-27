@@ -61,7 +61,7 @@ E.noop = function() end
 E.isMacClient = IsMacClient()
 E.title = format('|cffff7000E|r|cffe5e3e3lvUI|r')
 E.toc = tonumber(GetAddOnMetadata('ElvUI', 'X-Interface'))
-E.version = tonumber(GetAddOnMetadata('ElvUI', 'Version'))
+E.version, E.versionString = E:ParseVersionString('ElvUI')
 E.myfaction, E.myLocalizedFaction = UnitFactionGroup('player')
 E.myLocalizedClass, E.myclass = UnitClass('player')
 E.myLocalizedRace, E.myrace = UnitRace('player')
@@ -501,13 +501,6 @@ do
 		popup.cancel = info.cancel or cancel
 
 		E:StaticPopup_Show('INCOMPATIBLE_ADDON', popup.button1, popup.button2)
-	end
-end
-
-function E:IsAddOnEnabled(addon)
-	local _, _, _, enabled, _, reason = GetAddOnInfo(addon)
-	if reason ~= 'MISSING' and enabled then
-		return true
 	end
 end
 

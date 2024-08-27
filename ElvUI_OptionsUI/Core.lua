@@ -17,7 +17,7 @@ local GetAddOnMetadata = GetAddOnMetadata
 local ACH = E.Libs.ACH
 local L = E.Libs.ACL:GetLocale("ElvUI", E.global.general.locale)
 local C = {
-	version = tonumber(GetAddOnMetadata("ElvUI_OptionsUI", "Version")),
+	version = E:ParseVersionString('ElvUI_OptionsUI'),
 	Blank = function() return "" end,
 	SearchCache = {},
 	SearchText = "",
@@ -27,9 +27,10 @@ E.Config = select(2, ...)
 E.Config[1] = C
 E.Config[2] = L
 
-local sort, strmatch, strsplit = sort, strmatch, strsplit
-local format, gsub, ipairs, pairs = format, gsub, ipairs, pairs
-local tconcat, tinsert, tremove = table.concat, tinsert, tremove
+local _G = _G
+local next, sort, strmatch, strsplit = next, sort, strmatch, strsplit
+local tconcat, tinsert, tremove, wipe = table.concat, tinsert, tremove, wipe
+local format, gsub, ipairs, pairs, type = format, gsub, ipairs, pairs, type
 
 local UnitName = UnitName
 local UnitExists = UnitExists
@@ -302,9 +303,10 @@ E.Options.args.info.args.credits.args.donators.args.string = ACH:Description(DON
 --Create Profiles Table
 E.Options.args.profiles = ACH:Group(L["Profiles"], nil, 4, 'tab')
 E.Options.args.profiles.args.desc = ACH:Description(L["This feature will allow you to transfer settings to other characters."], 0)
-E.Options.args.profiles.args.distributeProfile = ACH:Execute(L["Share Current Profile"], L["Sends your current profile to your target."], 1, function() if not UnitExists('target') or not UnitIsPlayer('target') or not UnitIsFriend('player', 'target') or UnitIsUnit('player', 'target') then E:Print(L["You must be targeting a player."]) return end local name, server = UnitName('target') if name and (not server or server == '') then D:Distribute(name) elseif server then D:Distribute(name, true) end end, nil, nil, nil, nil, nil, function() return not E.global.general.allowDistributor end)
-E.Options.args.profiles.args.distributeGlobal = ACH:Execute(L["Share Filters"], L["Sends your filter settings to your target."], 2, function() if not UnitExists('target') or not UnitIsPlayer('target') or not UnitIsFriend('player', 'target') or UnitIsUnit('player', 'target') then E:Print(L["You must be targeting a player."]) return end local name, server = UnitName('target') if name and (not server or server == '') then D:Distribute(name, false, true) elseif server then D:Distribute(name, true, true) end end, nil, nil, nil, nil, nil, function() return not E.global.general.allowDistributor end)
-E.Options.args.profiles.args.allowDistributor = ACH:Toggle(L["Allow Sharing"], L["Both users will need this option enabled."], 3, nil, nil, nil, function() return E.global.general.allowDistributor end, function(_, value) E.global.general.allowDistributor = value; D:UpdateSettings() end)
+E.Options.args.profiles.args.distributeProfile = ACH:Execute(L["Share Profile"], L["Sends your current profile to your target."], 1, function() if not UnitExists('target') or not UnitIsPlayer('target') or not UnitIsFriend('player', 'target') or UnitIsUnit('player', 'target') then E:Print(L["You must be targeting a player."]) return end local name, server = UnitName('target') if name and (not server or server == '') then D:Distribute(name) elseif server then D:Distribute(name, true) end end, nil, nil, nil, nil, nil, function() return not E.global.general.allowDistributor end)
+E.Options.args.profiles.args.distributePrivate = ACH:Execute(L["Share Private"], nil, 2, function() if not UnitExists('target') or not UnitIsPlayer('target') or not UnitIsFriend('player', 'target') or UnitIsUnit('player', 'target') then E:Print(L["You must be targeting a player."]) return end local name, server = UnitName('target') if name and (not server or server == '') then D:Distribute(name, false, 'private') elseif server then D:Distribute(name, true, 'private') end end, nil, nil, nil, nil, nil, function() return not E.global.general.allowDistributor end)
+E.Options.args.profiles.args.distributeGlobal = ACH:Execute(L["Share Global"], nil, 3, function() if not UnitExists('target') or not UnitIsPlayer('target') or not UnitIsFriend('player', 'target') or UnitIsUnit('player', 'target') then E:Print(L["You must be targeting a player."]) return end local name, server = UnitName('target') if name and (not server or server == '') then D:Distribute(name, false, 'global') elseif server then D:Distribute(name, true, 'global') end end, nil, nil, nil, nil, nil, function() return not E.global.general.allowDistributor end)
+E.Options.args.profiles.args.allowDistributor = ACH:Toggle(L["Allow Sharing"], L["Both users will need this option enabled."], 4, nil, nil, nil, function() return E.global.general.allowDistributor end, function(_, value) E.global.general.allowDistributor = value; D:UpdateSettings() end)
 E.Options.args.profiles.args.spacer = ACH:Spacer(10)
 
 E.Options.args.profiles.args.profile = E.Libs.AceDBOptions:GetOptionsTable(E.data)

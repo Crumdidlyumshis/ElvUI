@@ -1,35 +1,39 @@
 --[[
 	~AddOn Engine~
 	To load the AddOn engine inside another addon add this to the top of your file:
-		local E, L, V, P, G = unpack(ElvUI)
+		local E, L, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 ]]
 
 local _G = _G
-local gsub, tinsert, next = gsub, tinsert, next
-local tostring, strfind, type = tostring, strfind, type
+local gsub, tinsert, next, type = gsub, tinsert, next, type
+local tostring, tonumber, strfind, strmatch = tostring, tonumber, strfind, strmatch
 
+local CreateFrame = CreateFrame
 local GetBuildInfo = GetBuildInfo
 local GetLocale = GetLocale
 local GetTime = GetTime
-local CreateFrame = CreateFrame
 local ReloadUI = ReloadUI
 local UIParent = UIParent
 
 local UIDropDownMenu_SetAnchor = UIDropDownMenu_SetAnchor
 
 local DisableAddOn = DisableAddOn
+local GetAddOnInfo = GetAddOnInfo
+local GetAddOnMetadata = GetAddOnMetadata
 local IsAddOnLoaded = IsAddOnLoaded
 
 local GetCVar = GetCVar
 local SetCVar = SetCVar
 
-local AceAddon, AceAddonMinor = _G.LibStub("AceAddon-3.0")
-local CallbackHandler = _G.LibStub("CallbackHandler-1.0")
+-- GLOBALS: ElvCharacterDB, ElvPrivateDB, ElvDB, ElvCharacterData, ElvPrivateData, ElvData
+
+local AceAddon, AceAddonMinor = _G.LibStub('AceAddon-3.0')
+local CallbackHandler = _G.LibStub('CallbackHandler-1.0')
 
 local AddOnName, Engine = ...
-local E = AceAddon:NewAddon(AddOnName, "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceHook-3.0")
+local E = AceAddon:NewAddon(AddOnName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceTimer-3.0', 'AceHook-3.0')
 E.DF = {profile = {}, global = {}}; E.privateVars = {profile = {}} -- Defaults
-E.Options = {type = "group", args = {}, childGroups = "ElvUI_HiddenTree"}
+E.Options = {type = 'group', args = {}, childGroups = 'ElvUI_HiddenTree'}
 E.callbacks = E.callbacks or CallbackHandler:New(E)
 E.wowpatch, E.wowbuild, E.wowdate, E.wowtoc = GetBuildInfo()
 E.locale = GetLocale()
@@ -42,36 +46,42 @@ Engine[5] = E.DF.global
 _G.ElvUI = Engine
 
 E.oUF = _G.ElvUF
-assert(E.oUF, "ElvUI was unable to locate oUF.")
+assert(E.oUF, 'ElvUI was unable to locate oUF.')
 
-E.ActionBars = E:NewModule("ActionBars", "AceHook-3.0", "AceEvent-3.0")
-E.AFK = E:NewModule("AFK", "AceEvent-3.0", "AceTimer-3.0")
-E.Auras = E:NewModule("Auras", "AceHook-3.0", "AceEvent-3.0")
-E.Bags = E:NewModule("Bags", "AceHook-3.0", "AceEvent-3.0", "AceTimer-3.0")
-E.Blizzard = E:NewModule("Blizzard", "AceEvent-3.0", "AceHook-3.0")
-E.Chat = E:NewModule("Chat", "AceTimer-3.0", "AceHook-3.0", "AceEvent-3.0")
-E.DataBars = E:NewModule("DataBars", "AceEvent-3.0")
-E.DataTexts = E:NewModule("DataTexts", "AceTimer-3.0", "AceHook-3.0", "AceEvent-3.0")
-E.DebugTools = E:NewModule("DebugTools", "AceEvent-3.0", "AceHook-3.0")
-E.Distributor = E:NewModule("Distributor", "AceEvent-3.0", "AceTimer-3.0", "AceComm-3.0", "AceSerializer-3.0")
-E.Layout = E:NewModule("Layout", "AceEvent-3.0")
-E.Minimap = E:NewModule("Minimap","AceHook-3.0","AceEvent-3.0","AceTimer-3.0")
-E.Misc = E:NewModule("Misc","AceEvent-3.0","AceTimer-3.0","AceHook-3.0")
-E.ModuleCopy = E:NewModule("ModuleCopy", "AceEvent-3.0", "AceTimer-3.0", "AceComm-3.0", "AceSerializer-3.0")
-E.NamePlates = E:NewModule("NamePlates", "AceHook-3.0", "AceEvent-3.0", "AceTimer-3.0")
-E.PluginInstaller = E:NewModule("PluginInstaller")
-E.RaidUtility = E:NewModule("RaidUtility", "AceEvent-3.0")
-E.Skins = E:NewModule("Skins","AceTimer-3.0","AceHook-3.0","AceEvent-3.0")
-E.Tooltip = E:NewModule("Tooltip","AceTimer-3.0","AceHook-3.0","AceEvent-3.0")
-E.TotemTracker = E:NewModule("TotemTracker","AceEvent-3.0")
-E.UnitFrames = E:NewModule("UnitFrames", "AceTimer-3.0", "AceEvent-3.0", "AceHook-3.0")
-E.WorldMap = E:NewModule("WorldMap", "AceHook-3.0", "AceEvent-3.0", "AceTimer-3.0")
+E.ActionBars = E:NewModule('ActionBars', 'AceHook-3.0', 'AceEvent-3.0')
+E.AFK = E:NewModule('AFK', 'AceEvent-3.0', 'AceTimer-3.0')
+E.Auras = E:NewModule('Auras', 'AceHook-3.0', 'AceEvent-3.0')
+E.Bags = E:NewModule('Bags', 'AceHook-3.0', 'AceEvent-3.0', 'AceTimer-3.0')
+E.Blizzard = E:NewModule('Blizzard', 'AceEvent-3.0', 'AceHook-3.0')
+E.Chat = E:NewModule('Chat', 'AceTimer-3.0', 'AceHook-3.0', 'AceEvent-3.0')
+E.DataBars = E:NewModule('DataBars', 'AceEvent-3.0')
+E.DataTexts = E:NewModule('DataTexts', 'AceTimer-3.0', 'AceHook-3.0', 'AceEvent-3.0')
+E.DebugTools = E:NewModule('DebugTools', 'AceEvent-3.0', 'AceHook-3.0')
+E.Distributor = E:NewModule('Distributor', 'AceEvent-3.0', 'AceTimer-3.0', 'AceComm-3.0', 'AceSerializer-3.0')
+E.Layout = E:NewModule('Layout', 'AceEvent-3.0')
+E.Minimap = E:NewModule('Minimap','AceHook-3.0','AceEvent-3.0','AceTimer-3.0')
+E.Misc = E:NewModule('Misc','AceEvent-3.0','AceTimer-3.0','AceHook-3.0')
+E.ModuleCopy = E:NewModule('ModuleCopy', 'AceEvent-3.0', 'AceTimer-3.0', 'AceComm-3.0', 'AceSerializer-3.0')
+E.NamePlates = E:NewModule('NamePlates', 'AceHook-3.0', 'AceEvent-3.0', 'AceTimer-3.0')
+E.PluginInstaller = E:NewModule('PluginInstaller')
+E.RaidUtility = E:NewModule('RaidUtility', 'AceEvent-3.0')
+E.Skins = E:NewModule('Skins','AceTimer-3.0','AceHook-3.0','AceEvent-3.0')
+E.Tooltip = E:NewModule('Tooltip','AceTimer-3.0','AceHook-3.0','AceEvent-3.0')
+E.TotemTracker = E:NewModule('TotemTracker','AceEvent-3.0')
+E.UnitFrames = E:NewModule('UnitFrames', 'AceTimer-3.0', 'AceEvent-3.0', 'AceHook-3.0')
+E.WorldMap = E:NewModule('WorldMap', 'AceHook-3.0', 'AceEvent-3.0', 'AceTimer-3.0')
 
-E.InfoColor = "|cff1784d1" -- blue
-E.InfoColor2 = "|cff9b9b9b" -- silver
+E.InfoColor = '|cff1784d1' -- blue
+E.InfoColor2 = '|cff9b9b9b' -- silver
 E.twoPixelsPlease = false -- changing this option is not supported! :P
 
-do -- WotLK HD Client Check
+-- Item Qualitiy stuff, also used by MerathilisUI
+E.QualityColors = CopyTable(_G.ITEM_QUALITY_COLORS)
+E.QualityColors[-1] = {r = 0, g = 0, b = 0}
+E.QualityColors[0] = {r = .61, g = .61, b = .61}
+E.QualityColors[1] = {r = 0, g = 0, b = 0}
+
+do -- WotLK HD Interface Check
 	local hdFrames = _G['CharacterAttributesFrameer'] or _G['NNewSpellBookPageNavigationFrame']
 
     function E:IsHDPatch()
@@ -80,12 +90,17 @@ do -- WotLK HD Client Check
 end
 
 do -- this is different from E.locale because we need to convert for ace locale files
-	local convert = {enGB = "enUS", esES = "esMX", itIT = "enUS"}
-	local gameLocale = convert[E.locale] or E.locale or "enUS"
+	local convert = {enGB = 'enUS', esES = 'esMX', itIT = 'enUS'}
+	local gameLocale = convert[E.locale] or E.locale or 'enUS'
 
 	function E:GetLocale()
 		return gameLocale
 	end
+end
+
+function E:ParseVersionString(addon)
+	local version = GetAddOnMetadata(addon, 'Version')
+	return tonumber(version), version
 end
 
 do
@@ -95,31 +110,31 @@ do
 		if not name then return end
 
 		-- in this case: `major` is the lib table and `minor` is the minor version
-		if type(major) == "table" and type(minor) == "number" then
+		if type(major) == 'table' and type(minor) == 'number' then
 			E.Libs[name], E.LibsMinor[name] = major, minor
 		else -- in this case: `major` is the lib name and `minor` is the silent switch
 			E.Libs[name], E.LibsMinor[name] = _G.LibStub(major, minor)
 		end
 	end
 
-	E:AddLib("AceAddon", AceAddon, AceAddonMinor)
-	E:AddLib("AceDB", "AceDB-3.0")
-	E:AddLib("ACH", "LibAceConfigHelper")
-	E:AddLib("EP", "LibElvUIPlugin-1.0")
-	E:AddLib("LSM", "LibSharedMedia-3.0")
-	E:AddLib("ACL", "AceLocale-3.0-ElvUI")
-	E:AddLib("LAB", "LibActionButton-1.0-ElvUI")
-	E:AddLib("LAI", "LibAuraInfo-1.0-ElvUI", true)
-	E:AddLib("LDB", "LibDataBroker-1.1")
-	E:AddLib("SimpleSticky", "LibSimpleSticky-1.0")
-	E:AddLib("SpellRange", "SpellRange-1.0")
-	E:AddLib("ItemSearch", "LibItemSearch-1.2-ElvUI")
-	E:AddLib("Deflate", "LibDeflate")
-	E:AddLib("Masque", "Masque", true)
-	E:AddLib("Translit", "LibTranslit-1.0")
-	E:AddLib("DualSpec", "LibDualSpec-1.0")
-	E:AddLib("LCS", "LibClassicSpecs-ElvUI")
-	E:AddLib("Compat", "LibCompat-1.0")
+	E:AddLib('AceAddon', AceAddon, AceAddonMinor)
+	E:AddLib('AceDB', 'AceDB-3.0')
+	E:AddLib('ACH', 'LibAceConfigHelper')
+	E:AddLib('EP', 'LibElvUIPlugin-1.0')
+	E:AddLib('LSM', 'LibSharedMedia-3.0')
+	E:AddLib('ACL', 'AceLocale-3.0-ElvUI')
+	E:AddLib('LAB', 'LibActionButton-1.0-ElvUI')
+	E:AddLib('LAI', 'LibAuraInfo-1.0-ElvUI', true)
+	E:AddLib('LDB', 'LibDataBroker-1.1')
+	E:AddLib('SimpleSticky', 'LibSimpleSticky-1.0')
+	E:AddLib('SpellRange', 'SpellRange-1.0')
+	E:AddLib('ItemSearch', 'LibItemSearch-1.2-ElvUI')
+	E:AddLib('Deflate', 'LibDeflate')
+	E:AddLib('Masque', 'Masque', true)
+	E:AddLib('Translit', 'LibTranslit-1.0')
+	E:AddLib('DualSpec', 'LibDualSpec-1.0')
+	E:AddLib('LCS', 'LibClassicSpecs-ElvUI')
+	E:AddLib('Compat', 'LibCompat-1.0')
 
 	-- backwards compatible for plugins
 	E.LSM = E.Libs.LSM
@@ -128,10 +143,10 @@ do
 end
 
 do
-	local a,b,c = "","([%(%)%.%%%+%-%*%?%[%^%$])","%%%1"
+	local a,b,c = '','([%(%)%.%%%+%-%*%?%[%^%$])','%%%1'
 	function E:EscapeString(s) return gsub(s,b,c) end
 
-	local d = {"|[TA].-|[ta]","|c[fF][fF]%x%x%x%x%x%x","|r","^%s+","%s+$"}
+	local d = {'|[TA].-|[ta]','|c[fF][fF]%x%x%x%x%x%x','|r','^%s+','%s+$'}
 	function E:StripString(s, ignoreTextures)
 		for i = ignoreTextures and 2 or 1, #d do s = gsub(s,d[i],a) end
 		return s
@@ -140,16 +155,16 @@ end
 
 do
 	local alwaysDisable = {
-		"ElvUI_VisualAuraTimers",
-		"ElvUI_ExtraActionBars",
-		"ElvUI_CastBarOverlay",
-		"ElvUI_EverySecondCounts",
-		"ElvUI_AuraBarsMovers",
-		"ElvUI_CustomTweaks",
-		"ElvUI_MinimapButtons",
-		"ElvUI_DataTextColors",
-		"ElvUI_ChannelAlerts",
-		"ElvUI_BagControl"
+		'ElvUI_VisualAuraTimers',
+		'ElvUI_ExtraActionBars',
+		'ElvUI_CastBarOverlay',
+		'ElvUI_EverySecondCounts',
+		'ElvUI_AuraBarsMovers',
+		'ElvUI_CustomTweaks',
+		'ElvUI_MinimapButtons',
+		'ElvUI_DataTextColors',
+		'ElvUI_ChannelAlerts',
+		'ElvUI_BagControl'
 	}
 
 	for _, addon in next, alwaysDisable do
@@ -164,15 +179,26 @@ function E:SetCVar(cvar, value, ...)
 	end
 end
 
+function E:GetAddOnEnableState(addon)
+	local _, _, _, enabled, _, reason = GetAddOnInfo(addon)
+	if reason ~= 'MISSING' and enabled then
+		return enabled
+	end
+end
+
+function E:IsAddOnEnabled(addon)
+	return E:GetAddOnEnableState(addon) == 1
+end
+
 function E:SetEasyMenuAnchor(menu, frame)
 	local point = E:GetScreenQuadrant(frame)
-	local bottom = point and strfind(point, "BOTTOM")
-	local left = point and strfind(point, "LEFT")
+	local bottom = point and strfind(point, 'BOTTOM')
+	local left = point and strfind(point, 'LEFT')
 
-	local anchor1 = (bottom and left and "BOTTOMLEFT") or (bottom and "BOTTOMRIGHT") or (left and "TOPLEFT") or "TOPRIGHT"
-	local anchor2 = (bottom and left and "TOPLEFT") or (bottom and "TOPRIGHT") or (left and "BOTTOMLEFT") or "BOTTOMRIGHT"
+	local anchor1 = (bottom and left and 'BOTTOMLEFT') or (bottom and 'BOTTOMRIGHT') or (left and 'TOPLEFT') or 'TOPRIGHT'
+	local anchor2 = (bottom and left and 'TOPLEFT') or (bottom and 'TOPRIGHT') or (left and 'BOTTOMLEFT') or 'BOTTOMRIGHT'
 
-	UIDropDownMenu_SetAnchor(menu, 0, 0, anchor1, frame, anchor2)
+	UIDropDownMenu_SetAnchor(menu, 1, -1, anchor1, frame, anchor2)
 end
 
 function E:ResetProfile()
@@ -180,7 +206,7 @@ function E:ResetProfile()
 end
 
 function E:OnProfileReset()
-	E:StaticPopup_Show("RESET_PROFILE_PROMPT")
+	E:StaticPopup_Show('RESET_PROFILE_PROMPT')
 end
 
 function E:ResetPrivateProfile()
@@ -188,7 +214,7 @@ function E:ResetPrivateProfile()
 end
 
 function E:OnPrivateProfileReset()
-	E:StaticPopup_Show("RESET_PRIVATE_PROFILE_PROMPT")
+	E:StaticPopup_Show('RESET_PRIVATE_PROFILE_PROMPT')
 end
 
 function E:OnEnable()
@@ -262,6 +288,7 @@ function E:OnInitialize()
 	E.Spacing = E.PixelMode and 0 or 1
 	E.loadedtime = GetTime()
 
+	E:SetupDB()
 	E:UIMult()
 	E:UpdateMedia()
 	E:InitializeInitialModules()
@@ -270,7 +297,7 @@ function E:OnInitialize()
 		E.Minimap:SetGetMinimapShape() -- This is just to support for other mods, keep below UIMult
 	end
 
-	if IsAddOnLoaded("Tukui") then
-		E:StaticPopup_Show("TUKUI_ELVUI_INCOMPATIBLE")
+	if IsAddOnLoaded('Tukui') then
+		E:StaticPopup_Show('TUKUI_ELVUI_INCOMPATIBLE')
 	end
 end
