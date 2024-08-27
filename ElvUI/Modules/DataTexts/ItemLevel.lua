@@ -55,4 +55,4 @@ local function ApplySettings(self)
 	end
 end
 
-DT:RegisterDatatext('Item Level', 'Stats', {'UNIT_INVENTORY_CHANGED', 'PLAYER_EQUIPMENT_CHANGED'}, OnEvent, nil, nil, OnEnter, nil, L["Item Level"], nil, ApplySettings)
+DT:RegisterDatatext('Item Level', 'Stats', { 'UNIT_INVENTORY_CHANGED', 'PLAYER_EQUIPMENT_CHANGED' }, OnEvent, nil, nil, OnEnter, nil, L["Item Level"], nil, ApplySettings)

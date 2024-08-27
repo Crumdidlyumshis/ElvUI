@@ -5,7 +5,7 @@ local LC = E.Libs.Compat
 -- GLOBALS: ElvDB
 
 local type, wipe, pairs, ipairs, sort = type, wipe, pairs, ipairs, sort
-local format, strjoin, tinsert = format, strjoin, tinsert
+local format, gsub, match, strjoin, tinsert = format, string.gsub, string.match, strjoin, tinsert
 
 local _G = _G
 local EasyMenu = EasyMenu
@@ -201,6 +201,7 @@ local function OnEnter()
 		end
 
 		if info.quantity then
+			iconString = match(info and info.iconFileID or '', E.myfaction) ~= nil and gsub(iconString, '4:60:4:60', '4:38:2:36') or iconString
 			DT.tooltip:AddDoubleLine(format('%s %s', format(iconString, info.iconFileID), name), BreakUpLargeNumbers(info.quantity), 1, 1, 1, 1, 1, 1)
 		end
 
@@ -220,4 +221,4 @@ local function OnEnter()
 	DT.tooltip:Show()
 end
 
-DT:RegisterDatatext('Gold', nil, {'PLAYER_MONEY', 'SEND_MAIL_MONEY_CHANGED', 'SEND_MAIL_COD_CHANGED', 'PLAYER_TRADE_MONEY', 'TRADE_MONEY_CHANGED', 'CURRENCY_DISPLAY_UPDATE'}, OnEvent, nil, Click, OnEnter, nil, L["Gold"])
+DT:RegisterDatatext('Gold', nil, { 'PLAYER_MONEY', 'SEND_MAIL_MONEY_CHANGED', 'SEND_MAIL_COD_CHANGED', 'PLAYER_TRADE_MONEY', 'TRADE_MONEY_CHANGED', 'CURRENCY_DISPLAY_UPDATE' }, OnEvent, nil, Click, OnEnter, nil, L["Gold"])

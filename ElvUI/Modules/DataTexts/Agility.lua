@@ -1,5 +1,5 @@
 local E, L, V, P, G = unpack(ElvUI)
-local DT = E:GetModule("DataTexts")
+local DT = E:GetModule('DataTexts')
 
 local strjoin = strjoin
 local UnitStat = UnitStat
@@ -7,13 +7,13 @@ local UnitStat = UnitStat
 local ITEM_MOD_AGILITY_SHORT = ITEM_MOD_AGILITY_SHORT
 local LE_UNIT_STAT_AGILITY = 2
 
-local displayString, db = ""
+local displayString, db = ''
 
 local function OnEvent(self)
 	if db.NoLabel then
-		self.text:SetFormattedText(displayString, UnitStat("player", LE_UNIT_STAT_AGILITY))
+		self.text:SetFormattedText(displayString, UnitStat('player', LE_UNIT_STAT_AGILITY))
 	else
-		self.text:SetFormattedText(displayString, db.Label ~= "" and db.Label or ITEM_MOD_AGILITY_SHORT..": ", UnitStat("player", LE_UNIT_STAT_AGILITY))
+		self.text:SetFormattedText(displayString, db.Label ~= '' and db.Label or ITEM_MOD_AGILITY_SHORT..': ', UnitStat('player', LE_UNIT_STAT_AGILITY))
 	end
 end
 
@@ -22,7 +22,7 @@ local function ApplySettings(self, hex)
 		db = E.global.datatexts.settings[self.name]
 	end
 
-	displayString = strjoin("", db.NoLabel and "" or "%s", hex, "%d|r")
+	displayString = strjoin('', db.NoLabel and '' or '%s', hex, '%d|r')
 end
 
-DT:RegisterDatatext("Agility", L["Attributes"], { "UNIT_STATS", "UNIT_AURA" }, OnEvent, nil, nil, nil, nil, ITEM_MOD_AGILITY_SHORT, nil, ApplySettings)
+DT:RegisterDatatext('Agility', L["Attributes"], { 'UNIT_STATS', 'UNIT_AURA' }, OnEvent, nil, nil, nil, nil, ITEM_MOD_AGILITY_SHORT, nil, ApplySettings)

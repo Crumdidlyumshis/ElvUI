@@ -1,5 +1,5 @@
 local E, L, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
-local DT = E:GetModule("DataTexts")
+local DT = E:GetModule('DataTexts')
 
 local min = min
 local strjoin = strjoin
@@ -15,7 +15,7 @@ local COMBAT_RATING_RESILIENCE_CRIT_TAKEN = COMBAT_RATING_RESILIENCE_CRIT_TAKEN
 local RESILIENCE_CRIT_CHANCE_TO_DAMAGE_REDUCTION_MULTIPLIER = RESILIENCE_CRIT_CHANCE_TO_DAMAGE_REDUCTION_MULTIPLIER
 local RESILIENCE_CRIT_CHANCE_TO_CONSTANT_DAMAGE_REDUCTION_MULTIPLIER = RESILIENCE_CRIT_CHANCE_TO_CONSTANT_DAMAGE_REDUCTION_MULTIPLIER
 
-local displayString = ""
+local displayString = ''
 local bonus, maxBonus = 0, 0
 
 local function OnEvent(self)
@@ -26,13 +26,13 @@ local function OnEvent(self)
 	local resilience = min(melee, ranged)
 	resilience = min(resilience, spell)
 
-	local lowestRating = CR_CRIT_TAKEN_MELEE;
+	local lowestRating = CR_CRIT_TAKEN_MELEE
 	if ( melee == minResilience ) then
-		lowestRating = CR_CRIT_TAKEN_MELEE;
+		lowestRating = CR_CRIT_TAKEN_MELEE
 	elseif ( ranged == minResilience ) then
-		lowestRating = CR_CRIT_TAKEN_RANGED;
+		lowestRating = CR_CRIT_TAKEN_RANGED
 	else
-		lowestRating = CR_CRIT_TAKEN_SPELL;
+		lowestRating = CR_CRIT_TAKEN_SPELL
 	end
 
 	bonus = GetCombatRatingBonus(lowestRating)
@@ -50,7 +50,7 @@ local function OnEnter()
 end
 
 local function ApplySettings(_, hex)
-	displayString = strjoin("", STAT_RESILIENCE, ": ", hex, "%d|r")
+	displayString = strjoin('', STAT_RESILIENCE, ': ', hex, '%d|r')
 end
 
-DT:RegisterDatatext("Resilience", L["Enhancements"], { "COMBAT_RATING_UPDATE" }, OnEvent, nil, nil, OnEnter, nil, STAT_RESILIENCE, nil, ApplySettings)
+DT:RegisterDatatext('Resilience', L["Enhancements"], { 'COMBAT_RATING_UPDATE' }, OnEvent, nil, nil, OnEnter, nil, STAT_RESILIENCE, nil, ApplySettings)

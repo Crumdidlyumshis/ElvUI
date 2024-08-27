@@ -32,7 +32,7 @@ local function GetDPS(self)
 	self.text:SetFormattedText(displayString, L["DPS"], E:ShortValue(DPS))
 end
 
-local function OnEvent(self, event)
+local function OnEvent(self, event, ...)
 	if event == 'UNIT_PET' then
 		petGUID = UnitGUID('pet')
 	elseif event == 'PLAYER_REGEN_DISABLED' or event == 'PLAYER_LEAVE_COMBAT' then
@@ -42,7 +42,7 @@ local function OnEvent(self, event)
 		end
 		lastSegment = now
 	elseif event == 'COMBAT_LOG_EVENT_UNFILTERED' then
-		local timestamp, Event, _, sourceGUID, _, _, _, _, _, _, _, arg12, _, _, arg15, arg16 = CombatLogGetCurrentEventInfo()
+		local timestamp, Event, sourceGUID, _, _, _, _, _, arg9, _, _, arg12 = ...
 		if not events[Event] then return end
 
 		-- only use events from the player
@@ -53,12 +53,11 @@ local function OnEvent(self, event)
 			lastSegment = timeStamp
 			combatTime = timestamp - timeStamp
 			if Event == 'SWING_DAMAGE' then
-				lastDMGAmount = arg12
+				lastDMGAmount = arg9
 			else
-				lastDMGAmount = arg15
+				lastDMGAmount = arg12
 			end
-			if arg16 == nil then overKill = 0 else overKill = arg16 end
-			DMGTotal = DMGTotal + max(0, lastDMGAmount - overKill)
+			DMGTotal = DMGTotal + lastDMGAmount
 		end
 	end
 
@@ -74,4 +73,4 @@ local function ApplySettings(_, hex)
 	displayString = strjoin('', '%s: ', hex, '%s')
 end
 
-DT:RegisterDatatext('DPS', nil, {'UNIT_PET', 'COMBAT_LOG_EVENT_UNFILTERED', 'PLAYER_LEAVE_COMBAT', 'PLAYER_REGEN_DISABLED'}, OnEvent, nil, OnClick, nil, nil, _G.STAT_DPS_SHORT, nil, ApplySettings)
+DT:RegisterDatatext('DPS', nil, { 'UNIT_PET', 'COMBAT_LOG_EVENT_UNFILTERED', 'PLAYER_LEAVE_COMBAT', 'PLAYER_REGEN_DISABLED' }, OnEvent, nil, OnClick, nil, nil, L["DPS"], nil, ApplySettings)

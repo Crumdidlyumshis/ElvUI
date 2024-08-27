@@ -69,11 +69,7 @@ local function OnEnter()
 end
 
 local function OnClick()
-	if not _G.QuestLogFrame:IsShown() then
-		ShowUIPanel(_G.QuestLogFrame)
-	else
-		HideUIPanel(_G.QuestLogFrame)
-	end
+	_G.ToggleFrame(_G.QuestLogFrame)
 end
 
 local function OnEvent(self)

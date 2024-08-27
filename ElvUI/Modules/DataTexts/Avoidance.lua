@@ -1,5 +1,5 @@
 local E, L, V, P, G = unpack(ElvUI)
-local DT = E:GetModule("DataTexts")
+local DT = E:GetModule('DataTexts')
 
 local format, strjoin, abs = format, strjoin, abs
 
@@ -23,20 +23,20 @@ local DEFENSE  = DEFENSE
 
 local displayString, targetlv, playerlv, db
 local basemisschance, misschance, baseDef, armorDef, leveldifference, dodge, parry, block, unhittable
-local AVD_DECAY_RATE, chanceString = .2, "%.2f%%"	--According to Light's Club discord, avoidance decay should be 0.2% per level per avoidance (thus 102.4 for +3 crush cap)
+local AVD_DECAY_RATE, chanceString = .2, '%.2f%%'	--According to Light's Club discord, avoidance decay should be 0.2% per level per avoidance (thus 102.4 for +3 crush cap)
 
 local function IsWearingShield()
-	local slotID = GetInventorySlotInfo("SecondaryHandSlot")
-	local itemID = GetInventoryItemID("player", slotID)
+	local slotID = GetInventorySlotInfo('SecondaryHandSlot')
+	local itemID = GetInventoryItemID('player', slotID)
 
 	if itemID then
 		local _, _, _, _, _, _, _, _, itemEquipLoc = GetItemInfo(itemID)
-		return itemEquipLoc == "INVTYPE_SHIELD"
+		return itemEquipLoc == 'INVTYPE_SHIELD'
 	end
 end
 
 local function OnEvent(self)
-	targetlv, playerlv = UnitLevel("target"), E.mylevel
+	targetlv, playerlv = UnitLevel('target'), E.mylevel
 
 	basemisschance = 5	--Base miss chance is 5%.
 
@@ -49,7 +49,7 @@ local function OnEvent(self)
 	else
 		leveldifference = 0
 	end
-	if not UnitExists("target") then --If there's no target, we"ll assume we"re talking about a lvl +3 boss. You can click yourself to see against your level.
+	if not UnitExists('target') then --If there's no target, we'll assume we're talking about a lvl +3 boss. You can click yourself to see against your level.
 		leveldifference = 3
 		targetlv = 73
 	end
@@ -80,7 +80,7 @@ local function OnEvent(self)
 		numAvoidances = numAvoidances - 1
 	end
 
-	if E.myclass == "DRUID" and GetBonusBarOffset() == 3 then
+	if E.myclass == 'DRUID' and GetBonusBarOffset() == 3 then
 		parry = 0
 		numAvoidances = numAvoidances - 1
 	end
@@ -91,7 +91,7 @@ local function OnEvent(self)
 	end
 
 	unhittableMax = unhittableMax + ((AVD_DECAY_RATE * leveldifference) * numAvoidances);
-	baseDef, armorDef = UnitDefense("player");
+	baseDef, armorDef = UnitDefense('player');
 	misschance = (basemisschance + (armorDef + baseDef - (5*playerlv))*.04);
 
 	local avoided = (dodge+parry+misschance) --First roll on hit table determining if the hit missed
@@ -102,7 +102,7 @@ local function OnEvent(self)
 	if db.NoLabel then
 		self.text:SetFormattedText(displayString, avoidance)
 	else
-		self.text:SetFormattedText(displayString, db.Label ~= "" and db.Label or L["AVD: "], avoidance)
+		self.text:SetFormattedText(displayString, db.Label ~= '' and db.Label or L["AVD: "], avoidance)
 	end
 
 	--print(unhittableMax) -- should report 102.4 for a level differance of +3 for shield classes, 101.2 for druids, 101.8 for monks and dks
@@ -111,21 +111,21 @@ end
 local function OnEnter()
 	DT.tooltip:ClearLines()
 	if targetlv > 0 then
-		DT.tooltip:AddDoubleLine(L["Avoidance Breakdown"], strjoin("", " (", L["lvl"], " ", targetlv, ")"))
+		DT.tooltip:AddDoubleLine(L["Avoidance Breakdown"], strjoin('', ' (', L["lvl"], ' ', targetlv, ')'))
 	elseif targetlv == -1 then
-		DT.tooltip:AddDoubleLine(L["Avoidance Breakdown"], strjoin("", " (", BOSS, ")"))
+		DT.tooltip:AddDoubleLine(L["Avoidance Breakdown"], strjoin('', ' (', BOSS, ')'))
 	else
-		DT.tooltip:AddDoubleLine(L["Avoidance Breakdown"], strjoin("", " (", L["lvl"], " ", playerlv, ")"))
+		DT.tooltip:AddDoubleLine(L["Avoidance Breakdown"], strjoin('', ' (', L["lvl"], ' ', playerlv, ')'))
 	end
-	DT.tooltip:AddLine(" ")
+	DT.tooltip:AddLine(' ')
 	DT.tooltip:AddDoubleLine(DODGE_CHANCE, format(chanceString, dodge),1,1,1)
 	DT.tooltip:AddDoubleLine(PARRY_CHANCE, format(chanceString, parry),1,1,1)
 	DT.tooltip:AddDoubleLine(BLOCK_CHANCE, format(chanceString, block),1,1,1)
 	DT.tooltip:AddDoubleLine(MISS_CHANCE, format(chanceString, misschance),1,1,1)
-	DT.tooltip:AddLine(" ")
+	DT.tooltip:AddLine(' ')
 
 	if unhittable > 0 then
-		DT.tooltip:AddDoubleLine(L["Unhittable:"], "+"..format(chanceString, unhittable), 1, 1, 1, 0, 1, 0)
+		DT.tooltip:AddDoubleLine(L["Unhittable:"], '+'..format(chanceString, unhittable), 1, 1, 1, 0, 1, 0)
 	else
 		DT.tooltip:AddDoubleLine(L["Unhittable:"], format(chanceString, unhittable), 1, 1, 1, 1, 0, 0)
 	end
@@ -137,7 +137,7 @@ local function ApplySettings(self, hex)
 		db = E.global.datatexts.settings[self.name]
 	end
 
-	displayString = strjoin("", db.NoLabel and "" or "%s", hex, "%."..db.decimalLength.."f%%|r")
+	displayString = strjoin('', db.NoLabel and '' or '%s', hex, '%.'..db.decimalLength..'f%%|r')
 end
 
-DT:RegisterDatatext("Avoidance", DEFENSE, { "UNIT_TARGET", "UNIT_STATS", "UNIT_AURA", "PLAYER_EQUIPMENT_CHANGED" }, OnEvent, nil, nil, OnEnter, nil, L["Avoidance Breakdown"], nil, ApplySettings)
+DT:RegisterDatatext('Avoidance', DEFENSE, { 'UNIT_TARGET', 'UNIT_STATS', 'UNIT_AURA', 'PLAYER_EQUIPMENT_CHANGED' }, OnEvent, nil, nil, OnEnter, nil, L["Avoidance Breakdown"], nil, ApplySettings)

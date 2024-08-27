@@ -1,12 +1,12 @@
 local E, L, V, P, G = unpack(ElvUI)
-local DT = E:GetModule("DataTexts")
+local DT = E:GetModule('DataTexts')
 
 local time, max, strjoin = time, max, strjoin
 local UnitGUID = UnitGUID
 
 local lastSegment, petGUID = 0
 local timeStamp, combatTime, healTotal = 0, 0, 0
-local displayString = ""
+local displayString = ''
 local events = {
 	SPELL_HEAL = true,
 	SPELL_PERIODIC_HEAL = true
@@ -27,15 +27,15 @@ local function GetHPS(self)
 end
 
 local function OnEvent(self, event, ...)
-	if event == "UNIT_PET" then
-		petGUID = UnitGUID("pet")
-	elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_LEAVE_COMBAT" then
+	if event == 'UNIT_PET' then
+		petGUID = UnitGUID('pet')
+	elseif event == 'PLAYER_REGEN_DISABLED' or event == 'PLAYER_LEAVE_COMBAT' then
 		local now = time()
 		if now - lastSegment > 20 then
 			Reset()
 		end
 		lastSegment = now
-	elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
+	elseif event == 'COMBAT_LOG_EVENT_UNFILTERED' then
 		local timestamp, Event, sourceGUID, _, _, _, _, _, _, _, lastHealAmount, overHeal = ...
 		if not events[Event] then return end
 
@@ -56,7 +56,7 @@ local function OnClick(self)
 end
 
 local function ApplySettings(_, hex)
-	displayString = strjoin("", "%s: ", hex, "%s")
+	displayString = strjoin('', '%s: ', hex, '%s')
 end
 
-DT:RegisterDatatext("HPS", nil, {"UNIT_PET", "COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_LEAVE_COMBAT", "PLAYER_REGEN_DISABLED"}, OnEvent, nil, OnClick, nil, nil, L["HPS"], nil, ApplySettings)
+DT:RegisterDatatext('HPS', nil, { 'UNIT_PET', 'COMBAT_LOG_EVENT_UNFILTERED', 'PLAYER_LEAVE_COMBAT', 'PLAYER_REGEN_DISABLED' }, OnEvent, nil, OnClick, nil, nil, L["HPS"], nil, ApplySettings)

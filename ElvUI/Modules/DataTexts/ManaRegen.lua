@@ -1,5 +1,5 @@
 local E, L, V, P, G = unpack(ElvUI)
-local DT = E:GetModule("DataTexts")
+local DT = E:GetModule('DataTexts')
 
 local strjoin = strjoin
 
@@ -8,7 +8,7 @@ local InCombatLockdown = InCombatLockdown
 
 local MANA_REGEN = MANA_REGEN
 
-local displayString = ""
+local displayString = ''
 
 local function OnEvent(self)
 	local baseMR, castingMR = GetManaRegen()
@@ -17,7 +17,7 @@ local function OnEvent(self)
 end
 
 local function ApplySettings(_, hex)
-	displayString = strjoin("", "%s: ", hex, "%.2f|r")
+	displayString = strjoin('', '%s: ', hex, '%.2f|r')
 end
 
-DT:RegisterDatatext("Mana Regen", L["Enhancements"], {"UNIT_STATS", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED"}, OnEvent, nil, nil, nil, nil, MANA_REGEN, nil, ApplySettings)
+DT:RegisterDatatext('Mana Regen', L["Enhancements"], { 'UNIT_STATS', 'PLAYER_REGEN_DISABLED', 'PLAYER_REGEN_ENABLED' }, OnEvent, nil, nil, nil, nil, MANA_REGEN, nil, ApplySettings)

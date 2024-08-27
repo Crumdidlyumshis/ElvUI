@@ -1,5 +1,5 @@
 local E, L, V, P, G = unpack(ElvUI)
-local DT = E:GetModule("DataTexts")
+local DT = E:GetModule('DataTexts')
 
 local format = format
 local strjoin = strjoin
@@ -7,8 +7,8 @@ local UnitArmor = UnitArmor
 local UnitLevel = UnitLevel
 local ARMOR = ARMOR
 
-local chanceString = "%.2f%%"
-local displayString, db, effectiveArmor, _ = ""
+local chanceString = '%.2f%%'
+local displayString, db, effectiveArmor, _ = ''
 
 local function GetArmorReduction(armor, attackerLevel)
 	local levelModifier = attackerLevel
@@ -25,19 +25,19 @@ local function GetArmorReduction(armor, attackerLevel)
 end
 
 local function OnEvent(self)
-	_, effectiveArmor = UnitArmor("player")
+	_, effectiveArmor = UnitArmor('player')
 
 	if db.NoLabel then
 		self.text:SetFormattedText(displayString, effectiveArmor)
 	else
-		self.text:SetFormattedText(displayString, db.Label ~= "" and db.Label or ARMOR..": ", effectiveArmor)
+		self.text:SetFormattedText(displayString, db.Label ~= '' and db.Label or ARMOR..': ', effectiveArmor)
 	end
 end
 
 local function OnEnter()
 	DT.tooltip:ClearLines()
 	DT.tooltip:AddLine(L["Mitigation By Level: "])
-	DT.tooltip:AddLine(" ")
+	DT.tooltip:AddLine(' ')
 
 	local playerLevel = E.mylevel + 3
 	for _ = 1, 4 do
@@ -46,10 +46,10 @@ local function OnEnter()
 		playerLevel = playerLevel - 1
 	end
 
-	local targetLevel = UnitLevel("target")
+	local targetLevel = UnitLevel('target')
 	if targetLevel and targetLevel > 0 and (targetLevel > playerLevel + 3 or targetLevel < playerLevel) then
 		local armorReduction = GetArmorReduction(effectiveArmor, targetLevel)
-		DT.tooltip:AddLine(" ")
+		DT.tooltip:AddLine(' ')
 		DT.tooltip:AddDoubleLine(L["Target Mitigation"], format(chanceString, armorReduction), 1, 1, 1)
 	end
 
@@ -61,7 +61,7 @@ local function ApplySettings(self, hex)
 		db = E.global.datatexts.settings[self.name]
 	end
 
-	displayString = strjoin("", db.NoLabel and "" or "%s", hex, "%d|r")
+	displayString = strjoin('', db.NoLabel and '' or '%s', hex, '%d|r')
 end
 
-DT:RegisterDatatext("Armor", L["Attributes"], {"UNIT_STATS", "UNIT_RESISTANCES"}, OnEvent, nil, nil, OnEnter, nil, ARMOR, nil, ApplySettings)
+DT:RegisterDatatext('Armor', L["Attributes"], {'UNIT_STATS', 'UNIT_RESISTANCES'}, OnEvent, nil, nil, OnEnter, nil, ARMOR, nil, ApplySettings)

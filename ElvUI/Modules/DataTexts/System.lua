@@ -1,5 +1,5 @@
 local E, L, V, P, G = unpack(ElvUI)
-local DT = E:GetModule("DataTexts")
+local DT = E:GetModule('DataTexts')
 
 local collectgarbage = collectgarbage
 local tremove, tinsert, sort, wipe, type = tremove, tinsert, sort, wipe, type
@@ -22,27 +22,27 @@ local UpdateAddOnCPUUsage = UpdateAddOnCPUUsage
 local UpdateAddOnMemoryUsage = UpdateAddOnMemoryUsage
 
 local statusColors = {
-	"|cff0CD809",
-	"|cffE8DA0F",
-	"|cffFF9000",
-	"|cffD80909"
+	'|cff0CD809',
+	'|cffE8DA0F',
+	'|cffFF9000',
+	'|cffD80909'
 }
 
 local enteredFrame, db = false
-local homeLatencyString = "%d ms"
-local kiloByteString = "%d kb"
-local megaByteString = "%.2f mb"
-local profilingString = "%s%s|r |cffffffff/|r %s%s|r"
-local cpuProfiling = GetCVar("scriptProfile") == "1"
+local homeLatencyString = '%d ms'
+local kiloByteString = '%d kb'
+local megaByteString = '%.2f mb'
+local profilingString = '%s%s|r |cffffffff/|r %s%s|r'
+local cpuProfiling = GetCVar('scriptProfile') == '1'
 
 local CombineAddOns = {
-	["DBM-Core"] = "^<DBM>",
-	["DataStore"] = "^DataStore",
-	["Altoholic"] = "^Altoholic",
-	["AtlasLoot"] = "^AtlasLoot",
-	["Details"] = "^Details!",
-	["RaiderIO"] = "^RaiderIO",
-	["BigWigs"] = "^BigWigs",
+	['DBM-Core'] = '^<DBM>',
+	['DataStore'] = '^DataStore',
+	['Altoholic'] = '^Altoholic',
+	['AtlasLoot'] = '^AtlasLoot',
+	['Details'] = '^Details!',
+	['RaiderIO'] = '^RaiderIO',
+	['BigWigs'] = '^BigWigs',
 }
 
 local function formatMem(memory)
@@ -73,10 +73,10 @@ end
 local function OnClick()
 	local shiftDown, ctrlDown = IsShiftKeyDown(), IsControlKeyDown()
 	if shiftDown and ctrlDown then
-		E:SetCVar("scriptProfile", GetCVar("scriptProfile"))
+		E:SetCVar('scriptProfile', GetCVar('scriptProfile'))
 		ReloadUI()
 	elseif shiftDown and not ctrlDown then
-		collectgarbage("collect")
+		collectgarbage('collect')
 		ResetCPUUsage()
 	end
 end
@@ -139,7 +139,7 @@ local function OnEnter(_, slow)
 			count = count + 1
 			infoDisplay[count] = data
 
-			if data.name == "ElvUI" or data.name == "ElvUI_OptionsUI" or data.name == "ElvUI_Libraries" then
+			if data.name == 'ElvUI' or data.name == 'ElvUI_OptionsUI' or data.name == 'ElvUI_Libraries' then
 				infoTable[data.name] = data
 			end
 		end
@@ -150,12 +150,12 @@ local function OnEnter(_, slow)
 		DT.tooltip:AddDoubleLine(L["Total CPU:"], format(homeLatencyString, totalCPU), .69, .31, .31, .84, .75, .65)
 	end
 
-	DT.tooltip:AddLine(" ")
+	DT.tooltip:AddLine(' ')
 	if not db.ShowOthers then
 		displayData(infoTable.ElvUI, totalMEM, totalCPU)
 		displayData(infoTable.ElvUI_OptionsUI, totalMEM, totalCPU)
 		-- displayData(infoTable.ElvUI_Libraries, totalMEM, totalCPU)
-		DT.tooltip:AddLine(" ")
+		DT.tooltip:AddLine(' ')
 	else
 		for addon, searchString in pairs(CombineAddOns) do
 			local addonIndex, memoryUsage, cpuUsage = 0, 0, 0
@@ -169,7 +169,7 @@ local function OnEnter(_, slow)
 			end
 
 			for k, data in pairs(infoDisplay) do
-				if type(data) == "table" then
+				if type(data) == 'table' then
 					local name, mem, cpu = data.title, data.mem, data.cpu
 					local stripName = E:StripString(data.title)
 					if name and (strmatch(stripName, searchString) or data.name == addon) then
@@ -200,7 +200,7 @@ local function OnEnter(_, slow)
 
 		for i = count, 1, -1 do
 			local data = infoDisplay[i]
-			if type(data) == "boolean" then
+			if type(data) == 'boolean' then
 				tremove(infoDisplay, i)
 			end
 		end
@@ -211,7 +211,7 @@ local function OnEnter(_, slow)
 			displayData(infoDisplay[i], totalMEM, totalCPU)
 		end
 
-		DT.tooltip:AddLine(" ")
+		DT.tooltip:AddLine(' ')
 		if showByCPU then
 			DT.tooltip:AddLine(L["(Hold Shift) Memory Usage"])
 		end
@@ -235,11 +235,11 @@ local function OnUpdate(self, elapsed)
 
 		local framerate = floor(GetFramerate())
 		local _, _, worldPing = GetNetStats()
-		local latency = db.latency == "WORLD" and worldPing
+		local latency = db.latency == 'WORLD' and worldPing
 
 		local fps = framerate >= 30 and 1 or (framerate >= 20 and framerate < 30) and 2 or (framerate >= 10 and framerate < 20) and 3 or 4
 		local ping = latency < 150 and 1 or (latency >= 150 and latency < 300) and 2 or (latency >= 300 and latency < 500) and 3 or 4
-		self.text:SetFormattedText(db.NoLabel and "%s%d|r | %s%d|r" or "FPS: %s%d|r MS: %s%d|r", statusColors[fps], framerate, statusColors[ping], latency)
+		self.text:SetFormattedText(db.NoLabel and '%s%d|r | %s%d|r' or 'FPS: %s%d|r MS: %s%d|r', statusColors[fps], framerate, statusColors[ping], latency)
 
 		if not enteredFrame then return end
 
@@ -263,4 +263,4 @@ local function ApplySettings(self)
 	end
 end
 
-DT:RegisterDatatext("System", nil, nil, BuildAddonList, OnUpdate, OnClick, OnEnter, OnLeave, L["System"], nil, ApplySettings)
+DT:RegisterDatatext('System', nil, nil, BuildAddonList, OnUpdate, OnClick, OnEnter, OnLeave, L["System"], nil, ApplySettings)

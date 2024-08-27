@@ -1,12 +1,12 @@
 local E, L, V, P, G = unpack(ElvUI)
-local DT = E:GetModule("DataTexts")
+local DT = E:GetModule('DataTexts')
 
 local _G = _G
 local strjoin = strjoin
 
 local NOT_APPLICABLE = NOT_APPLICABLE
 
-local displayString = ""
+local displayString = ''
 local inRestrictedArea = false
 local mapInfo = E.MapInfo
 
@@ -38,7 +38,7 @@ local function Click()
 end
 
 local function ApplySettings(_, hex)
-	displayString = strjoin("", hex, "%.2f|r", " | ", hex, "%.2f|r")
+	displayString = strjoin('', hex, '%.2f|r', ' | ', hex, '%.2f|r')
 end
 
-DT:RegisterDatatext("Coords", nil, {"LOADING_SCREEN_DISABLED", "ZONE_CHANGED", "ZONE_CHANGED_INDOORS", "ZONE_CHANGED_NEW_AREA"}, OnEvent, Update, Click, nil, nil, L["Coords"], mapInfo, ApplySettings)
+DT:RegisterDatatext('Coords', nil, { 'LOADING_SCREEN_DISABLED', 'ZONE_CHANGED', 'ZONE_CHANGED_INDOORS', 'ZONE_CHANGED_NEW_AREA' }, OnEvent, Update, Click, nil, nil, L["Coords"], mapInfo, ApplySettings)

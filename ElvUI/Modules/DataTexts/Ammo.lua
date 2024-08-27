@@ -20,6 +20,8 @@ local NUM_BAG_FRAMES = NUM_BAG_FRAMES
 local INVTYPE_AMMO = INVTYPE_AMMO
 local INVSLOT_RANGED = INVSLOT_RANGED
 local INVSLOT_AMMO = INVSLOT_AMMO
+local NOT_APPLICABLE = NOT_APPLICABLE
+local CURRENTLY_EQUIPPED = CURRENTLY_EQUIPPED
 
 local QUIVER = select(1, GetAuctionItemSubClasses(8))
 local POUCH = select(2, GetAuctionItemSubClasses(8))
@@ -86,6 +88,7 @@ local function OnEvent(self, event, ...)
 end
 
 local itemCount = {}
+local totalItemCount = 0
 local function OnEnter()
 	DT.tooltip:ClearLines()
 
@@ -102,12 +105,27 @@ local function OnEnter()
 					if equipLoc == 'INVTYPE_AMMO' or equipLoc == 'INVTYPE_THROWN' then
 						DT.tooltip:AddDoubleLine(strjoin('', format(iconString, texture), ' ', name), count, GetItemQualityColor(quality))
 						itemCount[info.itemID] = count
+						totalItemCount = totalItemCount + 1
 					end
 				end
 			end
 		end
 
-		DT.tooltip:AddLine(' ')
+		if totalItemCount == 0 then
+			DT.tooltip:AddLine(NOT_APPLICABLE)
+		end
+
+		local itemID = GetInventoryItemID('player', 18) -- ranged weapon
+		if itemID then
+			local name, _, quality, _, _, _, _, _, equipLoc, texture = GetItemInfo(itemID)
+			local count = GetItemCount(itemID)
+			itemCount[itemID] = count
+			if equipLoc == 'INVTYPE_RANGED' or equipLoc == 'INVTYPE_THROWN' then
+				DT.tooltip:AddLine(' ')
+				DT.tooltip:AddLine(CURRENTLY_EQUIPPED)
+				DT.tooltip:AddDoubleLine(strjoin('', format(iconString, texture), ' ', name), count, GetItemQualityColor(quality))
+			end
+		end
 	end
 
 	for i = 1, NUM_BAG_SLOTS do

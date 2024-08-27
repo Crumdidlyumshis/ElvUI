@@ -1,5 +1,5 @@
 local E, L, V, P, G = unpack(ElvUI)
-local DT = E:GetModule("DataTexts")
+local DT = E:GetModule('DataTexts')
 
 local _G = _G
 local min = min
@@ -7,7 +7,7 @@ local strjoin = strjoin
 
 local GetSpellBonusDamage = GetSpellBonusDamage
 local MAX_SPELL_SCHOOLS = MAX_SPELL_SCHOOLS
-local displayString, db = ""
+local displayString, db = ''
 
 local function OnEvent(self)
 	local minSpellPower
@@ -22,7 +22,7 @@ local function OnEvent(self)
 		minSpellPower = GetSpellBonusDamage(db.school)
 	end
 
-	self.text:SetFormattedText(displayString, L["SP"], minSpellPower or 0)
+	self.text:SetFormattedText(displayString, L['SP'], minSpellPower or 0)
 end
 
 local icon = [[Interface\PaperDollInfoFrame\SpellSchoolIcon]]
@@ -31,7 +31,7 @@ local function OnEnter()
 
 	for i = 2, MAX_SPELL_SCHOOLS do
 		local value = GetSpellBonusDamage(i) or 0
-		DT.tooltip:AddDoubleLine(_G["DAMAGE_SCHOOL"..i], value)
+		DT.tooltip:AddDoubleLine(_G['DAMAGE_SCHOOL'..i], value)
 		DT.tooltip:AddTexture(icon..i)
 	end
 
@@ -43,7 +43,7 @@ local function ApplySettings(self, hex)
 		db = E.global.datatexts.settings[self.name]
 	end
 
-	displayString = strjoin("", "%s: ", hex, "%d|r")
+	displayString = strjoin('', '%s: ', hex, '%d|r')
 end
 
-DT:RegisterDatatext("SpellPower", L["Enhancements"], { "UNIT_STATS", "UNIT_AURA" }, OnEvent, nil, nil, OnEnter, nil, L["Spell Power"], nil, ApplySettings)
+DT:RegisterDatatext('SpellPower', L["Enhancements"], { 'UNIT_STATS', 'UNIT_AURA' }, OnEvent, nil, nil, OnEnter, nil, L["Spell Power"], nil, ApplySettings)

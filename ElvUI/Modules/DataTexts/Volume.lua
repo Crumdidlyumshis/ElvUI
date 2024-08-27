@@ -7,7 +7,6 @@ local format = format
 local ipairs = ipairs
 local tinsert = tinsert
 
-local EasyMenu = EasyMenu
 local GetCVar = GetCVar
 local GetCVarBool = GetCVarBool
 local IsShiftKeyDown = IsShiftKeyDown
@@ -142,12 +141,12 @@ local function OnClick(self, button)
 		end
 
 		E:SetEasyMenuAnchor(E.EasyMenu, self)
-		EasyMenu(menu, E.EasyMenu, nil, nil, nil, 'MENU')
+		_G.EasyMenu(menu, E.EasyMenu, nil, nil, nil, 'MENU')
 	elseif button == 'MiddleButton' then
 		E:SetCVar(AudioStreams[1].Enabled, GetCVarBool(AudioStreams[1].Enabled) and 0 or 1, 'ELVUI_VOLUME')
 	elseif button == 'RightButton' then
 		E:SetEasyMenuAnchor(E.EasyMenu, self)
-		EasyMenu(IsShiftKeyDown() and deviceMenu or toggleMenu, E.EasyMenu, nil, nil, nil, 'MENU')
+		_G.EasyMenu(IsShiftKeyDown() and deviceMenu or toggleMenu, E.EasyMenu, nil, nil, nil, 'MENU')
 	end
 end
 

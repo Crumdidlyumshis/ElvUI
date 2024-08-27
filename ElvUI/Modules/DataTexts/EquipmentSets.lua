@@ -6,10 +6,11 @@ local tinsert = tinsert
 local pairs = pairs
 local wipe = wipe
 
-local EasyMenu = EasyMenu
-local C_EquipmentSet_GetEquipmentSetIDs = C_EquipmentSet.GetEquipmentSetIDs
-local C_EquipmentSet_GetEquipmentSetInfo = C_EquipmentSet.GetEquipmentSetInfo
-local C_EquipmentSet_UseEquipmentSet = C_EquipmentSet.UseEquipmentSet
+local GetNumEquipmentSets = GetNumEquipmentSets
+local GetEquipmentSetInfo = GetEquipmentSetInfo
+local GetEquipmentSetItemIDs = GetEquipmentSetItemIDs
+local GetInventoryItemID = GetInventoryItemID
+local UseEquipmentSet = UseEquipmentSet
 
 local eqSets = {}
 local hexColor = ''
@@ -29,20 +30,34 @@ end
 
 local function OnClick(self)
 	E:SetEasyMenuAnchor(E.EasyMenu, self)
-	EasyMenu(eqSets, E.EasyMenu, nil, nil, nil, 'MENU')
+	_G.EasyMenu(eqSets, E.EasyMenu, nil, nil, nil, 'MENU')
 end
 
 local function OnEvent(self, event)
-	if event == 'ELVUI_FORCE_UPDATE' or event == 'EQUIPMENT_SETS_CHANGED' then
+	if event == 'ELVUI_FORCE_UPDATE' or event == 'EQUIPMENT_SETS_CHANGED' or event == 'PLAYER_EQUIPMENT_CHANGED' then
 		wipe(eqSets)
 	end
 
+    local numSets = GetNumEquipmentSets()
 	local activeSetIndex
-	for i, setID in pairs(C_EquipmentSet_GetEquipmentSetIDs()) do
-		local name, iconFileID, _, isEquipped = C_EquipmentSet_GetEquipmentSetInfo(setID)
+	for i = 1, numSets do
+		local name, iconFileID, setID = GetEquipmentSetInfo(i)
+        local items = GetEquipmentSetItemIDs(name)
+		local isEquipped = true
 
-		if event == 'ELVUI_FORCE_UPDATE' or event == 'EQUIPMENT_SETS_CHANGED' then
-			tinsert(eqSets, { text = format('|T%s:20:20:0:0:64:64:4:60:4:60|t  %s', iconFileID, name), checked = isEquipped, func = function() C_EquipmentSet_UseEquipmentSet(setID) end, setID = setID, name = name, iconFileID = iconFileID, isEquipped = isEquipped })
+		for slot, itemID in pairs(items) do
+            if itemID then
+                local equippedItemID = GetInventoryItemID('player', slot)
+				equippedItemID = equippedItemID == nil and 0 or equippedItemID
+                if equippedItemID ~= itemID then
+                    isEquipped = false
+                    break
+                end
+            end
+        end
+
+		if event == 'ELVUI_FORCE_UPDATE' or event == 'EQUIPMENT_SETS_CHANGED' or event == 'PLAYER_EQUIPMENT_CHANGED' then
+			tinsert(eqSets, { text = format('|T%s:20:20:0:0:64:64:4:60:4:60|t  %s', iconFileID, name), checked = isEquipped, func = function() UseEquipmentSet(name) end, setID = setID, name = name, iconFileID = iconFileID, isEquipped = isEquipped })
 		end
 
 		if isEquipped then

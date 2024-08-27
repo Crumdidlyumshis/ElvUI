@@ -13,6 +13,7 @@ local GetNumSavedInstances = GetNumSavedInstances
 local GetSavedInstanceInfo = GetSavedInstanceInfo
 local RequestRaidInfo = RequestRaidInfo
 local SecondsToTime = SecondsToTime
+local IsInInstance = IsInInstance
 
 local QUEUE_TIME_UNAVAILABLE = QUEUE_TIME_UNAVAILABLE
 local TIMEMANAGER_TOOLTIP_LOCALTIME = TIMEMANAGER_TOOLTIP_LOCALTIME
@@ -131,7 +132,7 @@ local function OnEnter()
 	end
 
 	local addedHeader = false
-	local startTime = GetWintergraspWaitTime()
+	local startTime = _G.GetWintergraspWaitTime()
 	local _, instanceType = IsInInstance()
 
 	if startTime == nil then
@@ -212,7 +213,7 @@ local function OnEnter()
 		DT.tooltip:AddLine(' ')
 	end
 
-	local dailyReset = GetQuestResetTime()
+	local dailyReset = _G.GetQuestResetTime()
 	if dailyReset then
 		DT.tooltip:AddDoubleLine(L["Daily Reset"], ToTime(dailyReset), 1, 1, 1, lockoutColorNormal.r, lockoutColorNormal.g, lockoutColorNormal.b)
 	end
@@ -246,6 +247,6 @@ function OnUpdate(self, t)
 
 	local Hr, Min, Sec, AmPm = GetTimeValues()
 	self.text:SetFormattedText(displayFormats[AmPm == -1 and 'eu_color' or 'na_color'], Hr, Min, Sec, APM[AmPm])
-end	DT.tooltip:Show()
+end
 
 DT:RegisterDatatext('Time', nil, { 'UPDATE_INSTANCE_INFO', 'LOADING_SCREEN_ENABLED' }, OnEvent, OnUpdate, OnClick, OnEnter, OnLeave, nil, nil, ApplySettings)

@@ -10,10 +10,10 @@ local min, max = min, max
 local next, format, type, pcall, unpack = next, format, type, pcall, unpack
 local tinsert, ipairs, pairs, wipe, sort, gsub = tinsert, ipairs, pairs, wipe, sort, gsub
 local tostring, strfind, strmatch, strsplit = tostring, strfind, strmatch, strsplit
+local hooksecurefunc = hooksecurefunc
 
 local CloseDropDownMenus = CloseDropDownMenus
 local CreateFrame = CreateFrame
-local EasyMenu = EasyMenu
 local GetArenaCurrency = GetArenaCurrency
 local GetHonorCurrency = GetHonorCurrency
 local GetBackpackCurrencyInfo = GetBackpackCurrencyInfo
@@ -76,9 +76,9 @@ DT.SPECIALIZATION_CACHE = {}
 function DT:QuickDTMode(_, key, active)
 	if DT.SelectedDatatext and (key == 'LALT' or key == 'RALT') then
 		if active == 1 and MouseIsOver(DT.SelectedDatatext) then
-			DT:OnLeave()
+			DT.OnLeave(DT.SelectedDatatext)
 			E:SetEasyMenuAnchor(E.EasyMenu, DT.SelectedDatatext)
-			EasyMenu(QuickList, E.EasyMenu, nil, nil, nil, 'MENU')
+			_G.EasyMenu(QuickList, E.EasyMenu, nil, nil, nil, 'MENU')
 		elseif _G.DropDownList1:IsShown() and not _G.DropDownList1:IsMouseOver() then
 			CloseDropDownMenus()
 		end
@@ -99,6 +99,10 @@ function DT:OnEnter()
 		end
 	end
 
+	if self.watchModKey then
+		self:RegisterEvent('MODIFIER_STATE_CHANGED')
+	end
+
 	DT.MouseEnter(self)
 end
 
@@ -107,6 +111,10 @@ function DT:OnLeave()
 		for _, func in ipairs(self.MouseLeaves) do
 			func(self)
 		end
+	end
+
+	if self.watchModKey then
+		self:UnregisterEvent('MODIFIER_STATE_CHANGED')
 	end
 
 	DT.MouseLeave(self)
@@ -202,14 +210,29 @@ function DT:BuildPanelFunctions(name, obj)
 	local panel, hex
 
 	local function OnEnter(dt)
-		DT.tooltip:ClearLines()
-		if obj.OnTooltipShow then obj.OnTooltipShow(DT.tooltip) end
-		if obj.OnEnter then obj.OnEnter(dt) end
-		DT.tooltip:Show()
+		if obj.tooltip then
+			obj.tooltip:ClearAllPoints()
+			obj.tooltip:SetOwner(DT:SetupTooltip(self))
+			obj.tooltip:Show()
+		else
+			DT.tooltip:ClearLines()
+
+			if obj.OnEnter then
+				obj.OnEnter(dt)
+			elseif obj.OnTooltipShow then
+				obj.OnTooltipShow(DT.tooltip)
+			end
+
+			DT.tooltip:Show()
+		end
 	end
 
 	local function OnLeave(dt)
-		if obj.OnLeave then obj.OnLeave(dt) end
+		if obj.tooltip then
+			obj.tooltip:Hide()
+		elseif obj.OnLeave then
+			obj.OnLeave(dt)
+		end
 	end
 
 	local function OnClick(dt, button)
@@ -502,7 +525,6 @@ function DT:UpdatePanelInfo(panelName, panel, ...)
 			icon:Hide()
 			icon:Point('RIGHT', text, 'LEFT', -4, 0)
 			icon:SetTexCoord(unpack(E.TexCoords))
-
 			dt.icon = icon
 
 			DT.FontStrings[text] = true
@@ -848,6 +870,10 @@ function DT:BuildTables()
 	db.faction[E.myrealm][E.myname] = E.myfaction
 end
 
+function DT:CloseMenus()
+	CloseDropDownMenus()
+end
+
 function DT:Initialize()
 	DT.Initialized = true
 	DT.db = E.db.datatexts
@@ -857,15 +883,19 @@ function DT:Initialize()
 	E.EasyMenu:SetClampedToScreen(true)
 	E.EasyMenu:EnableMouse(true)
 	E.EasyMenu.MenuSetItem = function(dt, value)
-		DT.db.panels[dt.parentName][dt.pointIndex] = value
-		DT:UpdatePanelInfo(dt.parentName, dt.parent)
+		local panelDB = (dt and dt.battlePanel) and DT.db.battlePanel or DT.db.panels
+		if panelDB then
+			panelDB[dt.parentName][dt.pointIndex] = value
+			DT:UpdatePanelInfo(dt.parentName, dt.parent)
+		end
 
 		DT.SelectedDatatext = nil
-		CloseDropDownMenus()
+
+		DT:CloseMenus()
 	end
 	E.EasyMenu.MenuGetItem = function(dt, value)
-		local panel = (dt.battlePanel and DT.db.battlePanel or DT.db.panels)
-		return dt and (panel[dt.parentName] and panel[dt.parentName][dt.pointIndex] == value)
+		local panelDB = (dt and dt.battlePanel) and DT.db.battlePanel or DT.db.panels
+		return dt and (panelDB[dt.parentName] and panelDB[dt.parentName][dt.pointIndex] == value)
 	end
 
 	if E.private.skins.blizzard.enable and E.private.skins.blizzard.tooltip then

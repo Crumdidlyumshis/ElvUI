@@ -11,7 +11,6 @@ local SetRaidDifficulty = SetRaidDifficulty
 local GetInstanceInfo = GetInstanceInfo
 local GetZoneText = GetZoneText
 local ResetInstances = ResetInstances
-local EasyMenu = EasyMenu
 
 local heroicTex = [[|Tinterface\lfgframe\ui-lfg-icon-heroic:20:20:0:0:64:64:0:36:0:36|t]]
 local dungTex = [[|Tinterface\icons\spell_arcane_teleportstormwind:20:20:0:0:64:64:4:60:4:60|t]]
@@ -43,7 +42,7 @@ end
 
 local function OnClick(self)
     E:SetEasyMenuAnchor(E.EasyMenu, self)
-	EasyMenu(RightClickMenu, E.EasyMenu, nil, nil, nil, 'MENU')
+	_G.EasyMenu(RightClickMenu, E.EasyMenu, nil, nil, nil, 'MENU')
 end
 
 local function OnEnter()
@@ -57,4 +56,4 @@ local function OnEnter()
     DT.tooltip:Show()
 end
 
-DT:RegisterDatatext('Difficulty', nil, {'CHAT_MSG_SYSTEM', 'ZONE_CHANGED', 'ZONE_CHANGED_INDOORS', 'ZONE_CHANGED_NEW_AREA'}, OnEvent, nil, OnClick, OnEnter, nil, 'Difficulty')
+DT:RegisterDatatext('Difficulty', nil, { 'CHAT_MSG_SYSTEM', 'ZONE_CHANGED', 'ZONE_CHANGED_INDOORS', 'ZONE_CHANGED_NEW_AREA' }, OnEvent, nil, OnClick, OnEnter, nil, 'Difficulty')

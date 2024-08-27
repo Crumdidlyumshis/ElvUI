@@ -1,5 +1,5 @@
 local E, L, V, P, G = unpack(ElvUI)
-local DT = E:GetModule("DataTexts")
+local DT = E:GetModule('DataTexts')
 
 local _G = _G
 local format, strjoin = format, strjoin
@@ -16,27 +16,24 @@ local GetActiveTalentGroup = GetActiveTalentGroup
 local GetNumTalentGroups = GetNumTalentGroups
 local SetActiveTalentGroup = SetActiveTalentGroup
 local GetTalentTabInfo = GetTalentTabInfo
+local LoadAddOn = LoadAddOn
 
-local displayString, db = ""
+local displayString, db = ''
 local primaryStr, secondaryStr, activeGroup, hasDualSpec
 
 local function BuildTalentString(talentGroup)
-	local str = ""
+	local str = ''
 
 	for i = 1, MAX_TALENT_TABS do
-		local _, _, pointsSpent = GetTalentTabInfo(i, false, false, talentGroup)
-		if (str == "") then
-			str = pointsSpent
-		else
-			str = strjoin("/", str, pointsSpent)
-		end
+		local _, _, points = GetTalentTabInfo(i, false, false, talentGroup)
+		str = (str == '' and points) or strjoin('/', str, points)
 	end
 
 	return str
 end
 
 local function ColorText(str, hex)
-	return format("|cff%s%s|r",hex,str)
+	return format('|cff%s%s|r',hex,str)
 end
 
 local function OnEvent(self)
@@ -55,13 +52,13 @@ end
 local function OnEnter()
 	DT.tooltip:ClearLines()
 
-	DT.tooltip:AddDoubleLine(format("%s: %s", ColorText(PRIMARY, activeGroup == 1 and "0CD809" or "FFFFFF"), primaryStr))
+	DT.tooltip:AddDoubleLine(format('%s: %s', ColorText(PRIMARY, activeGroup == 1 and '0CD809' or 'FFFFFF'), primaryStr))
 
 	if hasDualSpec then
-		DT.tooltip:AddDoubleLine(format("%s: %s", ColorText(SECONDARY, activeGroup == 2 and "0CD809" or "FFFFFF"), secondaryStr))
+		DT.tooltip:AddDoubleLine(format('%s: %s', ColorText(SECONDARY, activeGroup == 2 and '0CD809' or 'FFFFFF'), secondaryStr))
 	end
 
-	DT.tooltip:AddLine(" ")
+	DT.tooltip:AddLine(' ')
 
 	if hasDualSpec then
 		DT.tooltip:AddLine(L["|cffFFFFFFLeft Click:|r Change Talent Specialization"])
@@ -72,15 +69,15 @@ local function OnEnter()
 end
 
 local function OnClick(_, button)
-	if button == "LeftButton" then
-		if not PlayerTalentFrame then
-			LoadAddOn("Blizzard_TalentUI")
+	if button == 'LeftButton' then
+		if not _G.PlayerTalentFrame then
+			LoadAddOn('Blizzard_TalentUI')
 		end
 		if IsShiftKeyDown() then
-			if not PlayerTalentFrame:IsShown() then
-				ShowUIPanel(PlayerTalentFrame)
+			if not _G.PlayerTalentFrame:IsShown() then
+				ShowUIPanel(_G.PlayerTalentFrame)
 			else
-				HideUIPanel(PlayerTalentFrame)
+				HideUIPanel(_G.PlayerTalentFrame)
 			end
 		else
 			if hasDualSpec then
@@ -95,7 +92,7 @@ local function ApplySettings(self, hex)
 		db = E.global.datatexts.settings[self.name]
 	end
 
-	displayString = strjoin("", db.NoLabel and "" or "%s: ", hex, "%s|r")
+	displayString = strjoin('', db.NoLabel and '' or '%s: ', hex, '%s|r')
 end
 
-DT:RegisterDatatext("DualSpecialization", nil, { "CHARACTER_POINTS_CHANGED", "ACTIVE_TALENT_GROUP_CHANGED" }, OnEvent, nil, OnClick, OnEnter, nil, LEVEL_UP_DUALSPEC, nil, ApplySettings)
+DT:RegisterDatatext('DualSpecialization', nil, { 'CHARACTER_POINTS_CHANGED', 'ACTIVE_TALENT_GROUP_CHANGED' }, OnEvent, nil, OnClick, OnEnter, nil, LEVEL_UP_DUALSPEC, nil, ApplySettings)
