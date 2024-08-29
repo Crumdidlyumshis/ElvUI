@@ -67,6 +67,7 @@ G.datatexts = {
 		Mastery = { Label = '', NoLabel = false, decimalLength = 1 },
 		MovementSpeed = { Label = '', NoLabel = false, decimalLength = 1 },
 		Reputation = { textFormat = 'CUR' },
+		['Talent Specialization'] = { iconSize = 16, iconOnly = false },
 		SpellPower = { school = 0 },
 		['Spell Crit Chance'] = { school = 0 },
 		Speed = { Label = '', NoLabel = false, decimalLength = 1 },

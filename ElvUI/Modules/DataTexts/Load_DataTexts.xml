@@ -47,6 +47,7 @@
 	<Script file='Quests.lua'/>
 	<Script file='Reputation.lua'/>
 	<Script file='Resilience.lua'/>
+	<Script file='SpecSwitch.lua'/>
 	<Script file='Speed.lua'/>
 	<Script file='SpellCrit.lua'/>
 	<Script file='SpellHaste.lua'/>
