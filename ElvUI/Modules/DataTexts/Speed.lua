@@ -20,7 +20,7 @@ local displayString, db = ''
 
 local function OnEnter()
 	DT.tooltip:ClearLines()
-	DT.tooltip:AddDoubleLine(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, SPEED)..' '..format('%.2F%%', UnitAttackSpeed('player'))..FONT_COLOR_CODE_CLOSE, nil, 1, 1, 1)
+	DT.tooltip:AddDoubleLine(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, SPEED)..' '..format('%.2f%%', UnitAttackSpeed('player'))..FONT_COLOR_CODE_CLOSE, nil, 1, 1, 1)
 	DT.tooltip:AddLine(format(CR_SPEED_TOOLTIP, BreakUpLargeNumbers(GetCombatRating(CR_HIT_TAKEN_SPELL)), GetCombatRatingBonus(CR_HIT_TAKEN_SPELL)), nil, nil, nil, true)
 	DT.tooltip:Show()
 end
