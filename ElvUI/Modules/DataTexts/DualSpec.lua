@@ -74,10 +74,8 @@ local function OnClick(_, button)
 			LoadAddOn('Blizzard_TalentUI')
 		end
 		if IsShiftKeyDown() then
-			if not _G.PlayerTalentFrame:IsShown() then
-				ShowUIPanel(_G.PlayerTalentFrame)
-			else
-				HideUIPanel(_G.PlayerTalentFrame)
+			if not E:AlertCombat() then
+				_G.ToggleTalentFrame()
 			end
 		else
 			if hasDualSpec then
