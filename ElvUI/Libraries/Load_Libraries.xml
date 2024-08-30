@@ -29,6 +29,7 @@
 
 	<Script file='LibSpellRange-1.0\LibSpellRange-1.0.lua'/>
 	<Script file='LibAceConfigHelper\LibAceConfigHelper.lua'/>
+	<Script file='LibButtonGlow-1.0\LibButtonGlow-1.0.lua'/>
 	<Script file='LibActionButton-1.0\LibActionButton-1.0.lua'/>
 	<Script file='LibDataBroker\LibDataBroker-1.1.lua'/>
 	<Script file='LibDualSpec-1.0\LibDualSpec-1.0.lua'/>

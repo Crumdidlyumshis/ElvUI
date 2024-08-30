@@ -15,6 +15,7 @@ local str_match, format, tinsert, tremove, strsub = string.match, format, tinser
 
 local KeyBound = LibStub("LibKeyBound-1.0", true)
 local CBH = LibStub("CallbackHandler-1.0")
+local LBG = LibStub("LibButtonGlow-1.0", true)
 
 lib.eventFrame = lib.eventFrame or CreateFrame("Frame")
 lib.eventFrame:UnregisterAllEvents()
@@ -63,8 +64,9 @@ local type_meta_map = {
 local ButtonRegistry, ActiveButtons, ActionButtons, NonActionButtons = lib.buttonRegistry, lib.activeButtons, lib.actionButtons, lib.nonActionButtons
 
 local Update, UpdateButtonState, UpdateUsable, UpdateCount, UpdateCooldown, UpdateTooltip
-local StartFlash, StopFlash, UpdateFlash, UpdateHotkeys, UpdateRangeTimer
+local StartFlash, StopFlash, UpdateFlash, UpdateHotkeys, UpdateRangeTimer, UpdateOverlayGlow
 local ShowGrid, HideGrid, UpdateGrid, SetupSecureSnippets, WrapOnClick
+local ShowOverlayGlow, HideOverlayGlow
 local UpdateRange -- Sezz: new method
 
 local UpdateAuraCooldowns -- Simpy
@@ -1222,6 +1224,27 @@ function UpdateHotkeys(self)
 
 	if self.postKeybind then
 		self.postKeybind(nil, self)
+	end
+end
+
+function ShowOverlayGlow(self)
+	if LBG then
+		LBG.ShowOverlayGlow(self)
+	end
+end
+
+function HideOverlayGlow(self)
+	if LBG then
+		LBG.HideOverlayGlow(self)
+	end
+end
+
+function UpdateOverlayGlow(self)
+	local spellId = self:GetSpellId()
+	if spellId then
+		ShowOverlayGlow(self)
+	else
+		HideOverlayGlow(self)
 	end
 end
 

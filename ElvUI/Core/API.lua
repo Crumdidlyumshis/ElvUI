@@ -14,8 +14,16 @@ local GetBattlefieldArenaFaction = GetBattlefieldArenaFaction
 local GetGameTime = GetGameTime
 local GetExpansionLevel = GetExpansionLevel
 local GetInstanceInfo = GetInstanceInfo
+local GetLootSlotInfo = GetLootSlotInfo
+local GetLootSlotLink = GetLootSlotLink
+local GetNumQuestLogEntries = GetNumQuestLogEntries
+local GetQuestLogTitle = GetQuestLogTitle
+local GetNumQuestLeaderBoards = GetNumQuestLeaderBoards
+local GetQuestLogLeaderBoard = GetQuestLogLeaderBoard
+local GetItemInfo = GetItemInfo
 local GetNumPartyMembers = GetNumPartyMembers
 local HideUIPanel = HideUIPanel
+local ShowUIPanel = ShowUIPanel
 local InCombatLockdown = InCombatLockdown
 local GetActiveTalentGroup = GetActiveTalentGroup
 local GetCVarBool = GetCVarBool
@@ -134,6 +142,56 @@ E.SpecName = { -- english locale
 	[72]	= 'Fury',
 	[73]	= 'Protection',
 }
+
+local questItemCache = {}
+
+function E:GetLootSlotInfo(slot)
+    local isQuestItem, questID, isActive = false, nil, false
+    local texture, item, count, quality, locked = GetLootSlotInfo(slot)
+    local link = GetLootSlotLink(slot)
+    if link then
+        local name, _, _, _, _, itemType, itemSubType = GetItemInfo(link)
+        if itemType == 'Quest' or itemSubType == 'Quest' then
+            isQuestItem = true
+
+            if not questItemCache[name] then
+                for i = 1, GetNumQuestLogEntries() do
+                    local _, _, _, _, isHeader, _, _, _, questId = GetQuestLogTitle(i)
+                    if not isHeader then
+                        for j = 1, GetNumQuestLeaderBoards(i) do
+							local text = GetQuestLogLeaderBoard(j, i)
+							local nameText = strmatch(text, '(.+):')
+                            if name == nameText then
+                                questItemCache[name] = {
+									questID = questId,
+									isActive = true
+								}
+                                break
+                            end
+                        end
+                    end
+                    if questItemCache[name] then break end
+                end
+            end
+
+            questID, isActive = questItemCache[name] and questItemCache[name].questID, questItemCache[name] and questItemCache[name].isActive
+        end
+    end
+
+    return texture, item, count, quality, locked, isQuestItem, questID, isActive
+end
+
+-- Function to clear the quest item cache when quests change
+local function ClearQuestItemCache()
+    wipe(questItemCache)
+end
+
+-- Register events to clear the cache
+local frame = CreateFrame('Frame')
+frame:RegisterEvent('QUEST_ACCEPTED')
+frame:RegisterEvent('QUEST_REMOVED')
+frame:RegisterEvent('QUEST_TURNED_IN')
+frame:SetScript('OnEvent', ClearQuestItemCache)
 
 function E:GetDateTime(localTime, unix)
 	if not localTime then -- try to properly handle realm time
