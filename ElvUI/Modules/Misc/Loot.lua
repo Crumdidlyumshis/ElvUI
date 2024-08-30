@@ -34,6 +34,8 @@ local UnitIsFriend = UnitIsFriend
 local UnitName = UnitName
 local UISpecialFrames = UISpecialFrames
 
+local GroupLootDropDown_GiveLoot = GroupLootDropDown_GiveLoot
+
 local StaticPopup_Hide = StaticPopup_Hide
 
 local hooksecurefunc = hooksecurefunc
@@ -342,9 +344,9 @@ function M:LoadLoot()
 	_G.LootFrame:UnregisterAllEvents()
 	tinsert(UISpecialFrames, 'ElvLootFrame')
 
-	function _G.GroupLootDropDown_GiveLoot(self)
+	local function GroupLootDropDown_GiveLoot(self)
 		if slotQuality >= _G.MASTER_LOOT_THREHOLD then
-			local dialog = E:StaticPopup_Show('CONFIRM_LOOT_DISTRIBUTION', ITEM_QUALITY_COLORS[slotQuality].hex..slotName..FONT_COLOR_CODE_CLOSE, self:GetText())
+			local dialog = E:StaticPopup_Show('CONFIRM_LOOT_DISTRIBUTION', ITEM_QUALITY_COLORS[slotQuality].hex .. slotName .. FONT_COLOR_CODE_CLOSE, self:GetText())
 			if dialog then
 				dialog.data = self.value
 			end
