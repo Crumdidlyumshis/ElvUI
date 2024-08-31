@@ -74,6 +74,7 @@ local bagStacks = {}
 local bagMaxStacks = {}
 local bagGroups = {}
 local initialOrder = {}
+local itemTypes, itemSubTypes = {}, {}
 local bagSorted, bagLocked = {}, {}
 local bagRole
 local moves = {}
@@ -274,17 +275,22 @@ local function DefaultSort(a, b)
 
 	local aRarity, bRarity = bagQualities[a], bagQualities[b]
 
-	if conjured_items[aID] then aRarity = -99 end
-	if conjured_items[bID] then bRarity = -99 end
-
 	if aRarity ~= bRarity and aRarity and bRarity then
 		return aRarity > bRarity
 	end
 
-	local _, _, _, _, _, aItemClassId, aItemSubClassId, _, aEquipLoc = GetItemInfo(aID)
-	local _, _, _, _, _, bItemClassId, bItemSubClassId, _, bEquipLoc = GetItemInfo(bID)
+	local _, _, _, _, _, aType, aSubType, _, aEquipLoc = GetItemInfo(aID)
+	local _, _, _, _, _, bType, bSubType, _, bEquipLoc = GetItemInfo(bID)
+
+	local aItemClassId, aItemSubClassId = itemTypes[aType] or 99, itemSubTypes[aType] and itemSubTypes[aType][aSubType] or 99
+	local bItemClassId, bItemSubClassId = itemTypes[bType] or 99, itemSubTypes[bType] and itemSubTypes[bType][bSubType] or 99
+
 	if aItemClassId ~= bItemClassId then
 		return (aItemClassId or 99) < (bItemClassId or 99)
+	end
+
+	if aItemClassId ~= bItemClassId then
+		return aItemClassId < bItemClassId
 	end
 
 	if aItemClassId == ARMOR or aItemClassId == ENCHSLOT_WEAPON then
@@ -300,7 +306,7 @@ local function DefaultSort(a, b)
 		end
 	end
 
-	if aItemClassId == bItemClassId and (aItemSubClassId == bItemSubClassId) then
+	if (aItemClassId == bItemClassId) and (aItemSubClassId == bItemSubClassId) then
 		return PrimarySort(a, b)
 	end
 
