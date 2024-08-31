@@ -509,10 +509,12 @@ function B:CanItemGoInBag(bag, slot, targetBag)
 	if IsGuildBankBag(targetBag) then return true end
 
 	local item = bagIDs[B:Encode_BagSlot(bag, slot)]
+	local _, _, _, _, _, itemType = GetItemInfo(item)
+
 	local _, bagType = GetContainerNumFreeSlots(targetBag)
 	if bagType == 0 then
 		return true -- target bag is normal
-	elseif bagType then
+	elseif bagType and itemType ~= 'Quiver' then -- prevent quiverception
 		local itemFamily = GetItemFamily(item)
 		if itemFamily then
 			return band(itemFamily, bagType) > 0
