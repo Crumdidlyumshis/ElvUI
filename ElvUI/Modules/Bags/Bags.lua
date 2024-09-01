@@ -85,6 +85,8 @@ local KEYRING_CONTAINER = KEYRING_CONTAINER
 local TEXTURE_ITEM_QUEST_BANG = TEXTURE_ITEM_QUEST_BANG
 local TEXTURE_ITEM_QUEST_BORDER = TEXTURE_ITEM_QUEST_BORDER
 
+local DEFAULT_ICON = [[Interface\PaperDoll\UI-PaperDoll-Slot-Bag]]
+
 local READY_TEX = [[Interface\RaidFrame\ReadyCheck-Ready]]
 local NOT_READY_TEX = [[Interface\RaidFrame\ReadyCheck-NotReady]]
 
@@ -148,6 +150,11 @@ local CONTAINER_SPACING = 0
 local VISIBLE_CONTAINER_SPACING = 3
 local CONTAINER_SCALE = 0.75
 local BIND
+
+B.BindText = {
+	[ITEM_BIND_ON_EQUIP] = L["BoE"],
+	[ITEM_BIND_ON_USE] = L["BoU"],
+}
 
 B.numTrackedTokens = 0
 B.QuestSlots = {}
@@ -315,9 +322,12 @@ do
 	local MIN_REPEAT_CHARACTERS = 3
 	function B:SearchUpdate()
 		local search = self:GetText()
+		if self.Instructions then
+			self.Instructions:SetShown(search == '')
+		end
 		if #search > MIN_REPEAT_CHARACTERS then
 			local repeating = true
-			for i = 1, MIN_REPEAT_CHARACTERS, 1 do
+			for i = 1, MIN_REPEAT_CHARACTERS do
 				local x, y = 0-i, -1-i
 				if strsub(search, x, x) ~= strsub(search, y, y) then
 					repeating = false
@@ -459,30 +469,6 @@ function B:UpdateSlotColors(slot, isQuestItem, questId, isActiveQuest)
 	end
 end
 
-function B:GetItemQuestInfo(itemLink, itemType)
-	if itemType == 'Quest' then
-		return true, true
-	else
-		local isQuestItem, isStarterItem
-		local info = E.ScanTooltip:GetHyperlinkInfo(itemLink)
-
-		if info then
-			for i = 1, BIND do
-				local line = info.lines[i]
-				local text = line and line.leftText
-
-				if not text or text == '' then break end
-				if not isQuestItem and line == _G.ITEM_BIND_QUEST then isQuestItem = true end
-				if not isStarterItem and line == _G.ITEM_STARTS_QUEST then isStarterItem = true end
-			end
-		end
-
-		E.ScanTooltip:Hide()
-
-		return isQuestItem or isStarterItem, not isStarterItem
-	end
-end
-
 function B:UpdateItemLevel(slot)
 	if slot.itemLink and B.db.itemLevel then
 		local canShowItemLevel = B:IsItemEligibleForItemLevelDisplay(slot.itemType, slot.itemSubType, slot.itemEquipLoc, slot.rarity)
@@ -532,31 +518,19 @@ function B:UpdateSlot(frame, bagID, slotID)
 
 		local questInfo = B:GetContainerItemQuestInfo(bagID, slotID)
 		isQuestItem, questId, isActiveQuest = questInfo.isQuestItem, questInfo.questID, questInfo.isActive
-		local r, g, b
 
-		if slot.rarity then
-			r, g, b = GetItemQualityColor(slot.rarity)
-		end
-
-		if B.db.showBindType and (slot.rarity and slot.rarity > 1) then
-
-			local BoE, BoU
-			local info = E.ScanTooltip:GetHyperlinkInfo(slot.itemLink)
-			if info then
+		if B.db.showBindType then
+			local bindType
+			local itemInfo = E.ScanTooltip:GetHyperlinkInfo(slot.itemLink)
+			if itemInfo then
 				for i = 2, BIND do
-					local line = info.lines[i]
-					local text = line and line.leftText
-
-					if (not text or text == '') or (text == ITEM_SOULBOUND or text == ITEM_ACCOUNTBOUND) then break end
-
-					BoE, BoU = text == ITEM_BIND_ON_EQUIP, text == ITEM_BIND_ON_USE
-					if not B.db.showBindType and (slot.rarity and slot.rarity > 1) or (BoE or BoU) then break end
+					local line = itemInfo.lines[i]
+					bindType = line and line.leftText
+					if B.BindText[bindType] then break end
 				end
 
-				if BoE or BoU then
-					slot.bindType:SetText(BoE and L["BoE"] or L["BoU"])
-					slot.bindType:SetVertexColor(r, g, b)
-				end
+				local bindTo = B.BindText[bindType]
+				if bindTo then slot.bindType:SetText(bindTo) end
 			end
 		end
 	end
@@ -1250,7 +1224,7 @@ end
 function B:UpdateContainerIcon(holder, bagID)
 	if not holder or not bagID or bagID == BACKPACK_CONTAINER or bagID == KEYRING_CONTAINER then return end
 
-	holder.icon:SetTexture(GetInventoryItemTexture('player', holder:GetID()) or [[Interface\PaperDoll\UI-PaperDoll-Slot-Bag]])
+	holder.icon:SetTexture(GetInventoryItemTexture('player', holder:GetID()) or DEFAULT_ICON)
 end
 
 function B:UpdateContainerIconQuality(holder, bagID)
@@ -1498,7 +1472,7 @@ function B:ConstructContainerFrame(name, isBank)
 	f.editBox = CreateFrame('EditBox', name..'EditBox', f)
 	S:HandleEditBox(f.editBox, nil, true)
 	f.editBox:FontTemplate()
-	f.editBox:Height(19)
+	f.editBox:Height(21)
 	f.editBox:SetAutoFocus(false)
 	f.editBox:SetFrameLevel(10)
 	f.editBox:SetScript('OnEditFocusGained', EditBox_HighlightText)

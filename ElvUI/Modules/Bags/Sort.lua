@@ -288,7 +288,6 @@ local function DefaultSort(a, b)
 	if aItemClassId ~= bItemClassId then
 		return (aItemClassId or 99) < (bItemClassId or 99)
 	end
-
 	if aItemClassId ~= bItemClassId then
 		return aItemClassId < bItemClassId
 	end
@@ -488,10 +487,13 @@ function B:ScanBags()
 		local itemLink = B:GetItemLink(bag, slot)
 		local itemID = B:ConvertLinkToID(itemLink)
 		if itemID then
-			bagMaxStacks[bagSlot] = select(8, GetItemInfo(itemID))
+			local _, _, quality, _, _, _, _, stackCount = GetItemInfo(itemLink)
+			local _, count = B:GetItemInfo(bag, slot)
+
+			bagMaxStacks[bagSlot] = stackCount
+			bagQualities[bagSlot] = quality
+			bagStacks[bagSlot] = count
 			bagIDs[bagSlot] = itemID
-			bagQualities[bagSlot] = select(3, GetItemInfo(itemLink))
-			bagStacks[bagSlot] = select(2, B:GetItemInfo(bag, slot))
 		end
 	end
 end
