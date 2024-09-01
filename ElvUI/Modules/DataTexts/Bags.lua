@@ -1,5 +1,6 @@
 local E, L, V, P, G = unpack(ElvUI)
 local DT = E:GetModule('DataTexts')
+local B = E:GetModule('Bags')
 
 local _G = _G
 local format, gsub, match = format, string.gsub, string.match
@@ -50,11 +51,7 @@ local function OnEvent(self)
 end
 
 local function OnClick()
-	if not ContainerFrame1:IsShown() then
-		_G.OpenAllBags()
-	else
-		_G.CloseAllBags()
-	end
+	B:ToggleAllBags()
 end
 
 local function OnEnter()

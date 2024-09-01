@@ -158,11 +158,7 @@ local function OnClick(_, btn)
 				end
 			end
 		else
-			if not _G.ContainerFrame1:IsShown() then
-				_G.OpenAllBags()
-			else
-				_G.CloseAllBags()
-			end
+			B:ToggleAllBags()
 		end
 	end
 end
