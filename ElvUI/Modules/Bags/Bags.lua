@@ -69,6 +69,7 @@ local CONTAINER_OFFSET_X, CONTAINER_OFFSET_Y = CONTAINER_OFFSET_X, CONTAINER_OFF
 local BINDING_NAME_TOGGLEKEYRING = BINDING_NAME_TOGGLEKEYRING
 local CONTAINER_OFFSET_X, CONTAINER_OFFSET_Y = CONTAINER_OFFSET_X, CONTAINER_OFFSET_Y
 local ITEM_ACCOUNTBOUND = ITEM_ACCOUNTBOUND
+local ITEM_BIND_ON_PICKUP = ITEM_BIND_ON_PICKUP
 local ITEM_BIND_ON_EQUIP = ITEM_BIND_ON_EQUIP
 local ITEM_BIND_ON_USE = ITEM_BIND_ON_USE
 local ITEM_BNETACCOUNTBOUND = ITEM_BNETACCOUNTBOUND
@@ -152,6 +153,7 @@ local CONTAINER_SCALE = 0.75
 local BIND
 
 B.BindText = {
+	[ITEM_BIND_ON_PICKUP] = L["BoP"],
 	[ITEM_BIND_ON_EQUIP] = L["BoE"],
 	[ITEM_BIND_ON_USE] = L["BoU"],
 }
@@ -469,6 +471,43 @@ function B:UpdateSlotColors(slot, isQuestItem, questId, isActiveQuest)
 	end
 end
 
+function B:GetBindTypeText(itemLink)
+	local bindType
+	local itemInfo = E.ScanTooltip:GetHyperlinkInfo(itemLink)
+	if itemInfo then
+		for i = 2, BIND do
+			local line = itemInfo.lines[i]
+			bindType = line and line.leftText
+			if B.BindText[bindType] then break end
+		end
+
+		return B.BindText[bindType]
+	end
+end
+
+function B:GetItemQuestInfo(itemLink, itemType, itemSubType)
+	if itemType == 'Quest' or itemSubType == 'Quest' then
+		return true, true
+	else
+		local isQuestItem, isStarterItem
+		local info = E.ScanTooltip:GetHyperlinkInfo(itemLink)
+		if info then
+			for i = 1, BIND do
+				local line = info.lines[i]
+				local text = line and line.leftText
+
+				if not text or text == '' then break end
+				if not isQuestItem and line == _G.ITEM_BIND_QUEST then isQuestItem = true end
+				if not isStarterItem and line == _G.ITEM_STARTS_QUEST then isStarterItem = true end
+			end
+		end
+
+		E.ScanTooltip:Hide()
+
+		return isQuestItem or isStarterItem, not isStarterItem
+	end
+end
+
 function B:UpdateItemLevel(slot)
 	if slot.itemLink and B.db.itemLevel then
 		local canShowItemLevel = B:IsItemEligibleForItemLevelDisplay(slot.itemType, slot.itemSubType, slot.itemEquipLoc, slot.rarity)
@@ -513,26 +552,15 @@ function B:UpdateSlot(frame, bagID, slotID)
 	local isQuestItem, questId, isActiveQuest
 	if slot.itemLink then
 		local _, spellID = GetItemSpell(slot.itemLink)
+		local bindType = B:GetBindTypeText(slot.itemLink)
 		local name, _, _, iLvL, _, itemType, itemSubType, _, itemEquipLoc = GetItemInfo(slot.itemLink)
 		slot.name, slot.spellID, slot.isEquipment, slot.itemEquipLoc, slot.itemType, slot.itemSubType, slot.iLvL = name, spellID, B.IsEquipmentSlot[itemEquipLoc], itemEquipLoc, itemType, itemSubType, iLvL
 
 		local questInfo = B:GetContainerItemQuestInfo(bagID, slotID)
 		isQuestItem, questId, isActiveQuest = questInfo.isQuestItem, questInfo.questID, questInfo.isActive
 
-		if B.db.showBindType then
-			local bindType
-			local itemInfo = E.ScanTooltip:GetHyperlinkInfo(slot.itemLink)
-			if itemInfo then
-				for i = 2, BIND do
-					local line = itemInfo.lines[i]
-					bindType = line and line.leftText
-					if B.BindText[bindType] then break end
-				end
-
-				local bindTo = B.BindText[bindType]
-				if bindTo then slot.bindType:SetText(bindTo) end
-			end
-		end
+		local bindTo = (bindType ~= L["BoP"] and B.db.showBindType) and bindType
+		if bindTo then slot.bindType:SetText(bindTo) end
 	end
 
 	if slot.spellID then
