@@ -193,6 +193,10 @@ frame:RegisterEvent('QUEST_REMOVED')
 frame:RegisterEvent('QUEST_TURNED_IN')
 frame:SetScript('OnEvent', ClearQuestItemCache)
 
+function E:RemoveExtraSpaces(str)
+	return gsub(str, '     +', '    ')	--Replace all instances of 5+ spaces with only 4 spaces.
+end
+
 function E:GetDateTime(localTime, unix)
 	if not localTime then -- try to properly handle realm time
 		local dateTable = date('*t', time())
