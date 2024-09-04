@@ -2010,6 +2010,29 @@ do
 	local GetInventoryItemTexture = GetInventoryItemTexture
 	local GetTalentInfo = GetTalentInfo
 	local UnitClass = UnitClass
+	local GetLocale = GetLocale
+
+	local SHORTDATE = '%2$d/%1$02d/%3$02d'
+	local SHORTDATENOYEAR = '%2$d/%1$02d'
+	local SHORTDATENOYEAR_EU = '%1$d/%2$d'
+	local SHORTDATE_EU = '%1$d/%2$d/%3$02d'
+	local locale = GetLocale() == 'enGB'
+
+	local function FormatShortDate(day, month, year)
+		if year then
+			if locale then
+				return SHORTDATE_EU:format(day, month, year);
+			else
+				return SHORTDATE:format(day, month, year);
+			end
+		else
+			if locale then
+				return SHORTDATENOYEAR_EU:format(day, month);
+			else
+				return SHORTDATENOYEAR:format(day, month);
+			end
+		end
+	end
 
 	local function GetPhysicalScreenSize()
 		local width, height = strmatch(({GetScreenResolutions()})[GetCurrentResolution()], "(%d+)x(%d+)")
@@ -2140,6 +2163,7 @@ do
 		return playerMaxLevel
 	end
 
+	lib.FormatShortDate = FormatShortDate
 	lib.GetPhysicalScreenSize = GetPhysicalScreenSize
 	lib.GetAverageItemLevel = GetAverageItemLevel
 	lib.GetItemLevelColor = GetItemLevelColor
@@ -2251,6 +2275,7 @@ local mixins = {
 	"WrapTextInColorCode",
 	"AnimatedNumericFontStringMixin",
 	"StatusBarPrototype",
+	"FormatShortDate",
 	"GetPhysicalScreenSize",
 	"GetAverageItemLevel",
 	"GetItemLevelColor",
