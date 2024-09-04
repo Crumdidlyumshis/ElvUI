@@ -2016,7 +2016,7 @@ do
 	local SHORTDATENOYEAR = '%2$d/%1$02d'
 	local SHORTDATENOYEAR_EU = '%1$d/%2$d'
 	local SHORTDATE_EU = '%1$d/%2$d/%3$02d'
-	local locale = GetLocale() == 'enGB'
+	local locale = LOCALE_enGB or GetLocale() == 'enGB'
 
 	local function FormatShortDate(day, month, year)
 		if year then
