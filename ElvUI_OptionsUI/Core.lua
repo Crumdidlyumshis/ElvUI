@@ -451,7 +451,7 @@ do -- Import and Export
 				input.hidden = not exporting
 
 				if exporting then
-					local profileKey, profileExport = D:ExportProfile(profileType, which)
+					local profileKey, profileExport = D:ExportProfile(profileType, nil, which)
 					if not profileKey or not profileExport then
 						label.name = L["Error exporting profile!"]
 					else
@@ -535,13 +535,6 @@ do -- Module Copy
 			bar.order = order
 			order = order + 1
 		end
-
-		-- for i = 13, 15 do
-		-- 	local bar = config.args['bar'..i]
-		-- 	bar.name = L["Bar "]..i
-		-- 	bar.order = order
-		-- 	order = order + 1
-		-- end
 
 		config.args.barPet.name = L["Pet Bar"]
 		config.args.stanceBar.name = L["Stance Bar"]
@@ -725,11 +718,6 @@ do -- Module Copy
 		config.args.units.args.boss.name = L["Boss"]
 		config.args.units.args.arena.name = L["Arena"]
 		config.args.units.args.party.name = L["Party"]
-
-		-- for i = 1, 3 do
-		-- 	config.args.units.args['raid'..i].name = L[format("Raid %s", i)]
-		-- end
-
 		config.args.units.args.raid.name = L["Raid Frames"]
 		config.args.units.args.raid40.name = L["Raid-40 Frames"]
 		config.args.units.args.raidpet.name = L["Raid Pet"]
