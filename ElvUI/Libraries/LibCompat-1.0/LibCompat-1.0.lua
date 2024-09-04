@@ -2011,12 +2011,13 @@ do
 	local GetTalentInfo = GetTalentInfo
 	local UnitClass = UnitClass
 	local GetLocale = GetLocale
+	local GetCVar = GetCVar
 
-	local SHORTDATE = '%2$d/%1$02d/%3$02d'
-	local SHORTDATENOYEAR = '%2$d/%1$02d'
-	local SHORTDATENOYEAR_EU = '%1$d/%2$d'
-	local SHORTDATE_EU = '%1$d/%2$d/%3$02d'
-	local locale = LOCALE_enGB or GetLocale() == 'enGB'
+	local SHORTDATE = "%2$d/%1$02d/%3$02d"
+	local SHORTDATENOYEAR = "%2$d/%1$02d"
+	local SHORTDATENOYEAR_EU = "%1$d/%2$d"
+	local SHORTDATE_EU = "%1$d/%2$d/%3$02d"
+	local locale = LOCALE_enGB or (GetLocale() == "enGB") or (GetCVar("locale") == "enGB")
 
 	local function FormatShortDate(day, month, year)
 		if year then
