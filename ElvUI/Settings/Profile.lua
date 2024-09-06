@@ -548,13 +548,33 @@ P.nameplates = {
 	},
 	filters = {
 		ElvUI_Boss = {triggers = {enable = false}},
+		ElvUI_Target = {triggers = {enable = false}},
+		ElvUI_NonTarget = {triggers = {enable = true}},
 		ElvUI_Totem = {triggers = {enable = true}}
+	},
+	visibility = {
+		showAll = true,
+		showOnlyNames = false,
+		enemy = {
+			guardians = false,
+			minions = false,
+			minus = true,
+			pets = false,
+			totems = false,
+		},
+		friendly = {
+			guardians = false,
+			minions = false,
+			npcs = true,
+			pets = false,
+			totems = false,
+		},
 	},
 	units = {
 		TARGET = {
 			enable = true,
-			glowStyle = "style4",
-			arrow = "ArrowUp",
+			glowStyle = "style2",
+			arrow = "Arrow9",
 			arrowSize = 20,
 			arrowXOffset = 3,
 			arrowYOffset = 0,

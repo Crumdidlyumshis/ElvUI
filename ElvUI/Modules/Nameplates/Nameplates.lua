@@ -489,7 +489,7 @@ function NP:ConfigureAll()
 
 	NP:StyleFilterConfigure()
 	NP:ForEachPlate("UpdateAllFrame", true, true)
-	NP:UpdateCVars()
+	NP:SetCVars()
 end
 
 function NP:ForEachPlate(functionToRun, ...)
@@ -922,12 +922,6 @@ function NP:SearchForFrame(guid, raidIcon, name)
 	return frame
 end
 
-function NP:UpdateCVars()
-	E:SetCVar("ShowClassColorInNameplate", "1")
-	E:SetCVar("showVKeyCastbar", "0")
-	E:SetCVar("nameplateAllowOverlap", self.db.motionType == "STACKED" and "0" or "1")
-end
-
 local function CopySettings(from, to)
 	for setting, value in pairs(from) do
 		if type(value) == "table" and to[setting] ~= nil then
@@ -1018,48 +1012,62 @@ function NP:PLAYER_FOCUS_CHANGED()
 	end
 end
 
-function NP:UNIT_COMBO_POINTS(_, unit)
-	if unit == "player" or unit == "vehicle" then
-		self:ForEachVisiblePlate("Update_CPoints")
-	end
+function NP:SetCVars()
+	E:SetCVar('ShowClassColorInNameplate', 1)
+	E:SetCVar('showVKeyCastbar', 0)
+	E:SetCVar('nameplateAllowOverlap', NP.db.motionType == 'STACKED' and 0 or 1)
+
+	-- the order of these is important !!
+	E:SetCVar('nameplateShowEnemyGuardians', NP.db.visibility.enemy.guardians and 1 or 0)
+	E:SetCVar('nameplateShowEnemyPets', NP.db.visibility.enemy.pets and 1 or 0)
+	E:SetCVar('nameplateShowEnemyTotems', NP.db.visibility.enemy.totems and 1 or 0)
+	E:SetCVar('nameplateShowFriendlyGuardians', NP.db.visibility.friendly.guardians and 1 or 0)
+	E:SetCVar('nameplateShowFriendlyPets', NP.db.visibility.friendly.pets and 1 or 0)
+	E:SetCVar('nameplateShowFriendlyTotems', NP.db.visibility.friendly.totems and 1 or 0)
 end
 
 function NP:PLAYER_REGEN_DISABLED()
-	if self.db.showFriendlyCombat == "TOGGLE_ON" then
-		E:SetCVar("nameplateShowFriends", 1)
-	elseif self.db.showFriendlyCombat == "TOGGLE_OFF" then
-		E:SetCVar("nameplateShowFriends", 0)
+	if NP.db.showFriendlyCombat == 'TOGGLE_ON' then
+		E:SetCVar('nameplateShowFriends', 1)
+	elseif NP.db.showFriendlyCombat == 'TOGGLE_OFF' then
+		E:SetCVar('nameplateShowFriends', 0)
 	end
 
-	if self.db.showEnemyCombat == "TOGGLE_ON" then
-		E:SetCVar("nameplateShowEnemies", 1)
-	elseif self.db.showEnemyCombat == "TOGGLE_OFF" then
-		E:SetCVar("nameplateShowEnemies", 0)
+	if NP.db.showEnemyCombat == 'TOGGLE_ON' then
+		E:SetCVar('nameplateShowEnemies', 1)
+	elseif NP.db.showEnemyCombat == 'TOGGLE_OFF' then
+		E:SetCVar('nameplateShowEnemies', 0)
 	end
 
 	NP:ForEachVisiblePlate("StyleFilterUpdate", "PLAYER_REGEN_DISABLED")
 end
 
 function NP:PLAYER_REGEN_ENABLED()
-	if next(self.ResizeQueue) then
-		for frame in pairs(self.ResizeQueue) do
-			self:SetSize(frame)
+	if next(NP.ResizeQueue) then
+		for frame in pairs(NP.ResizeQueue) do
+			NP:SetSize(frame)
 		end
 	end
 
-	if self.db.showFriendlyCombat == "TOGGLE_ON" then
-		E:SetCVar("nameplateShowFriends", 0)
-	elseif self.db.showFriendlyCombat == "TOGGLE_OFF" then
-		E:SetCVar("nameplateShowFriends", 1)
+	if NP.db.showFriendlyCombat == 'TOGGLE_ON' then
+		E:SetCVar('nameplateShowFriends', 0)
+	elseif NP.db.showFriendlyCombat == 'TOGGLE_OFF' then
+		E:SetCVar('nameplateShowFriends', 1)
 	end
 
-	if self.db.showEnemyCombat == "TOGGLE_ON" then
-		E:SetCVar("nameplateShowEnemies", 0)
-	elseif self.db.showEnemyCombat == "TOGGLE_OFF" then
-		E:SetCVar("nameplateShowEnemies", 1)
+	if NP.db.showEnemyCombat == 'TOGGLE_ON' then
+		E:SetCVar('nameplateShowEnemies', 0)
+	elseif NP.db.showEnemyCombat == 'TOGGLE_OFF' then
+		E:SetCVar('nameplateShowEnemies', 1)
 	end
 
 	NP:ForEachVisiblePlate("StyleFilterUpdate", "PLAYER_REGEN_ENABLED")
+end
+
+function NP:UNIT_COMBO_POINTS(_, unit)
+	if unit == "player" or unit == "vehicle" then
+		self:ForEachVisiblePlate("Update_CPoints")
+	end
 end
 
 function NP:UNIT_HEALTH(_, unit)
@@ -1215,7 +1223,7 @@ function NP:Initialize()
 
 	self.levelStep = 2
 
-	self:UpdateCVars()
+	self:SetCVars()
 
 	local ElvNP_Test = CreateFrame("Button", "ElvNP_Test")
 	ElvNP_Test:SetScale(1)
