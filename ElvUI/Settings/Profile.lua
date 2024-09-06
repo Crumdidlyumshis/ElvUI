@@ -338,6 +338,7 @@ P.bags = {
 	questIcon = true,
 	junkIcon = false,
 	junkDesaturate = false,
+	newItemGlow = true,
 	ignoredItems = {},
 	itemLevel = true,
 	itemLevelThreshold = 1,
