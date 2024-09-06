@@ -29,6 +29,7 @@ Bags.args.general.args.generalGroup.values = {
 	questIcon = L["Quest Starter Icon"],
 	junkIcon = L["Junk Icon"],
 	junkDesaturate = L["Desaturate Junk"],
+	newItemGlow = L["New Item Glow"],
 	showBindType = L["Bind on Equip/Use Text"],
 	clearSearchOnClose = L["Clear Search On Close"],
 	reverseSlots = L["Reverse Bag Slots"],
