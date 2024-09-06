@@ -52,6 +52,9 @@ local IsBagOpen, IsOptionFrameOpen = IsBagOpen, IsOptionFrameOpen
 local IsShiftKeyDown, IsControlKeyDown = IsShiftKeyDown, IsControlKeyDown
 local CloseBag, CloseBackpack, CloseBankFrame = CloseBag, CloseBackpack, CloseBankFrame
 
+local C_NewItems_IsNewItem = LC.C_NewItems.IsNewItem
+local C_NewItems_RemoveNewItem = LC.C_NewItems.RemoveNewItem
+
 local EditBox_HighlightText = EditBox_HighlightText
 local BankFrameItemButton_UpdateLocked = BankFrameItemButton_UpdateLocked
 local BankFrame_UpdateCooldown = BankFrame_UpdateCooldown
@@ -421,6 +424,41 @@ function B:IsItemEligibleForItemLevelDisplay(itemType, subType, equipLoc, rarity
 	return (B.IsEquipmentSlot[equipLoc] or (itemType == 'Miscellaneous' and subType == 'Quiver')) and (rarity and rarity > 1)
 end
 
+function B:NewItemGlowSlotSwitch(slot, show)
+	if slot and slot.newItemGlow then
+		if show then
+			slot.newItemGlow:Show()
+
+			local bank = slot.bagFrame.isBank and B.BankFrame
+			B:ShowItemGlow(bank or B.BagFrame, slot.newItemGlow)
+		else
+			slot.newItemGlow:Hide()
+
+			-- also clear them on blizzard's side
+			C_NewItems_RemoveNewItem(slot.BagID, slot.SlotID)
+		end
+	end
+end
+
+function B:BagFrameHidden(bagFrame)
+	if not (bagFrame and bagFrame.BagIDs) then return end
+
+	for _, bagID in next, bagFrame.BagIDs do
+		local slotMax = B:GetContainerNumSlots(bagID)
+		for slotID = 1, slotMax do
+			B:NewItemGlowSlotSwitch(bagFrame.Bags[bagID][slotID])
+		end
+	end
+end
+
+function B:HideSlotItemGlow()
+	B:NewItemGlowSlotSwitch(self)
+end
+
+function B:CheckSlotNewItem(slot, bagID, slotID)
+	B:NewItemGlowSlotSwitch(slot, C_NewItems_IsNewItem(bagID, slotID))
+end
+
 function B:GetItemQualityColor(rarity)
 	if rarity then
 		return GetItemQualityColor(rarity)
@@ -461,6 +499,7 @@ function B:UpdateSlotColors(slot, isQuestItem, questId, isActiveQuest)
 	slot.forcedBorderColors = r and {r, g, b, a}
 	if not r then r, g, b = unpack(E.media.bordercolor) end
 
+	slot.newItemGlow:SetVertexColor(r, g, b, a)
 	slot:SetBackdropBorderColor(r, g, b, a)
 
 	if B.db.colorBackdrop then
@@ -580,6 +619,10 @@ function B:UpdateSlot(frame, bagID, slotID)
 	if slot.questIcon then slot.questIcon:SetShown(B.db.questIcon and ((isQuestItem or questId) and not isActiveQuest)) end
 	if slot.JunkIcon then slot.JunkIcon:SetShown(slot.isJunk and B.db.junkIcon) end
 
+	if B.db.newItemGlow then
+		E:Delay(0.1, B.CheckSlotNewItem, B, slot, bagID, slotID)
+	end
+
 	if not frame.isBank then
 		B.QuestSlots[slot] = questId or nil
 	end
@@ -630,6 +673,8 @@ function B:Slot_OnEvent(event)
 end
 
 function B:Slot_OnEnter()
+	B.HideSlotItemGlow(self)
+
 	-- bag keybind support from actionbar module
 	if E.private.actionbar.enable then
 		AB:BindUpdate(self, 'BAG')
@@ -1399,6 +1444,7 @@ function B:ConstructContainerFrame(name, isBank)
 	local f = CreateFrame('Button', name, E.UIParent)
 	f:SetTemplate('Transparent')
 	f:SetFrameStrata(strata)
+	B:SetupItemGlow(f)
 
 	f.events = (isBank and bankEvents) or bagEvents
 	f.DelayedContainers = {}
@@ -1749,6 +1795,14 @@ function B:ConstructContainerButton(f, bagID, slotID)
 	slot.bindType:Point('TOP', 0, -2)
 	slot.bindType:FontTemplate(LSM:Fetch('font', B.db.itemLevelFont), B.db.itemLevelFontSize, B.db.itemLevelFontOutline)
 
+	if not slot.newItemGlow then
+		slot.newItemGlow = slot:CreateTexture(nil, 'OVERLAY')
+		slot.newItemGlow:SetInside()
+		slot.newItemGlow:SetTexture(E.Media.Textures.BagNewItemGlow)
+		slot.newItemGlow:Hide()
+		f.NewItemGlow.Fade:AddChild(slot.newItemGlow)
+	end
+
 	return slot
 end
 
@@ -1896,6 +1950,45 @@ function B:ShowBankTab(f, bankTab)
 	else
 		B:UpdateLayout(f)
 	end
+end
+
+function B:ItemGlowOnFinished()
+	if self:GetChange() == 1 then
+		self:SetChange(0)
+	else
+		self:SetChange(1)
+	end
+end
+
+function B:ShowItemGlow(bag, newItemGlow)
+	if newItemGlow then
+		newItemGlow:SetAlpha(1)
+	end
+
+	if not bag.NewItemGlow:IsPlaying() then
+		bag.NewItemGlow:Play()
+	end
+end
+
+function B:HideItemGlow(bag)
+	if bag.NewItemGlow:IsPlaying() then
+		bag.NewItemGlow:Stop()
+
+		for _, itemGlow in next, bag.NewItemGlow.Fade.children do
+			itemGlow:SetAlpha(0)
+		end
+	end
+end
+
+function B:SetupItemGlow(frame)
+	frame.NewItemGlow = _G.CreateAnimationGroup(frame)
+	frame.NewItemGlow:SetLooping(true)
+
+	frame.NewItemGlow.Fade = frame.NewItemGlow:CreateAnimation('fade')
+	frame.NewItemGlow.Fade:SetDuration(0.7)
+	frame.NewItemGlow.Fade:SetChange(0)
+	frame.NewItemGlow.Fade:SetEasing('in')
+	frame.NewItemGlow.Fade:SetScript('OnFinished', B.ItemGlowOnFinished)
 end
 
 function B:OpenBank()

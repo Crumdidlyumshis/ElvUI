@@ -1437,6 +1437,94 @@ end
 -------------------------------------------------------------------------------
 
 do
+	local C_Timer = lib.C_Timer
+
+	local C_NewItems = {}
+	local previousBagContents = {}
+	local newItems = {}
+	local hasInitialized = false
+
+	-- Mimics C_NewItems.IsNewItem(containerIndex, slotIndex)
+	function C_NewItems.IsNewItem(containerIndex, slotIndex)
+		return newItems[containerIndex] and newItems[containerIndex][slotIndex] or false
+	end
+
+	-- Mimics C_NewItems.RemoveNewItem(containerIndex, slotIndex)
+	function C_NewItems.RemoveNewItem(containerIndex, slotIndex)
+		if newItems[containerIndex] then
+			newItems[containerIndex][slotIndex] = nil
+		end
+	end
+
+	-- Helper function to check if an item exists in any bag or bank
+	local function ItemExistsInBagsOrBank(targetItemID)
+		-- Check regular bags (-2 to 4) and bank bags (5 to 11)
+		for bag = -2, 11 do
+			if previousBagContents[bag] then
+				for _, itemID in pairs(previousBagContents[bag]) do
+					if itemID == targetItemID then
+						return true
+					end
+				end
+			end
+		end
+		return false
+	end
+
+	-- Updates bag contents and identifies new items
+	local function UpdateBagContents()
+		local currentContents = {}
+		local currentNewItems = {}
+
+		-- Update for regular bags (-2 to 4) and bank bags (5 to 11)
+		for bag = -2, 11 do
+			currentContents[bag] = {}
+			currentNewItems[bag] = {}
+
+			-- GetContainerNumSlots works for both regular bags and bank bags
+			for slot = 1, GetContainerNumSlots(bag) do
+				local itemLink = GetContainerItemLink(bag, slot)
+				local itemID = itemLink and tonumber(itemLink:match('item:(%d+)'))
+
+				if itemID then
+					currentContents[bag][slot] = itemID
+					if hasInitialized and not ItemExistsInBagsOrBank(itemID) then
+						currentNewItems[bag][slot] = true
+					elseif newItems[bag] and newItems[bag][slot] then
+						-- Preserve new status for items that were already marked as new
+						currentNewItems[bag][slot] = true
+					end
+				end
+			end
+		end
+
+		previousBagContents = currentContents
+		newItems = currentNewItems
+		hasInitialized = true
+	end
+
+	-- Event handling for bag updates, bank updates, and player login
+	local eventFrame = CreateFrame('Frame')
+	eventFrame:RegisterEvent('BAG_UPDATE')
+	eventFrame:RegisterEvent('PLAYERBANKSLOTS_CHANGED')
+	eventFrame:RegisterEvent('PLAYER_LOGIN')
+	eventFrame:SetScript('OnEvent', function(_, event)
+		if event == 'PLAYER_LOGIN' then
+			UpdateBagContents()
+		elseif event == 'BAG_UPDATE' or event == 'PLAYERBANKSLOTS_CHANGED' then
+			C_Timer.After(0.1, UpdateBagContents)
+		end
+	end)
+
+
+	lib.IsNewItem = C_NewItems.IsNewItem
+	lib.RemoveNewItem = C_NewItems.RemoveNewItem
+	lib.C_NewItems = C_NewItems
+end
+
+-------------------------------------------------------------------------------
+
+do
 	local function PassClickToParent(obj, ...)
 		obj:GetParent():Click(...)
 	end
@@ -2211,6 +2299,8 @@ local mixins = {
 	"UnitIterator",
 	"UnitFullName",
 	"C_PvP",
+	-- newitem util
+	"C_NewItems",
 	-- unit util
 	"GetUnitIdFromGUID",
 	"GetClassFromGUID",
