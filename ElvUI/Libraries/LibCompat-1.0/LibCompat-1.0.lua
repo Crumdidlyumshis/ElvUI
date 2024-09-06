@@ -1437,6 +1437,11 @@ end
 -------------------------------------------------------------------------------
 
 do
+	local GetContainerItemInfo = GetContainerItemInfo
+	local GetContainerItemLink = GetContainerItemLink
+	local GetContainerNumSlots = GetContainerNumSlots
+	local GetItemInfo = GetItemInfo
+
 	local C_Timer = lib.C_Timer
 
 	local C_NewItems = {}
@@ -1456,43 +1461,54 @@ do
 		end
 	end
 
-	-- Helper function to check if an item exists in any bag or bank
-	local function ItemExistsInBagsOrBank(targetItemID)
-		-- Check regular bags (-2 to 4) and bank bags (5 to 11)
+	-- Optimized helper function to check if an item is stackable
+	local stackableItems = setmetatable({}, {__index = function(t, itemID)
+		local _, _, _, _, _, _, _, maxStack = GetItemInfo(itemID)
+		local isStackable = maxStack and maxStack > 1 or false
+		t[itemID] = isStackable
+		return isStackable
+	end})
+
+	-- Optimized helper function to check if an item exists in any bag or bank and count occurrences
+	local function CountItemInBagsAndBank(targetItemID)
+		local count = 0
 		for bag = -2, 11 do
-			if previousBagContents[bag] then
-				for _, itemID in pairs(previousBagContents[bag]) do
-					if itemID == targetItemID then
-						return true
+			local bagContents = previousBagContents[bag]
+			if bagContents then
+				for _, itemData in pairs(bagContents) do
+					if itemData.id == targetItemID then
+						count = count + itemData.count
 					end
 				end
 			end
 		end
-		return false
+		return count
 	end
 
-	-- Updates bag contents and identifies new items
+	-- Optimized function to update bag contents and identify new items
 	local function UpdateBagContents()
 		local currentContents = {}
 		local currentNewItems = {}
 
-		-- Update for regular bags (-2 to 4) and bank bags (5 to 11)
 		for bag = -2, 11 do
 			currentContents[bag] = {}
 			currentNewItems[bag] = {}
 
-			-- GetContainerNumSlots works for both regular bags and bank bags
 			for slot = 1, GetContainerNumSlots(bag) do
 				local itemLink = GetContainerItemLink(bag, slot)
-				local itemID = itemLink and tonumber(itemLink:match('item:(%d+)'))
+				if itemLink then
+					local itemID = tonumber(itemLink:match('item:(%d+)'))
+					local _, itemCount = GetContainerItemInfo(bag, slot)
 
-				if itemID then
-					currentContents[bag][slot] = itemID
-					if hasInitialized and not ItemExistsInBagsOrBank(itemID) then
-						currentNewItems[bag][slot] = true
-					elseif newItems[bag] and newItems[bag][slot] then
-						-- Preserve new status for items that were already marked as new
-						currentNewItems[bag][slot] = true
+					currentContents[bag][slot] = {id = itemID, count = itemCount}
+
+					if hasInitialized then
+						local previousCount = CountItemInBagsAndBank(itemID)
+						if previousCount == 0 or (not stackableItems[itemID] and previousCount < itemCount) then
+							currentNewItems[bag][slot] = true
+						elseif newItems[bag] and newItems[bag][slot] then
+							currentNewItems[bag][slot] = true
+						end
 					end
 				end
 			end
@@ -1503,19 +1519,20 @@ do
 		hasInitialized = true
 	end
 
-	-- Event handling for bag updates, bank updates, and player login
+	local function OnEvent(_, event)
+		if event == "PLAYER_LOGIN" then
+			UpdateBagContents()
+		else
+			C_Timer.After(0.1, UpdateBagContents)
+		end
+	end
+
+	-- Optimized event handling
 	local eventFrame = CreateFrame('Frame')
 	eventFrame:RegisterEvent('BAG_UPDATE')
 	eventFrame:RegisterEvent('PLAYERBANKSLOTS_CHANGED')
 	eventFrame:RegisterEvent('PLAYER_LOGIN')
-	eventFrame:SetScript('OnEvent', function(_, event)
-		if event == 'PLAYER_LOGIN' then
-			UpdateBagContents()
-		elseif event == 'BAG_UPDATE' or event == 'PLAYERBANKSLOTS_CHANGED' then
-			C_Timer.After(0.1, UpdateBagContents)
-		end
-	end)
-
+	eventFrame:SetScript('OnEvent', OnEvent)
 
 	lib.IsNewItem = C_NewItems.IsNewItem
 	lib.RemoveNewItem = C_NewItems.RemoveNewItem
