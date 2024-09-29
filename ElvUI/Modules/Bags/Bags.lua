@@ -52,8 +52,8 @@ local IsBagOpen, IsOptionFrameOpen = IsBagOpen, IsOptionFrameOpen
 local IsShiftKeyDown, IsControlKeyDown = IsShiftKeyDown, IsControlKeyDown
 local CloseBag, CloseBackpack, CloseBankFrame = CloseBag, CloseBackpack, CloseBankFrame
 
-local C_NewItems_IsNewItem = LC.C_NewItems.IsNewItem
-local C_NewItems_RemoveNewItem = LC.C_NewItems.RemoveNewItem
+local C_NewItems_IsNewItem = C_NewItems.IsNewItem
+local C_NewItems_RemoveNewItem = C_NewItems.RemoveNewItem
 
 local EditBox_HighlightText = EditBox_HighlightText
 local BankFrameItemButton_UpdateLocked = BankFrameItemButton_UpdateLocked
@@ -88,6 +88,9 @@ local KEYRING_CONTAINER = KEYRING_CONTAINER
 
 local TEXTURE_ITEM_QUEST_BANG = TEXTURE_ITEM_QUEST_BANG
 local TEXTURE_ITEM_QUEST_BORDER = TEXTURE_ITEM_QUEST_BORDER
+
+local BOTTOM_OFFSET = 8
+local TOP_OFFSET = 50
 
 local DEFAULT_ICON = [[Interface\PaperDoll\UI-PaperDoll-Slot-Bag]]
 
@@ -774,6 +777,7 @@ function B:Layout(isBank)
 	if not f then return end
 
 	local lastButton, lastRowButton, newBag
+	local numContainerRows, numBags, numBagSlots = 0, 0, 0
 	local buttonSpacing = isBank and B.db.bankButtonSpacing or B.db.bagButtonSpacing
 	local buttonSize = E:Scale(isBank and B.db.bankSize or B.db.bagSize)
 	local containerWidth = ((isBank and B.db.bankWidth) or B.db.bagWidth)
@@ -795,12 +799,11 @@ function B:Layout(isBank)
 	if not isBank then
 		local currencies = f.currencyButton
 		if B.numTrackedTokens == 0 then
-			if f.bottomOffset > 8 then
-				f.bottomOffset = 8
+			if f.bottomOffset > BOTTOM_OFFSET then
+				f.bottomOffset = BOTTOM_OFFSET
 			end
 		else
 			local currentRow = 1
-
 			local rowWidth = 0
 			for i = 1, B.numTrackedTokens do
 				local token = currencies[i]
@@ -827,7 +830,7 @@ function B:Layout(isBank)
 			local height = 24 * currentRow
 			currencies:Height(height)
 
-			local offset = height + 8
+			local offset = height + BOTTOM_OFFSET
 			if f.bottomOffset ~= offset then
 				f.bottomOffset = offset
 			end
@@ -887,7 +890,7 @@ function B:Layout(isBank)
 					end
 				else
 					local anchorPoint = reverseSlots and 'BOTTOMRIGHT' or 'TOPLEFT'
-					slot:Point(anchorPoint, f.holderFrame, anchorPoint, 0, reverseSlots and f.bottomOffset - 8 or 0)
+					slot:Point(anchorPoint, f.holderFrame, anchorPoint, 0, (reverseSlots and f.bottomOffset - BOTTOM_OFFSET or 0) - (reverseSlots and 2 or 0))
 					lastRowButton = slot
 					numContainerRows = numContainerRows + 1
 				end
@@ -898,8 +901,9 @@ function B:Layout(isBank)
 		end
 	end
 
+	local splitOffset = (isSplit and (numBags * bagSpacing)) or 0
 	local buttonsHeight = (((buttonSize + buttonSpacing) * numContainerRows) - buttonSpacing)
-	f:SetSize(containerWidth, buttonsHeight + f.topOffset + f.bottomOffset + (isSplit and (numBags * bagSpacing) or 0))
+	f:SetSize(containerWidth, buttonsHeight + f.topOffset + f.bottomOffset + splitOffset)
 	f:SetFrameStrata(B.db.strata or 'HIGH')
 end
 
@@ -1413,6 +1417,34 @@ function B:CoverButton_ClickBank()
 	end
 end
 
+function B:BagsButton_ClickBank()
+	local frame = self:GetParent():GetParent()
+	ToggleFrame(frame.ContainerHolder)
+	PlaySound(852) --IG_MAINMENU_OPTION
+end
+
+function B:BagsButton_ClickBag()
+	local frame = self:GetParent():GetParent()
+	ToggleFrame(frame.ContainerHolder)
+end
+
+function B:ConstructPurchaseButton(frame, text, template)
+	local button = CreateFrame('Button', nil, frame, template)
+	button:Size(20)
+	button:SetTemplate()
+	button:Point('RIGHT', frame.bagsButton, 'LEFT', -5, 0)
+
+	B:SetButtonTexture(button, [[Interface\ICONS\INV_Misc_Coin_01]]) -- Interface\ICONS\INV_Misc_Coin_01
+	button:StyleButton(nil, true)
+
+	button.ttText = text
+
+	button:SetScript('OnEnter', B.Tooltip_Show)
+	button:SetScript('OnLeave', GameTooltip_Hide)
+
+	return button
+end
+
 function B:ConstructContainerFrame(name, isBank)
 	local strata = B.db.strata or 'HIGH'
 
@@ -1427,8 +1459,8 @@ function B:ConstructContainerFrame(name, isBank)
 	f:Hide()
 
 	f.isBank = isBank
-	f.topOffset = 50
-	f.bottomOffset = 8
+	f.topOffset = TOP_OFFSET
+	f.bottomOffset = BOTTOM_OFFSET
 	f.BagIDs = (isBank and bankIDs) or bagIDs
 	f.staleBags = {} -- used to keep track of bank items that need update on next open
 	f.Bags = {}
@@ -1470,7 +1502,7 @@ function B:ConstructContainerFrame(name, isBank)
 
 	f.holderFrame = CreateFrame('Frame', nil, f)
 	f.holderFrame:Point('TOP', f, 'TOP', 0, -f.topOffset)
-	f.holderFrame:Point('BOTTOM', f, 'BOTTOM', 0, 8)
+	f.holderFrame:Point('BOTTOM', f, 'BOTTOM', 0, BOTTOM_OFFSET)
 
 	f.ContainerHolder = CreateFrame('Button', name..'ContainerHolder', f)
 	f.ContainerHolder:Point('BOTTOMLEFT', f, 'TOPLEFT', 0, 1)
@@ -1483,6 +1515,7 @@ function B:ConstructContainerFrame(name, isBank)
 		B:ConstructContainerHolder(f, bagID, isBank, name, index)
 	end
 
+	--Stack/Transfer Button
 	f.stackButton = CreateFrame('Button', name..'StackButton', f.holderFrame)
 	f.stackButton:Size(20)
 	f.stackButton:SetTemplate()
@@ -1535,22 +1568,23 @@ function B:ConstructContainerFrame(name, isBank)
 	f.spinnerIcon:EnableMouse(false)
 	f.spinnerIcon:Hide()
 
+	--Gold Text
+	f.goldText = f:CreateFontString(nil, 'OVERLAY')
+	f.goldText:FontTemplate()
+	f.goldText:Point('RIGHT', f.helpButton, 'LEFT', -10, -2)
+	f.goldText:SetJustifyH('RIGHT')
+
+	f.pickupGold = CreateFrame('Button', nil, f)
+	f.pickupGold:SetAllPoints(f.goldText)
+
 	if isBank then
 		f.notPurchased = {}
 		f.fullBank = select(2, GetNumBankSlots())
 
-		--Bank Text
-		f.bankText = f:CreateFontString(nil, 'OVERLAY')
-		f.bankText:FontTemplate()
-		f.bankText:Point('RIGHT', f.helpButton, 'LEFT', -5, -2)
-		f.bankText:SetJustifyH('RIGHT')
-		f.bankText:SetText(L["Bank"])
-
-		-- Stack
-		f.stackButton:Point('BOTTOMRIGHT', f.holderFrame, 'TOPRIGHT', -2, 4)
 		f.stackButton.ttText = L["Stack Items In Bank"]
 		f.stackButton.ttText2 = L["Hold Shift:"]
 		f.stackButton.ttText2desc = L["Stack Items To Bags"]
+		f.stackButton:Point('BOTTOMRIGHT', f.holderFrame, 'TOPRIGHT', -2, 4)
 		f.stackButton:SetScript('OnEnter', B.Tooltip_Show)
 		f.stackButton:SetScript('OnLeave', GameTooltip_Hide)
 		f.stackButton:SetScript('OnClick', function()
@@ -1571,40 +1605,20 @@ function B:ConstructContainerFrame(name, isBank)
 			end
 		end)
 
-		--Toggle Bags Button
-		f.bagsButton:SetScript('OnClick', function()
-			ToggleFrame(f.ContainerHolder)
-			PlaySound(852) --IG_MAINMENU_OPTION
-		end)
+		f.bagsButton:SetScript('OnClick', B.BagsButton_ClickBank)
 
-		f.purchaseBagButton = CreateFrame('Button', nil, f.holderFrame)
-		f.purchaseBagButton:SetShown(not f.fullBank)
-		f.purchaseBagButton:Size(20)
-		f.purchaseBagButton:SetTemplate()
-		f.purchaseBagButton:Point('RIGHT', f.bagsButton, 'LEFT', -5, 0)
-		B:SetButtonTexture(f.purchaseBagButton, [[Interface\ICONS\INV_Misc_Coin_01]])
-		f.purchaseBagButton:StyleButton(nil, true)
-		f.purchaseBagButton.ttText = L["Purchase Bags"]
-		f.purchaseBagButton:SetScript('OnEnter', B.Tooltip_Show)
-		f.purchaseBagButton:SetScript('OnLeave', GameTooltip_Hide)
+		f.purchaseBagButton = B:ConstructPurchaseButton(f, L["Purchase Bags"])
 		f.purchaseBagButton:SetScript('OnClick', B.CoverButton_ClickBank)
+		f.purchaseBagButton:SetShown(not f.fullBank)
 
 		--Search
 		f.editBox:Point('BOTTOMLEFT', f.holderFrame, 'TOPLEFT', E.Border, 4)
 	else
-		--Gold Text
-		f.goldText = f:CreateFontString(nil, 'OVERLAY')
-		f.goldText:FontTemplate()
-		f.goldText:Point('RIGHT', f.helpButton, 'LEFT', -10, -2)
-		f.goldText:SetJustifyH('RIGHT')
-
-		f.pickupGold = CreateFrame('Button', nil, f)
-		f.pickupGold:SetAllPoints(f.goldText)
 		f.pickupGold:SetScript('OnClick', function()
 			E:StaticPopup_Show('PICKUP_MONEY')
 		end)
 
-		-- Stack/Transfer Button
+		--Stack/Transfer Button
 		f.stackButton.ttText = L["Stack Items In Bags"]
 		f.stackButton.ttText2 = L["Hold Shift:"]
 		f.stackButton.ttText2desc = L["Stack Items To Bank"]
@@ -1629,7 +1643,7 @@ function B:ConstructContainerFrame(name, isBank)
 		end)
 
 		--Bags Button
-		f.bagsButton:SetScript('OnClick', function() ToggleFrame(f.ContainerHolder) end)
+		f.bagsButton:SetScript('OnClick', B.BagsButton_ClickBag)
 
 		--Keyring Button
 		f.keyButton = CreateFrame('Button', name..'KeyButton', f.holderFrame)
@@ -1650,7 +1664,7 @@ function B:ConstructContainerFrame(name, isBank)
 		f.vendorGraysButton:Point('RIGHT', f.keyButton, 'LEFT', -5, 0)
 		B:SetButtonTexture(f.vendorGraysButton, [[Interface\ICONS\INV_Misc_Coin_01]])
 		f.vendorGraysButton:StyleButton(nil, true)
-		f.vendorGraysButton.ttText = L["Vendor / Delete Grays"]
+		f.vendorGraysButton.ttText = L["Vendor/Delete Grays"]
 		f.vendorGraysButton.ttValue = B.GetGraysValue
 		f.vendorGraysButton:SetScript('OnEnter', B.Tooltip_Show)
 		f.vendorGraysButton:SetScript('OnLeave', GameTooltip_Hide)
@@ -1708,6 +1722,7 @@ function B:ConstructContainerButton(f, bagID, slotID)
 	slot:SetID(slotID)
 
 	slot:SetNormalTexture(E.ClearTexture)
+
 	if slot.SetCheckedTexture then
 		slot:SetCheckedTexture(E.ClearTexture)
 	end
@@ -1716,6 +1731,11 @@ function B:ConstructContainerButton(f, bagID, slotID)
 	slot.BagID = bagID
 	slot.SlotID = slotID
 	slot.name = slotName
+
+	local newItemTexture = _G[slotName..'NewItemTexture']
+	if newItemTexture then
+		newItemTexture:Hide()
+	end
 
 	slot.Count = _G[slotName..'Count']
 	slot.Count:ClearAllPoints()
