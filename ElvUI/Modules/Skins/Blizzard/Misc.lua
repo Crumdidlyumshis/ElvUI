@@ -245,30 +245,26 @@ S:AddCallback("Skin_Misc", function()
 	end)
 
 	-- Chat Menu
-	local chatMenus = {
-		"ChatMenu",
-		"EmoteMenu",
-		"LanguageMenu",
-		"VoiceMacroMenu",
-	}
+	do
+		local menuBackdrop = function(s)
+			s:SetTemplate('Transparent')
+		end
 
-	ChatMenu:ClearAllPoints()
-	ChatMenu:Point("BOTTOMLEFT", ChatFrame1, "TOPLEFT", 0, 30)
-	ChatMenu.ClearAllPoints = E.noop
-	ChatMenu.SetPoint = E.noop
+		local chatMenuBackdrop = function(s)
+			s:SetTemplate('Transparent')
 
-	local chatMenuOnShow = function(self)
-		self:SetBackdropBorderColor(unpack(E.media.bordercolor))
-		self:SetBackdropColor(unpack(E.media.backdropfadecolor))
-	end
+			s:ClearAllPoints()
+			s:Point('BOTTOMLEFT', _G.ChatFrame1, 'TOPLEFT', 0, 30)
+		end
 
-	for i = 1, #chatMenus do
-		local frame = _G[chatMenus[i]]
-		frame:SetTemplate("Transparent")
-		frame:HookScript("OnShow", chatMenuOnShow)
+		for index, menu in next, { _G.ChatMenu, _G.EmoteMenu, _G.LanguageMenu, _G.VoiceMacroMenu } do
+			menu:StripTextures()
 
-		for j = 1, 32 do
-			_G[chatMenus[i].."Button"..j]:StyleButton()
+			if index == 1 then -- ChatMenu
+				menu:HookScript('OnShow', chatMenuBackdrop)
+			else
+				menu:HookScript('OnShow', menuBackdrop)
+			end
 		end
 	end
 

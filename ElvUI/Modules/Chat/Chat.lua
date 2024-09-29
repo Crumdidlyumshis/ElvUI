@@ -301,7 +301,23 @@ end
 function CH:CopyButtonOnMouseUp(btn)
 	local chat = self:GetParent()
 	if btn == 'RightButton' and chat:GetID() == 1 then
-		ToggleFrame(_G.ChatMenu)
+		local menu = _G.ChatMenu
+		if menu then
+			menu:ClearAllPoints()
+
+			local point = E:GetScreenQuadrant(self)
+			if strfind(point, 'LEFT') then
+				menu:SetPoint('BOTTOMLEFT', self, 'TOPRIGHT')
+			else
+				menu:SetPoint('BOTTOMRIGHT', self, 'TOPLEFT')
+			end
+
+			ToggleFrame(menu)
+		else
+			_G.ChatFrameMenuButton:ClearAllPoints()
+			_G.ChatFrameMenuButton:SetPoint('TOPLEFT', _G.ChatFrame1.copyButton, 'TOPRIGHT')
+			_G.ChatFrameMenuButton:OpenMenu()
+		end
 	else
 		CH:CopyChat(chat)
 	end
@@ -1837,8 +1853,6 @@ function CH:SetupChat()
 		end
 	end
 
-	CH:ToggleHyperlink(CH.db.hyperlinkHover)
-
 	local chat = _G.GeneralDockManager.primary
 	_G.GeneralDockManager:ClearAllPoints()
 	_G.GeneralDockManager:Point('BOTTOMLEFT', chat, 'TOPLEFT', 0, 3)
@@ -1847,6 +1861,9 @@ function CH:SetupChat()
 	_G.GeneralDockManagerScrollFrame:Height(22)
 	_G.GeneralDockManagerScrollFrameChild:Height(22)
 
+	_G.CHAT_FONT_HEIGHTS = CH.FontHeights
+
+	CH:ToggleHyperlink(CH.db.hyperlinkHover)
 	CH:StyleOverflowButton()
 	CH:PositionChats()
 
@@ -2761,8 +2778,6 @@ function CH:Initialize()
 	if not ElvCharacterDB.ChatEditHistory then ElvCharacterDB.ChatEditHistory = {} end
 	if not ElvCharacterDB.ChatHistoryLog or not CH.db.chatHistory then ElvCharacterDB.ChatHistoryLog = {} end
 
-	_G.CHAT_FONT_HEIGHTS = CH.FontHeights
-	_G.ChatFrameMenuButton:Kill()
 	_G.FriendsMicroButton:Kill()
 
 	CH:SetupChat()
