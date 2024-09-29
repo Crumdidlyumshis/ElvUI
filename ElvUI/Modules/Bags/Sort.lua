@@ -6,7 +6,12 @@ local tinsert, tremove, sort, wipe = tinsert, tremove, sort, wipe
 local ipairs, pairs, select, unpack = ipairs, pairs, select, unpack
 local tonumber, floor, band = tonumber, floor, bit.band
 
+local ContainerIDToInventoryID = ContainerIDToInventoryID
 local CreateFrame = CreateFrame
+local GetContainerItemID = GetContainerItemID
+local GetContainerItemLink = GetContainerItemLink
+local GetContainerNumFreeSlots = GetContainerNumFreeSlots
+local GetContainerNumSlots = GetContainerNumSlots
 local GetCurrentGuildBankTab = GetCurrentGuildBankTab
 local GetCursorInfo = GetCursorInfo
 local GetGuildBankItemInfo = GetGuildBankItemInfo
@@ -17,23 +22,17 @@ local GetItemFamily = GetItemFamily
 local GetItemInfo = GetItemInfo
 local GetTime = GetTime
 local InCombatLockdown = InCombatLockdown
+local PickupContainerItem = PickupContainerItem
 local PickupGuildBankItem = PickupGuildBankItem
 local QueryGuildBankTab = QueryGuildBankTab
+local SplitContainerItem = SplitContainerItem
 local SplitGuildBankItem = SplitGuildBankItem
 
 local NUM_BAG_SLOTS = NUM_BAG_SLOTS
 local BANK_CONTAINER = BANK_CONTAINER
 
-local ARMOR = ARMOR
-local ENCHSLOT_WEAPON = ENCHSLOT_WEAPON
-
-local ContainerIDToInventoryID = ContainerIDToInventoryID
-local GetContainerItemID = GetContainerItemID
-local GetContainerItemLink = GetContainerItemLink
-local GetContainerNumFreeSlots = GetContainerNumFreeSlots
-local GetContainerNumSlots = GetContainerNumSlots
-local PickupContainerItem = PickupContainerItem
-local SplitContainerItem = SplitContainerItem
+local ItemClass_Armor = ARMOR
+local ItemClass_Weapon = ENCHSLOT_WEAPON
 
 local guildBags = {51,52,53,54,55,56,57,58}
 local bankBags = {BANK_CONTAINER}
@@ -56,6 +55,7 @@ end
 for _,i in ipairs(bankBags) do
 	tinsert(allBags, i)
 end
+
 for _,i in ipairs(guildBags) do
 	tinsert(allBags, i)
 end
@@ -222,7 +222,7 @@ local function IsGuildBankBag(bagid)
 end
 
 local function UpdateLocation(from, to)
-	if (bagIDs[from] == bagIDs[to]) and (bagStacks[to] < bagMaxStacks[to]) then
+	if bagIDs[from] == bagIDs[to] and (bagStacks[to] < bagMaxStacks[to]) then
 		local stackSize = bagMaxStacks[to]
 		if (bagStacks[to] + bagStacks[from]) > stackSize then
 			bagStacks[from] = bagStacks[from] - (stackSize - bagStacks[to])
@@ -249,6 +249,7 @@ local function PrimarySort(a, b)
 	if aLvl ~= bLvl and aLvl and bLvl then
 		return aLvl > bLvl
 	end
+
 	if aPrice ~= bPrice and aPrice and bPrice then
 		return aPrice > bPrice
 	end
@@ -275,24 +276,22 @@ local function DefaultSort(a, b)
 
 	local aRarity, bRarity = bagQualities[a], bagQualities[b]
 
+	if conjured_items[aID] then aRarity = -99 end
+	if conjured_items[bID] then bRarity = -99 end
+
 	if aRarity ~= bRarity and aRarity and bRarity then
 		return aRarity > bRarity
 	end
 
 	local _, _, _, _, _, aType, aSubType, _, aEquipLoc = GetItemInfo(aID)
 	local _, _, _, _, _, bType, bSubType, _, bEquipLoc = GetItemInfo(bID)
-
-	local aItemClassId, aItemSubClassId = itemTypes[aType] or 99, itemSubTypes[aType] and itemSubTypes[aType][aSubType] or 99
-	local bItemClassId, bItemSubClassId = itemTypes[bType] or 99, itemSubTypes[bType] and itemSubTypes[bType][bSubType] or 99
-
+	local aItemClassId, aItemSubClassId = itemTypes[aType], itemSubTypes[aType] and itemSubTypes[aType][aSubType]
+	local bItemClassId, bItemSubClassId = itemTypes[bType], itemSubTypes[bType] and itemSubTypes[bType][bSubType]
 	if aItemClassId ~= bItemClassId then
 		return (aItemClassId or 99) < (bItemClassId or 99)
 	end
-	if aItemClassId ~= bItemClassId then
-		return aItemClassId < bItemClassId
-	end
 
-	if aItemClassId == ARMOR or aItemClassId == ENCHSLOT_WEAPON then
+	if aItemClassId == ItemClass_Armor or aItemClassId == ItemClass_Weapon then
 		aEquipLoc = inventorySlots[aEquipLoc] or -1
 		bEquipLoc = inventorySlots[bEquipLoc] or -1
 
@@ -305,7 +304,7 @@ local function DefaultSort(a, b)
 		end
 	end
 
-	if (aItemClassId == bItemClassId) and (aItemSubClassId == bItemSubClassId) then
+	if aItemClassId == bItemClassId and (aItemSubClassId == bItemSubClassId) then
 		return PrimarySort(a, b)
 	end
 
@@ -452,11 +451,11 @@ local function DefaultCanMove()
 end
 
 function B:Encode_BagSlot(bag, slot)
-	return (bag * 100) + slot
+	return (bag*100) + slot
 end
 
 function B:Decode_BagSlot(int)
-	return floor(int / 100), int % 100
+	return floor(int*0.01), int % 100
 end
 
 function B:IsPartial(bag, slot)
@@ -469,10 +468,12 @@ function B:EncodeMove(source, target)
 end
 
 function B:DecodeMove(move)
-	local s = floor(move/10000)
-	local t = move%10000
-	s = (t > 9000) and (s + 1) or s
-	t = (t > 9000) and (t - 10000) or t
+	local s, t = floor(move * 0.0001), move % 10000
+
+	if t > 9000 then
+		s, t = s + 1, t - 10000
+	end
+
 	return s, t
 end
 
@@ -489,10 +490,10 @@ function B:ScanBags()
 		if itemID then
 			local _, _, quality, _, _, _, _, stackCount = GetItemInfo(itemLink)
 			local _, count = B:GetItemInfo(bag, slot)
-
 			bagMaxStacks[bagSlot] = stackCount
 			bagQualities[bagSlot] = quality
 			bagStacks[bagSlot] = count
+
 			bagIDs[bagSlot] = itemID
 		end
 	end
@@ -618,19 +619,17 @@ function B.Sort(bags, sorter, invertDirection)
 	B:BuildBlacklist(E.global.bags.ignoredItems)
 
 	for i, bag, slot in B:IterateBags(bags, nil, 'both') do
-		-- if not B:IsSortIgnored(bag) then
-			local link = B:GetItemLink(bag, slot)
-			local itemID = B:GetItemID(bag, slot)
-			local bagSlot = B:Encode_BagSlot(bag, slot)
-			if (itemID and blackList[itemID]) or (link and blackList[GetItemInfo(link)]) then
-				blackListedSlots[bagSlot] = true
-			end
+		local link = B:GetItemLink(bag, slot)
+		local itemID = B:GetItemID(bag, slot)
+		local bagSlot = B:Encode_BagSlot(bag, slot)
+		if (itemID and blackList[itemID]) or (link and blackList[GetItemInfo(link)]) then
+			blackListedSlots[bagSlot] = true
+		end
 
-			if not blackListedSlots[bagSlot] then
-				initialOrder[bagSlot] = i
-				tinsert(bagSorted, bagSlot)
-			end
-		-- end
+		if not blackListedSlots[bagSlot] then
+			initialOrder[bagSlot] = i
+			tinsert(bagSorted, bagSlot)
+		end
 	end
 
 	sort(bagSorted, sorter)
