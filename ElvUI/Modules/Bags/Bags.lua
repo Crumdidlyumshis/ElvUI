@@ -970,7 +970,6 @@ function B:SetBagAssignments(holder, skip)
 		bag.type = B.BagIndice.keyring
 	else
 		bag.type = select(2, GetContainerNumFreeSlots(holder.BagID))
-		B:UpdateContainerIconQuality(holder, holder.BagID)
 	end
 
 	if not skip and B:TotalSlotsChanged(frame) then
@@ -1286,18 +1285,6 @@ function B:UpdateContainerIcon(holder, bagID)
 	if not holder or not bagID or bagID == BACKPACK_CONTAINER or bagID == KEYRING_CONTAINER then return end
 
 	holder.icon:SetTexture(GetInventoryItemTexture('player', holder:GetID()) or DEFAULT_ICON)
-end
-
-function B:UpdateContainerIconQuality(holder, bagID)
-	local name = GetBagName(bagID)
-	local quality = name and select(3, GetItemInfo(name))
-	if quality and quality > 1 then
-		holder:SetBackdropBorderColor(GetItemQualityColor(quality))
-		holder.forcedBorderColors = {GetItemQualityColor(quality)}
-	else
-		holder:SetBackdropBorderColor(unpack(E.media.bordercolor))
-		holder.forcedBorderColors = nil
-	end
 end
 
 function B:UnregisterBagEvents(bagFrame)
