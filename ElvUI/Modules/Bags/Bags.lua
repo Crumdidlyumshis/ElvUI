@@ -104,45 +104,33 @@ do
 	local GetBackpackCurrencyInfo = GetBackpackCurrencyInfo
 
 	function B:GetBackpackCurrencyInfo(index)
-		if _G.GetBackpackCurrencyInfo then
-			local info = {}
+		local info = {}
 
-			info.name, info.quantity, info.currencyTypesID, info.iconFileID, info.itemID = GetBackpackCurrencyInfo(index)
-			info.iconFileID = (info.itemID == honorID and honorTex) or (info.itemID == arenaID and arenaTex) or info.iconFileID
+		info.name, info.quantity, info.currencyTypesID, info.iconFileID, info.itemID = GetBackpackCurrencyInfo(index)
+		info.iconFileID = (info.itemID == honorID and honorTex) or (info.itemID == arenaID and arenaTex) or info.iconFileID
 
-			return info
-		else
-			return GetBackpackCurrencyInfo(index)
-		end
+		return info
 	end
 
 	function B:GetContainerItemInfo(containerIndex, slotIndex)
-		if _G.GetContainerItemInfo then
-			local info = {}
+		local info = {}
 
-			info.iconFileID, info.stackCount, info.isLocked, _, info.isReadable, info.hasLoot, info.hyperlink = GetContainerItemInfo(containerIndex, slotIndex)
-			info.itemID = B:GetItemID(containerIndex, slotIndex)
-			if info.itemID then
-				_, _, info.quality, info.itemLevel, _, info.itemType, info.itemSubType, _, _, _, info.itemPrice = GetItemInfo(info.itemID)
-				info.hasNoValue = (info.itemPrice and info.itemPrice == 0)
-			end
-
-			return info
-		else
-			return GetContainerItemInfo(containerIndex, slotIndex) or {}
+		info.iconFileID, info.stackCount, info.isLocked, _, info.isReadable, info.hasLoot, info.hyperlink = GetContainerItemInfo(containerIndex, slotIndex)
+		info.itemID = B:GetItemID(containerIndex, slotIndex)
+		if info.itemID then
+			_, _, info.quality, info.itemLevel, _, info.itemType, info.itemSubType, _, _, _, info.itemPrice = GetItemInfo(info.itemID)
+			info.hasNoValue = (info.itemPrice and info.itemPrice == 0)
 		end
+
+		return info
 	end
 
 	function B:GetContainerItemQuestInfo(containerIndex, slotIndex)
-		if _G.GetContainerItemQuestInfo then
-			local info = {}
+		local info = {}
 
-			info.isQuestItem, info.questID, info.isActive = GetContainerItemQuestInfo(containerIndex, slotIndex)
+		info.isQuestItem, info.questID, info.isActive = GetContainerItemQuestInfo(containerIndex, slotIndex)
 
-			return info
-		else
-			return GetContainerItemQuestInfo(containerIndex, slotIndex)
-		end
+		return info
 	end
 end
 
@@ -1074,7 +1062,7 @@ function B:OnEvent(event, ...)
 			B:DelayedContainer(self, event, id)
 		end
 	elseif event == 'BAG_CLOSED' then
-		E:Delay(0.02, B.UpdateDelayedContainer, B, self) --Delay it to next frame to allow other addons to update their bag frames first. hook B:UpdateDelayedContainer(self)
+		E:Delay(0.01, B.UpdateDelayedContainer, B, self) --Delay it to next frame to allow other addons to update their bag frames first. hook B:UpdateDelayedContainer(self)
 	elseif (event == 'QUEST_ACCEPTED' or event == 'QUEST_REMOVED' or event == 'QUEST_LOG_UPDATE') and self:IsShown() then
 		for slot in next, B.QuestSlots do
 			B:UpdateSlot(self, slot.BagID, slot.SlotID)
