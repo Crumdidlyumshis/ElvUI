@@ -2778,6 +2778,7 @@ function CH:Initialize()
 	if not ElvCharacterDB.ChatEditHistory then ElvCharacterDB.ChatEditHistory = {} end
 	if not ElvCharacterDB.ChatHistoryLog or not CH.db.chatHistory then ElvCharacterDB.ChatHistoryLog = {} end
 
+	_G.ChatFrameMenuButton:Kill()
 	_G.FriendsMicroButton:Kill()
 
 	CH:SetupChat()
