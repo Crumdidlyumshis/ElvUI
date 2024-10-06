@@ -91,9 +91,9 @@ local function ColorItemBorder()
 	end
 end
 
-local function HandleTabs(frameCheck)
+local function HandleTabs()
 	local lastTab
-	for index, tab in next, { _G.CharacterFrameTab1, (HasPetUI() and (GetNumCompanions('CRITTER') > 0) or (GetNumCompanions('MOUNT') > 0)) and _G.CharacterFrameTab2 or nil, _G.CharacterFrameTab3, _G.CharacterFrameTab4, _G.CharacterFrameTab5 } do
+	for index, tab in next, { _G.CharacterFrameTab1, ((HasPetUI() == 1) or (GetNumCompanions('CRITTER') > 0) or (GetNumCompanions('MOUNT') > 0)) and _G.CharacterFrameTab2 or nil, _G.CharacterFrameTab3, _G.CharacterFrameTab4, _G.CharacterFrameTab5 } do
 		tab:ClearAllPoints()
 
 		if index == 1 then
@@ -164,7 +164,7 @@ local function UpdateCurrencySkins()
 	local TokenFrameContainer = _G.TokenFrameContainer
 	if not TokenFrameContainer.buttons then return end
 
-	for i, button in next, TokenFrameContainer.buttons do
+	for _, button in next, TokenFrameContainer.buttons do
 		if button.highlight then button.highlight:Kill() end
 		if button.categoryLeft then button.categoryLeft:Kill() end
 		if button.categoryRight then button.categoryRight:Kill() end
@@ -348,7 +348,7 @@ S:AddCallback('Skin_Character', function()
 
 	HandleResistanceFrame(E:IsHDPatch() and 'MagicResFrameer' or 'MagicResFrame')
 
-	for i, slot in ipairs(slots) do
+	for _, slot in ipairs(slots) do
 		local icon = _G[slot:GetName()..'IconTexture']
 		local cooldown = _G[slot:GetName()..'Cooldown']
 
@@ -420,7 +420,7 @@ S:AddCallback('Skin_Character', function()
 
 	S:HandleCloseButton(_G.GearManagerDialogClose, _G.GearManagerDialog.backdrop)
 
-	for i, button in ipairs(_G.GearManagerDialog.buttons) do
+	for _, button in ipairs(_G.GearManagerDialog.buttons) do
 		button:StripTextures()
 		button:CreateBackdrop('Default')
 		button.backdrop:SetAllPoints()
@@ -796,7 +796,7 @@ S:AddCallback('Skin_Character', function()
 		S:HandlePointXY(_G.PetAttackPowerFrame, 170, -5)
 		S:HandlePointXY(_G.PetLevelText, 0, -18)
 
-		for i, frame in ipairs({ PetAttributesFrame:GetChildren() }) do
+		for _, frame in ipairs({ PetAttributesFrame:GetChildren() }) do
 			if frame:IsObjectType('Frame') then
 				frame:Width(frame:GetWidth() + 40)
 			end
