@@ -9,15 +9,12 @@ local getmetatable = getmetatable
 local hooksecurefunc = hooksecurefunc
 
 local CreateFrame = CreateFrame
-local GetCurrencyListInfo = GetCurrencyListInfo
 local GetInventoryItemQuality = GetInventoryItemQuality
 local GetInventoryItemTexture = GetInventoryItemTexture
 local GetItemInfo = GetItemInfo
 local GetItemQualityColor = GetItemQualityColor
-local GetNumFactions = GetNumFactions
 local GetPetHappiness = GetPetHappiness
 local HasPetUI = HasPetUI
-local UnitFactionGroup = UnitFactionGroup
 local IsAddOnLoaded = IsAddOnLoaded
 
 local ResistanceCoords = {
@@ -92,8 +89,10 @@ local function ColorItemBorder()
 end
 
 local function HandleTabs()
+	local hasPetUI = GetNumCompanions('CRITTER') > 0 or GetNumCompanions('MOUNT') > 0 or HasPetUI() == 1
+
 	local lastTab
-	for index, tab in next, { _G.CharacterFrameTab1, ((HasPetUI() == 1) or (GetNumCompanions('CRITTER') > 0) or (GetNumCompanions('MOUNT') > 0)) and _G.CharacterFrameTab2 or nil, _G.CharacterFrameTab3, _G.CharacterFrameTab4, _G.CharacterFrameTab5 } do
+	for index, tab in next, { _G.CharacterFrameTab1, hasPetUI and _G.CharacterFrameTab2 or nil, _G.CharacterFrameTab3, _G.CharacterFrameTab4, _G.CharacterFrameTab5 } do
 		tab:ClearAllPoints()
 
 		if index == 1 then
