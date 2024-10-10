@@ -4389,6 +4389,7 @@ local ACTION_SLOTS = _G.NUM_PET_ACTION_SLOTS or 10
 local STANCE_SLOTS = _G.NUM_STANCE_SLOTS or 10
 
 P.actionbar = {
+	colorSwipeLOC = { r = 0.25, g = 0, b = 0, a = 0.8 },
 	colorSwipeNormal = { r = 0, g = 0, b = 0, a = 0.8 },
 	hotkeyTextPosition = 'TOPRIGHT',
 	macroTextPosition = 'TOPRIGHT',
@@ -4406,8 +4407,8 @@ P.actionbar = {
 	fontSize = 10,
 	globalFadeAlpha = 0,
 	handleOverlay = true,
+	keyDown = false,
 	lockActionBars = true,
-	keyDown = true,
 	movementModifier = 'SHIFT',
 	noPowerColor = { r = 0.5, g = 0.5, b = 1 },
 	noRangeColor = { r = 0.8, g = 0.1, b = 0.1 },
@@ -4472,20 +4473,22 @@ P.actionbar = {
 		fontOutline = 'OUTLINE',
 		fontSize = 12,
 		mouseover = false,
-		visibility = '[vehicleui] hide;show'
+		visibility = '[vehicleui] hide;show',
+		frameStrata = 'LOW',
+		frameLevel = 5,
 	},
 	microbar = {
 		enabled = false,
 		mouseover = false,
 		useIcons = true,
-		buttonsPerRow = 11,
+		buttonsPerRow = 12,
 		buttonSize = 20,
 		keepSizeRatio = false,
 		point = 'TOPLEFT',
 		buttonHeight = 28,
 		buttonSpacing = 2,
 		alpha = 1,
-		visibility = "show",
+		visibility = 'show',
 		backdrop = false,
 		backdropSpacing = 2,
 		heightMult = 1,
@@ -4508,7 +4511,7 @@ local AB_Bar = {
 	keepSizeRatio = true,
 	buttons = 12,
 	buttonsPerRow = 12,
-	point = "BOTTOMLEFT",
+	point = 'BOTTOMLEFT',
 	backdrop = false,
 	heightMult = 1,
 	widthMult = 1,
@@ -4519,36 +4522,36 @@ local AB_Bar = {
 	alpha = 1,
 	inheritGlobalFade = false,
 	showGrid = true,
-	flyoutDirection = "AUTOMATIC",
+	flyoutDirection = 'AUTOMATIC',
 	paging = {},
 	countColor = { r = 1, g = 1, b = 1 },
-	countFont = "Homespun",
-	countFontOutline = "MONOCHROMEOUTLINE",
+	countFont = 'Homespun',
+	countFontOutline = 'MONOCHROMEOUTLINE',
 	countFontSize = 10,
 	countFontXOffset = 0,
 	countFontYOffset = 2,
 	counttext = true,
-	countTextPosition = "BOTTOMRIGHT",
+	countTextPosition = 'BOTTOMRIGHT',
 	hotkeyColor = { r = 1, g = 1, b = 1 },
-	hotkeyFont = "Homespun",
-	hotkeyFontOutline = "MONOCHROMEOUTLINE",
+	hotkeyFont = 'Homespun',
+	hotkeyFontOutline = 'MONOCHROMEOUTLINE',
 	hotkeyFontSize = 10,
 	hotkeytext = true,
-	hotkeyTextPosition = "TOPRIGHT",
+	hotkeyTextPosition = 'TOPRIGHT',
 	hotkeyTextXOffset = 0,
 	hotkeyTextYOffset = -3,
 	macroColor = { r = 1, g = 1, b = 1 },
 	macrotext = false,
-	macroFont = "Homespun",
-	macroFontOutline = "MONOCHROMEOUTLINE",
+	macroFont = 'Homespun',
+	macroFontOutline = 'MONOCHROMEOUTLINE',
 	macroFontSize = 10,
-	macroTextPosition = "TOPRIGHT",
+	macroTextPosition = 'TOPRIGHT',
 	macroTextXOffset = 0,
 	macroTextYOffset = -3,
 	useCountColor = false,
 	useHotkeyColor = false,
 	useMacroColor = false,
-	frameStrata = "LOW",
+	frameStrata = 'LOW',
 	frameLevel = 1,
 }
 for i = 1, 10 do
@@ -4558,32 +4561,32 @@ for i = 1, 10 do
 	P.actionbar[barN].visibility = '[vehicleui] hide; show'
 end
 
-for _, bar in next, {"barPet", "stanceBar", "vehicleExitButton"} do
+for _, bar in next, {'barPet', 'stanceBar', 'vehicleExitButton'} do
 	local db = P.actionbar[bar]
-	db.frameStrata = "LOW"
+	db.frameStrata = 'LOW'
 	db.frameLevel = 1
 
-	if bar == "barPet" then
+	if bar == 'barPet' then
 		db.countColor = { r = 1, g = 1, b = 1 }
-		db.countFont = "Homespun"
-		db.countFontOutline = "MONOCHROMEOUTLINE"
+		db.countFont = 'Homespun'
+		db.countFontOutline = 'MONOCHROMEOUTLINE'
 		db.countFontSize = 10
 		db.countFontXOffset = 0
 		db.countFontYOffset = 2
 		db.counttext = true
-		db.countTextPosition = "BOTTOMRIGHT"
+		db.countTextPosition = 'BOTTOMRIGHT'
 		db.useCountColor = false
 	end
 end
 
 P.actionbar.bar1.enabled = true
-P.actionbar.bar1.visibility = ""
+P.actionbar.bar1.visibility = ''
 
-P.actionbar.bar1.paging.ROGUE = "[bonusbar:1] 7; [bonusbar:2] 8;"
-P.actionbar.bar1.paging.WARLOCK = "[form:1] 7;"
-P.actionbar.bar1.paging.DRUID = "[bonusbar:1,nostealth] 7; [bonusbar:1,stealth] 8; [bonusbar:2] 10; [bonusbar:3] 9; [bonusbar:4] 10;"
-P.actionbar.bar1.paging.PRIEST = "[bonusbar:1] 7;"
-P.actionbar.bar1.paging.WARRIOR = "[bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9;"
+P.actionbar.bar1.paging.ROGUE = '[bonusbar:1] 7; [bonusbar:2] 8;'
+P.actionbar.bar1.paging.WARLOCK = '[form:1] 7;'
+P.actionbar.bar1.paging.DRUID = '[bonusbar:1,nostealth] 7; [bonusbar:1,stealth] 8; [bonusbar:2] 10; [bonusbar:3] 9; [bonusbar:4] 10;'
+P.actionbar.bar1.paging.PRIEST = '[bonusbar:1] 7;'
+P.actionbar.bar1.paging.WARRIOR = '[bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9;'
 
 P.actionbar.bar3.enabled = true
 P.actionbar.bar3.buttons = 6
@@ -4591,7 +4594,7 @@ P.actionbar.bar3.buttonsPerRow = 6
 
 P.actionbar.bar4.enabled = true
 P.actionbar.bar4.buttonsPerRow = 1
-P.actionbar.bar4.point = "TOPRIGHT"
+P.actionbar.bar4.point = 'TOPRIGHT'
 P.actionbar.bar4.backdrop = true
 
 P.actionbar.bar5.enabled = true

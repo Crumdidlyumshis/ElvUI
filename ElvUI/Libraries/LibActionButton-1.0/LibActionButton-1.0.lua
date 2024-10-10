@@ -106,7 +106,6 @@ local DefaultConfig = {
 	tooltip = "enabled",
 	enabled = true,
 	showGrid = false,
-	targetReticle = true,
 	useColoring = true,
 	colors = {
 		range = { 0.8, 0.1, 0.1 },
@@ -128,7 +127,6 @@ local DefaultConfig = {
 	flyoutDirection = "UP",
 	disableCountDownNumbers = false,
 	useDrawBling = true,
-	useDrawSwipeOnCharges = true,
 	handleOverlay = true,
 	text = {
 		hotkey = {
@@ -639,7 +637,7 @@ function Generic:AddToMasque(group)
 	if type(group) ~= "table" or type(group.AddButton) ~= "function" then
 		error("LibActionButton-1.0:AddToMasque: You need to supply a proper group to use!", 2)
 	end
-	group:AddButton(self)
+	group:AddButton(self, nil, "Action")
 	self.MasqueSkinned = true
 end
 
@@ -823,10 +821,10 @@ end
 -----------------------------------------------------------
 --- event handler
 
-function ForAllButtons(method, onlyWithAction)
+function ForAllButtons(method, onlyWithAction, event)
 	assert(type(method) == "function")
 	for button in next, (onlyWithAction and ActiveButtons or ButtonRegistry) do
-		method(button)
+		method(button, event)
 	end
 end
 
@@ -835,18 +833,19 @@ function InitializeEventHandler()
 	lib.eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	lib.eventFrame:RegisterEvent("ACTIONBAR_SHOWGRID")
 	lib.eventFrame:RegisterEvent("ACTIONBAR_HIDEGRID")
-	--lib.eventFrame:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
-	--lib.eventFrame:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
 	lib.eventFrame:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
 	lib.eventFrame:RegisterEvent("UPDATE_BINDINGS")
 	lib.eventFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
-
 	lib.eventFrame:RegisterEvent("ACTIONBAR_UPDATE_STATE")
 	lib.eventFrame:RegisterEvent("ACTIONBAR_UPDATE_USABLE")
 	lib.eventFrame:RegisterEvent("ACTIONBAR_UPDATE_COOLDOWN")
 	lib.eventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
 	lib.eventFrame:RegisterEvent("TRADE_SKILL_SHOW")
 	lib.eventFrame:RegisterEvent("TRADE_SKILL_CLOSE")
+	lib.eventFrame:RegisterEvent("TRADE_CLOSED")
+	lib.eventFrame:RegisterEvent("UNIT_AURA")
+	lib.eventFrame:RegisterEvent("UNIT_INVENTORY_CHANGED")
+	lib.eventFrame:RegisterEvent("UNIT_MODEL_CHANGED")
 	lib.eventFrame:RegisterEvent("PLAYER_ENTER_COMBAT")
 	lib.eventFrame:RegisterEvent("PLAYER_LEAVE_COMBAT")
 	lib.eventFrame:RegisterEvent("START_AUTOREPEAT_SPELL")
@@ -854,7 +853,6 @@ function InitializeEventHandler()
 	lib.eventFrame:RegisterEvent("UNIT_ENTERED_VEHICLE")
 	lib.eventFrame:RegisterEvent("UNIT_EXITED_VEHICLE")
 	lib.eventFrame:RegisterEvent("COMPANION_UPDATE")
-	lib.eventFrame:RegisterEvent("UNIT_INVENTORY_CHANGED")
 	lib.eventFrame:RegisterEvent("LEARNED_SPELL_IN_TAB")
 	lib.eventFrame:RegisterEvent("PET_STABLE_UPDATE")
 	lib.eventFrame:RegisterEvent("PET_STABLE_SHOW")
@@ -875,7 +873,18 @@ function OnEvent(frame, event, arg1, ...)
 		end
 
 		if AURA_COOLDOWNS_ENABLED then
-			UpdateAuraCooldowns()
+			UpdateAuraCooldowns(event)
+		end
+	elseif event == "UNIT_MODEL_CHANGED" then
+		for button in next, ActiveButtons do
+			local texture = button:GetTexture()
+			if texture then
+				button.icon:SetTexture(texture)
+			end
+		end
+
+		if AURA_COOLDOWNS_ENABLED then
+			UpdateAuraCooldowns(event)
 		end
 	elseif (event == "UNIT_INVENTORY_CHANGED" and arg1 == "player") or event == "LEARNED_SPELL_IN_TAB" then
 		local tooltipOwner = GameTooltip:GetOwner()
@@ -885,11 +894,11 @@ function OnEvent(frame, event, arg1, ...)
 	elseif event == "ACTIONBAR_SLOT_CHANGED" then
 		for button in next, ButtonRegistry do
 			if button._state_type == "action" and (arg1 == 0 or arg1 == tonumber(button._state_action)) then
-				Update(button)
+				Update(button, event)
 			end
 		end
 	elseif event == "PLAYER_ENTERING_WORLD" or event == "UPDATE_SHAPESHIFT_FORM" then
-		ForAllButtons(Update)
+		ForAllButtons(Update, nil, event)
 	elseif event == "ACTIONBAR_SLOT_CHANGED" then
 		for button in next, ButtonRegistry do
 			if button._state_type == "action" and (arg1 == 0 or arg1 == tonumber(button._state_action)) then
@@ -905,7 +914,7 @@ function OnEvent(frame, event, arg1, ...)
 	elseif event == "ACTIONBAR_HIDEGRID" then
 		HideGrid()
 	elseif event == "UPDATE_BINDINGS" then
-		ForAllButtons(UpdateHotkeys)
+		ForAllButtons(UpdateHotkeys, nil, event)
 	elseif event == "PLAYER_TARGET_CHANGED" then
 		if AURA_COOLDOWNS_ENABLED then
 			UpdateAuraCooldowns(event)
@@ -918,10 +927,9 @@ function OnEvent(frame, event, arg1, ...)
 		if AURA_COOLDOWNS_ENABLED then
 			UpdateAuraCooldowns()
 		end
-	elseif (event == "ACTIONBAR_UPDATE_STATE") or
-		((event == "UNIT_ENTERED_VEHICLE" or event == "UNIT_EXITED_VEHICLE") and (arg1 == "player")) or
-		((event == "COMPANION_UPDATE") and (arg1 == "MOUNT")) then
-		ForAllButtons(UpdateButtonState, true)
+	elseif (event == "ACTIONBAR_UPDATE_STATE") or ((event == "UNIT_ENTERED_VEHICLE" or event == "UNIT_EXITED_VEHICLE") and (arg1 == "player"))
+		or ((event == "COMPANION_UPDATE") and (arg1 == "MOUNT")) or (event == "TRADE_SKILL_SHOW" or event == "TRADE_SKILL_CLOSE" or event == "TRADE_CLOSED") then
+		ForAllButtons(UpdateButtonState, true, event)
 	elseif event == "ACTIONBAR_UPDATE_USABLE" then
 		for button in next, ActionButtons do
 			UpdateUsable(button)
@@ -944,8 +952,6 @@ function OnEvent(frame, event, arg1, ...)
 				UpdateTooltip(button)
 			end
 		end
-	elseif event == "TRADE_SKILL_SHOW" or event == "TRADE_SKILL_CLOSE" then
-		ForAllButtons(UpdateButtonState, true)
 	elseif event == "PLAYER_ENTER_COMBAT" then
 		for button in next, ActiveButtons do
 			if button:IsAttack() then
@@ -971,11 +977,11 @@ function OnEvent(frame, event, arg1, ...)
 			end
 		end
 	elseif event == "PET_STABLE_UPDATE" or event == "PET_STABLE_SHOW" then
-		ForAllButtons(Update)
+		ForAllButtons(Update, nil, event)
 	elseif event == "PLAYER_EQUIPMENT_CHANGED" then
 		for button in next, ActiveButtons do
 			if button._state_type == "item" then
-				Update(button)
+				Update(button, event)
 			end
 		end
 	end
