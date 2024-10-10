@@ -782,6 +782,12 @@ S:AddCallback('Skin_Character', function()
 	-- Reposition Tabs
 	HandleTabs()
 
+	hooksecurefunc('PetPaperDollFrame_UpdateIsAvailable', function()
+		if not PetPaperDollFrame.hidden then
+			HandleTabs()
+		end
+	end)
+
 	-- Handle other HD interface frames
 	if E:IsHDPatch() then
 		S:HandleButton(_G.MostrarStatPaperDollLeftDropDown)
