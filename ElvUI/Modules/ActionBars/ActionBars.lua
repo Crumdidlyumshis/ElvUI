@@ -26,12 +26,11 @@ local UIParent = UIParent
 local SecureHandlerSetFrameRef = SecureHandlerSetFrameRef
 
 local NUM_ACTIONBAR_BUTTONS = NUM_ACTIONBAR_BUTTONS
-local LEAVE_VEHICLE = LEAVE_VEHICLE
 
 local LAB = E.Libs.LAB
 local LSM = E.Libs.LSM
 local Masque = E.Masque
-local MasqueGroup = Masque and Masque:Group('ElvUI', 'ActionBars')
+local VehicleMasqueGroup = Masque and Masque:Group('ElvUI', 'ActionBar Leave Vehicle')
 
 local buttonDefaults = {
 	hideElements = {},
@@ -79,7 +78,7 @@ AB.customExitButton = {
 		end
 	end,
 	texture = [[Interface\Icons\Spell_Shadow_SacrificialShield]],
-	tooltip = LEAVE_VEHICLE
+	tooltip = _G.LEAVE_VEHICLE
 }
 
 function AB:HandleBackdropMultiplier(bar, backdropSpacing, buttonSpacing, widthMult, heightMult, anchorUp, anchorLeft, horizontal, lastShownButton, anchorRowButton)
@@ -348,8 +347,8 @@ function AB:CreateBar(id)
 
 		button.MasqueSkinned = true -- skip LAB styling (we handle it and masque as well)
 
-		if MasqueGroup and E.private.actionbar.masque.actionbars then
-			button:AddToMasque(MasqueGroup)
+		if Masque and E.private.actionbar.masque.actionbars then
+			button:AddToMasque(bar.MasqueGroup)
 		end
 
 		AB:HookScript(button, 'OnEnter', 'Button_OnEnter')
@@ -428,8 +427,9 @@ function AB:CreateVehicleLeave()
 	button:SetScript('OnShow', nil)
 	button:SetScript('OnHide', nil)
 
-	if MasqueGroup and E.private.actionbar.masque.actionbars then
+	if Masque and E.private.actionbar.masque.actionbars then
 		button:StyleButton(true, true, true)
+		VehicleMasqueGroup:AddButton(button)
 	else
 		button:CreateBackdrop(nil, true)
 		button:GetNormalTexture():SetTexCoord(0.140625 + .08, 0.859375 - .06, 0.140625 + .08, 0.859375 - .08)
@@ -466,7 +466,7 @@ function AB:UpdateVehicleLeave()
 	end
 end
 
-function AB:UpdateVehicleShow(event)
+function AB:UpdateVehicleShown(event)
 	local button = _G.MainMenuBarVehicleLeaveButton
 	if event == "UNIT_ENTERED_VEHICLE" then
 		button:Show()
@@ -594,17 +594,7 @@ function AB:StyleButton(button, noBackdrop, useMasque, ignoreNormal)
 	local border = _G[name..'Border']
 	local normal = _G[name..'NormalTexture']
 	local normal2 = button:GetNormalTexture()
-	-- local macroText = _G[name..'Name']
-	local count = _G[name..'Count']
 	local cooldown = _G[name..'Cooldown']
-
-	button.icon = icon
-	button.HotKey = hotkey
-	button.AutoCastShine = shine
-	button.Flash = flash
-	button.Border = border
-	button.NormalTexture = normal
-	button.count = count
 
 	button.noBackdrop = noBackdrop
 	button.useMasque = useMasque
@@ -612,6 +602,7 @@ function AB:StyleButton(button, noBackdrop, useMasque, ignoreNormal)
 
 	icon:SetDrawLayer('ARTWORK', -1)
 	hotkey:SetDrawLayer('OVERLAY')
+	hotkey:SetParent(button) -- otherwise its on level 500 thanks to ActionButtonTextOverlayContainerMixin
 
 	if normal and not ignoreNormal then normal:SetTexture() normal:Hide() normal:SetAlpha(0) end
 	if normal2 then normal2:SetTexture() normal2:Hide() normal2:SetAlpha(0) end
@@ -658,16 +649,6 @@ function AB:StyleButton(button, noBackdrop, useMasque, ignoreNormal)
 	AB:FixKeybindText(button)
 end
 
-function AB:Bar_OnEnter(bar)
-	if bar:GetParent() == AB.fadeParent and not AB.fadeParent.mouseLock then
-		E:UIFrameFadeIn(AB.fadeParent, 0.2, AB.fadeParent:GetAlpha(), 1)
-	end
-
-	if bar.mouseover then
-		E:UIFrameFadeIn(bar, 0.2, bar:GetAlpha(), bar.db.alpha or 1)
-	end
-end
-
 function AB:UpdateMasque(bar, masqueGroup)
 	local masque = (bar and bar.MasqueGroup) or masqueGroup
 	masque:ReSkin()
@@ -676,6 +657,16 @@ function AB:UpdateMasque(bar, masqueGroup)
 		for _, btn in next, bar.buttons do
 			AB:TrimIcon(btn, true)
 		end
+	end
+end
+
+function AB:Bar_OnEnter(bar)
+	if bar:GetParent() == AB.fadeParent and not AB.fadeParent.mouseLock then
+		E:UIFrameFadeIn(AB.fadeParent, 0.2, AB.fadeParent:GetAlpha(), 1)
+	end
+
+	if bar.mouseover then
+		E:UIFrameFadeIn(bar, 0.2, bar:GetAlpha(), bar.db.alpha or 1)
 	end
 end
 
@@ -992,7 +983,7 @@ do
 
 	-- handle for pet/stance/etc not main bars
 	function AB:FixKeybindColor(button)
-		local hotkey = button.HotKey or _G[button:GetName()..'HotKey']
+		local hotkey = _G[button:GetName()..'HotKey']
 		if not hotkey then return end
 
 		local font, size, flags, anchor, offsetX, offsetY, justify, color, show = AB:GetHotkeyConfig(button:GetParent().db)
@@ -1204,8 +1195,8 @@ function AB:Initialize()
 
 	AB:RegisterEvent('PLAYER_ENTERING_WORLD')
 	AB:RegisterEvent('UPDATE_BINDINGS', 'ReassignBindings')
-	AB:RegisterEvent('UNIT_ENTERED_VEHICLE', 'UpdateVehicleShow')
-	AB:RegisterEvent('UNIT_EXITED_VEHICLE', 'UpdateVehicleShow')
+	AB:RegisterEvent('UNIT_ENTERED_VEHICLE', 'UpdateVehicleShown')
+	AB:RegisterEvent('UNIT_EXITED_VEHICLE', 'UpdateVehicleShown')
 
 	if E.myclass == 'SHAMAN' and AB.db.totemBar.enable then
 		AB:CreateTotemBar()
@@ -1215,7 +1206,7 @@ function AB:Initialize()
 
 	-- We handle actionbar lock for regular bars, but the lock on PetBar needs to be handled by WoW so make some necessary updates
 	E:SetCVar('lockActionBars', (AB.db.lockActionBars == true and 1 or 0))
-	LOCK_ACTIONBAR = (AB.db.lockActionBars == true and '1' or '0') -- Keep an eye on this, in case it taints
+	_G.LOCK_ACTIONBAR = (AB.db.lockActionBars == true and '1' or '0') -- Keep an eye on this, in case it taints
 end
 
 local function InitializeCallback()

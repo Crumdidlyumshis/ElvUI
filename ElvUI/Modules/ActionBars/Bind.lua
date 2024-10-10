@@ -162,11 +162,12 @@ function AB:BindUpdate(button, spellmacro)
 
 	button.bindstring = nil -- keep this clean
 
-	-- if spellmacro == "SPELL" then
-	-- 	button.id = SpellBook_GetSpellBookSlot(button)
-	-- 	bind.name = button.id and GetSpellBookItemName(button.id, _G.SpellBookFrame.bookType) or nil
-	-- 	if bind.name then button.bindstring = "SPELL "..bind.name end
-	if spellmacro == "MACRO" then
+	if spellmacro == "SPELL" then
+		button.id = button:GetID()
+		bind.name = button.id and GetSpellBookItemName(button.id, _G.SpellBookFrame.bookType) or nil
+
+		if bind.name then button.bindstring = "SPELL "..bind.name end
+	elseif spellmacro == "MACRO" then
 		button.id = button.selectionIndex or button:GetID()
 
 		if _G.MacroFrame.selectedTab == 2 then
@@ -305,11 +306,6 @@ function AB:LoadKeyBinder()
 	bind:SetScript("OnKeyUp", function(_, key) self:BindListener(key) end)
 	bind:SetScript("OnMouseUp", function(_, key) self:BindListener(key) end)
 	bind:SetScript("OnMouseWheel", function(_, delta) if delta>0 then self:BindListener("MOUSEWHEELUP") else self:BindListener("MOUSEWHEELDOWN") end end)
-
-	-- for i = 1, 12 do
-	-- 	local b = _G["SpellButton"..i]
-	-- 	b:HookScript("OnEnter", function(s) AB:BindUpdate(s, "SPELL") end)
-	-- end
 
 	local function buttonOnEnter(b) AB:BindUpdate(b) end
 	for b in next, self.handledbuttons do
