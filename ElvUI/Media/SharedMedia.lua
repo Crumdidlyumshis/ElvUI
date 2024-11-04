@@ -92,6 +92,7 @@ AddMedia('sound','RunFast.ogg',					'Runaway Fast')
 AddMedia('sound','StopRunningSlimeBall.ogg',	'Stop Running')
 AddMedia('sound','Whisper.ogg',					'Whisper Alert')
 AddMedia('sound','YankieBangBang.ogg',			'Big Yankie Devil')
+AddMedia('sound','Resurrect.ogg',				'Resurrect')
 
 AddMedia('texture','GlowTex',		'ElvUI GlowBorder','border')
 AddMedia('texture','NormTex',		'ElvUI Gloss',	'statusbar')
