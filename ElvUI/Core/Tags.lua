@@ -104,7 +104,7 @@ Tags.Env.UnitLevel = function(unit)
 	return UnitLevel(unit)
 end
 
-Tags.Env.Abbrev = function(name)
+local Abbrev = function(name)
 	local letters, lastWord = '', strmatch(name, '.+%s(.+)$')
 	if lastWord then
 		for word in gmatch(name, '.-%s') do
@@ -117,6 +117,8 @@ Tags.Env.Abbrev = function(name)
 	end
 	return name
 end
+
+Tags.Env.Abbrev = Abbrev
 
 local ClassPowers = {
 	DEATHKNIGHT	= SPELL_POWER_RUNES,
