@@ -9,6 +9,7 @@ local wipe, max, next, tinsert, date, time = wipe, max, next, tinsert, date, tim
 local format, gsub, strfind, strlen, strmatch, tonumber, tostring = string.format, string.gsub, strfind, strlen, strmatch, tonumber, tostring
 local hooksecurefunc = hooksecurefunc
 
+local CopyTable = CopyTable
 local CreateFrame = CreateFrame
 local GetBattlefieldArenaFaction = GetBattlefieldArenaFaction
 local GetGameTime = GetGameTime
@@ -33,7 +34,6 @@ local GetFunctionCPUUsage = GetFunctionCPUUsage
 local GetTalentTabInfo = GetTalentTabInfo
 local GetWatchedFactionInfo = GetWatchedFactionInfo
 local IsAddOnLoaded = IsAddOnLoaded
-local IsInRaid = LC.IsInRaid
 local IsXPUserDisabled = IsXPUserDisabled
 local RequestBattlefieldScoreData = RequestBattlefieldScoreData
 local UnitInBattleground = UnitInBattleground
@@ -47,11 +47,12 @@ local UnitInRaid = UnitInRaid
 local UnitIsUnit = UnitIsUnit
 local UnitAura = UnitAura
 
+local IsInRaid = LC.IsInRaid
+
 local GetSpecialization = LCS.GetSpecialization
 local GetSpecializationInfo = LCS.GetSpecializationInfo
 local GetSpecializationInfoForClassID = LCS.GetSpecializationInfoForClassID
-
-local GetClassInfo = LC.GetClassInfo
+local GetClassInfo = LCS.GetClassInfo
 
 local MAX_TALENT_TABS = MAX_TALENT_TABS
 local NONE = NONE
@@ -382,6 +383,18 @@ function E:IsDispellableByMe(debuffType)
 	if E.DispelClasses[E.myclass][debuffType] then return true end
 end
 
+function E:UpdateDispelColor(debuffType, r, g, b)
+	local color = DebuffTypeColor[debuffType]
+	if color then
+		color.r, color.g, color.b = r, g, b
+	end
+
+	local db = E.db.general.debuffColors[debuffType]
+	if db then
+		db.r, db.g, db.b = r, g, b
+	end
+end
+
 function E:UpdateDispelColors()
 	local colors = E.db.general.debuffColors
 	for debuffType, db in next, colors do
@@ -393,15 +406,87 @@ function E:UpdateDispelColors()
 	end
 end
 
-function E:UpdateDispelColor(debuffType, r, g, b)
-	local color = DebuffTypeColor[debuffType]
-	if color then
-		color.r, color.g, color.b = r, g, b
+do
+	local callbacks = {}
+	function E:CustomClassColorUpdate()
+		for func in next, callbacks do
+			func()
+		end
 	end
 
-	local db = E.db.general.debuffColors[debuffType]
-	if db then
-		db.r, db.g, db.b = r, g, b
+	function E:CustomClassColorRegister(func)
+		callbacks[func] = true
+	end
+
+	function E:CustomClassColorUnregister(func)
+		callbacks[func] = nil
+	end
+
+	function E:CustomClassColorNotify()
+		local changed = E:UpdateCustomClassColors()
+		if changed then
+			E:CustomClassColorUpdate()
+		end
+	end
+
+	function E:CustomClassColorClassToken(className)
+		return E:UnlocalizedClassName(className)
+	end
+
+	local meta = {
+		__index = {
+			RegisterCallback = E.CustomClassColorRegister,
+			UnregisterCallback = E.CustomClassColorUnregister,
+			NotifyChanges = E.CustomClassColorNotify,
+			GetClassToken = E.CustomClassColorClassToken
+		}
+	}
+
+	function E:SetupCustomClassColors()
+		local object = CopyTable(_G.RAID_CLASS_COLORS)
+
+		_G.CUSTOM_CLASS_COLORS = setmetatable(object, meta)
+
+		return object
+	end
+
+	function E:UpdateCustomClassColor(classTag, r, g, b)
+		local colors = _G.CUSTOM_CLASS_COLORS
+		local color = colors and colors[classTag]
+		if color then
+			color.r, color.g, color.b = r, g, b
+			color.colorStr = E:RGBToHex(r, g, b, 'ff')
+		end
+
+		local db = E.db.general.classColors[classTag]
+		if db then
+			db.r, db.g, db.b = r, g, b
+		end
+
+		E:CustomClassColorNotify()
+	end
+
+	function E:UpdateCustomClassColors()
+		if not E.private.general.classColors then return end
+
+		local custom = _G.CUSTOM_CLASS_COLORS or E:SetupCustomClassColors()
+		local colors, changed = E.db.general.classColors
+
+		for classTag, db in next, colors do
+			local color = custom[classTag]
+			if color then
+				E:UpdateClassColor(db)
+
+				if color.r ~= db.r or color.g ~= db.g or color.b ~= db.b then
+					color.r, color.g, color.b = db.r, db.g, db.b
+					color.colorStr = E:RGBToHex(db.r, db.g, db.b, 'ff')
+
+					changed = true
+				end
+			end
+		end
+
+		return changed
 	end
 end
 

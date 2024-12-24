@@ -558,13 +558,6 @@ end
 function TT:GameTooltip_OnTooltipCleared(tt)
 	if tt.qualityChanged then
 		tt.qualityChanged = nil
-
-		local r, g, b = 1, 1, 1
-		if E.private.skins.blizzard.enable and E.private.skins.blizzard.tooltip then
-			r, g, b = unpack(E.media.bordercolor)
-		end
-
-		tt:SetBackdropBorderColor(r, g, b)
 	end
 
 	tt.ItemLevelShown = nil
@@ -602,7 +595,7 @@ function TT:GameTooltip_OnTooltipSetItem(data)
 		return
 	end
 
-	local itemID, bagCount, bankCount
+	local itemID, bagCount, bankCount, stackSize
 	local modKey = TT:IsModKeyDown()
 
 	local GetItem = self.GetItem
@@ -610,20 +603,32 @@ function TT:GameTooltip_OnTooltipSetItem(data)
 		local _, link = GetItem(self)
 		if not link then return end
 
+		if TT.db.itemQuality then
+			local _, _, quality = GetItemInfo(link)
+			if quality and quality > 1 then
+				local r, g, b = GetItemQualityColor(quality)
+				self:SetBackdropBorderColor(r, g, b)
+
+				self.qualityChanged = true
+			end
+		end
+
 		if modKey then
 			itemID = format('|cFFCA3C3C%s|r %s', _G.ID, (data and data.id) or strmatch(link, ':(%w+)'))
 		end
 
-		if TT.db.itemCount ~= 'NONE' and (not TT.db.modifierCount or modKey) then
+		if not TT.db.modifierCount or modKey then
 			local count = GetItemCount(link)
-			local total = GetItemCount(link, true)
-			if TT.db.itemCount == 'BAGS_ONLY' then
-				bagCount = format(IDLine, L["Count"], count)
-			elseif TT.db.itemCount == 'BANK_ONLY' then
-				bankCount = format(IDLine, L["Bank"], total - count)
-			elseif TT.db.itemCount == 'BOTH' then
-				bagCount = format(IDLine, L["Count"], count)
-				bankCount = format(IDLine, L["Bank"], total - count)
+			local itemCount = TT.db.itemCount
+			if itemCount.bags then
+				bagCount = format(IDLine, L["Bags"], count)
+			end
+
+			if itemCount.stack then
+				local _, _, _, _, _, _, _, stack = GetItemInfo(link)
+				if stack and stack > 1 then
+					stackSize = format(IDLine, L["Stack Size"], stack)
+				end
 			end
 		end
 	elseif modKey then
@@ -633,9 +638,18 @@ function TT:GameTooltip_OnTooltipSetItem(data)
 		end
 	end
 
-	if itemID or bagCount or bankCount then self:AddLine(' ') end
-	if itemID or bagCount then self:AddDoubleLine(itemID or ' ', bagCount or ' ') end
-	if bankCount then self:AddDoubleLine(' ', bankCount) end
+	if itemID or bagCount or bankCount or stackSize then
+		self:AddLine(' ')
+		self:AddDoubleLine(itemID or ' ', bagCount or bankCount or stackSize or ' ')
+	end
+
+	if (bagCount and bankCount) then
+		self:AddDoubleLine(' ', bankCount)
+	end
+
+	if (bagCount or bankCount) and stackSize then
+		self:AddDoubleLine(' ', stackSize)
+	end
 end
 
 function TT:GameTooltip_AddQuestRewardsToTooltip(tt, questID)
@@ -685,27 +699,8 @@ end
 function TT:SetStyle(tt)
 	if not tt or (tt == E.ScanTooltip) then return end
 
-	if not tt.template then
-		tt:SetTemplate('Transparent')
-	else
-		tt:SetBackdropBorderColor(unpack(E.media.bordercolor, 1, 3))
-	end
-
-	local r, g, b = unpack(E.media.backdropfadecolor, 1, 3)
-	tt:SetBackdropColor(r, g, b, TT.db.colorAlpha)
-
-	if not (TT.db.itemQuality and tt.GetItem) then return end
-
-	local _, link = tt:GetItem()
-	if not link then return end
-
-	local _, _, quality = GetItemInfo(link)
-	if quality and quality > 1 then
-		local r, g, b = GetItemQualityColor(quality)
-		tt:SetBackdropBorderColor(r, g, b)
-
-		tt.qualityChanged = true
-	end
+	tt.customBackdropAlpha = TT.db.colorAlpha
+	tt:SetTemplate('Transparent')
 end
 
 function TT:MODIFIER_STATE_CHANGED(_, key)

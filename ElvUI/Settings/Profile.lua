@@ -73,6 +73,18 @@ P.general = {
 		questtext = { enable = false, font = 'Expressway', size = 14, outline = 'NONE' },
 		questsmall = { enable = false, font = 'Expressway', size = 13, outline = 'NONE' },
 	},
+	classColors = {
+		HUNTER = { b = 0.44, g = 0.82, r = 0.66 },
+		WARRIOR = { b = 0.42, g = 0.60, r = 0.77 },
+		ROGUE = { b = 0.40, g = 0.95, r = 1 },
+		MAGE = { b = 0.92, g = 0.78, r = 0.24 },
+		PRIEST = { b = 1, g = 1, r = 1 },
+		SHAMAN = { b = 0.86, g = 0.43, r = 0 },
+		WARLOCK = { b = 0.93, g = 0.53, r = 0.52 },
+		DEATHKNIGHT = { b = 0.22, g = 0.11, r = 0.76 },
+		DRUID = { b = 0.03, g = 0.48, r = 1 },
+		PALADIN = { b = 0.72, g = 0.54, r = 0.95 }
+	},
 	debuffColors = { -- handle colors of LibDispel
 		none = { r = 0.8, g = 0, b = 0 },
 		Magic = { r = 0.2, g = 0.6, b = 1 },
@@ -1406,16 +1418,12 @@ P.tooltip = {
 	cursorAnchorX = 0,
 	cursorAnchorY = 0,
 	inspectDataEnable = true,
-	dungeonScore = true,
-	dungeonScoreColor = true,
 	alwaysShowRealm = false,
 	targetInfo = true,
 	playerTitles = true,
 	guildRanks = true,
 	itemQuality = false,
-	itemCount = "BAGS_ONLY",
 	modifierCount = true,
-	showMount = true,
 	modifierID = "SHOW",
 	role = true,
 	gender = false,
@@ -1428,6 +1436,10 @@ P.tooltip = {
 	smallTextFontSize = 12,
 	colorAlpha = 0.8,
 	fadeOut = true,
+	itemCount = {
+		bags = true,
+		stack = false
+	},
 	visibility = {
 		bags = "SHOW",
 		unitFrames = "SHOW",

@@ -26,6 +26,7 @@ V.general = {
 	blizzardFontSize = false,
 	noFontScale = false,
 	totemTracker = true,
+	classColors = false,
 	queueStatus = true,
 	minimap = {
 		enable = true,

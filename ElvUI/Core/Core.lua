@@ -1117,14 +1117,14 @@ do
 			end
 
 		-- removed override stuff from aurawatch
---[[ 		for _, spells in pairs(E.global.unitframe.buffwatch) do
-			for _, spell in pairs(spells) do
-				buffwatchConvert(spell)
-			end
-		end
-		for _, spell in pairs(E.db.unitframe.filters.buffwatch) do
-			buffwatchConvert(spell)
-		end ]]
+ 		-- for _, spells in pairs(E.global.unitframe.buffwatch) do
+		-- 	for _, spell in pairs(spells) do
+		-- 		buffwatchConvert(spell)
+		-- 	end
+		-- end
+		-- for _, spell in pairs(E.db.unitframe.filters.buffwatch) do
+		-- 	buffwatchConvert(spell)
+		-- end
 
 		-- fix aurabars colors
 		local auraBarColors = E.global.unitframe.AuraBarColors
@@ -1235,13 +1235,55 @@ do
 		if E.db.chat.numAllowedCombatRepeat == 0 then
 			E.db.chat.enableCombatRepeat = false
 		end
+
+		-- tooltip item count to be more optional
+		local itemCount = E.db.tooltip.itemCount
+		if type(itemCount) == 'string' then
+			local db = E:CopyTable({}, P.tooltip.itemCount)
+			if itemCount == 'BAGS_ONLY' then
+				db.bags = true
+				db.bank = false
+			elseif itemCount == 'BANK_ONLY' then
+				db.bags = false
+				db.bank = true
+			elseif itemCount == 'BOTH' then
+				db.bags = true
+				db.bank = true
+			elseif itemCount == 'NONE' then
+				db.bags = false
+				db.bank = false
+			end
+
+			E.db.tooltip.itemCount = db
+		end
+
+		local currency = E.global.datatexts.customCurrencies
+		if currency then
+			for id, data in next, E.global.datatexts.customCurrencies do
+				local info = {
+					name = data.NAME or nil,
+					showMax = data.SHOW_MAX or nil,
+					currencyTooltip = data.DISPLAY_IN_MAIN_TOOLTIP or nil,
+					nameStyle = data.DISPLAY_STYLE and (strfind(data.DISPLAY_STYLE, 'ABBR') and 'abbr' or strfind(data.DISPLAY_STYLE, 'TEXT') and 'full' or 'none') or nil
+				}
+
+				if next(info) then
+					E.global.datatexts.customCurrencies[id] = info
+				end
+			end
+		end
+
+		if E.private.general.gameMenuScale ~= nil then
+			E.db.general.gameMenuScale = E.private.general.gameMenuScale
+			E.private.general.gameMenuScale = nil
+		end
 	end
 end
 
 function E:DBConvertDev()
-	if E.private.general.gameMenuScale ~= nil then
-		E.db.general.gameMenuScale = E.private.general.gameMenuScale
-		E.private.general.gameMenuScale = nil
+	if not ElvCharacterDB.ConvertKeybindings then
+		E:ConvertActionBarKeybinds()
+		ElvCharacterDB.ConvertKeybindings = true
 	end
 end
 
@@ -1250,6 +1292,7 @@ function E:UpdateDB()
 	E.db = E.data.profile
 	E.global = E.data.global
 
+	E:DBConversions()
 	E:SetupDB()
 
 	-- default the non thing pixel border color to 191919, otherwise its 000000
@@ -1277,6 +1320,8 @@ end
 
 function E:UpdateMediaItems(skipCallback)
 	E:UpdateMedia()
+	E:UpdateDispelColors()
+	E:UpdateCustomClassColors()
 	E:UpdateFrameTemplates()
 	E:UpdateStatusBars()
 
@@ -1648,6 +1693,26 @@ do
 	end
 end
 
+--TODO
+-- function E:CallLoadedModule(obj, silent, object, index)
+-- 	local name, func = obj.name, obj.func
+
+-- 	local module = name and E:GetModule(name, silent)
+-- 	if not module then return end
+
+-- 	if func and type(func) == 'string' then
+-- 		E:CallLoadFunc(module[func], module)
+-- 	elseif func and type(func) == 'function' then
+-- 		E:CallLoadFunc(func, module)
+-- 	elseif module.Initialize then
+-- 		E:CallLoadFunc(module.Initialize, module)
+-- 	end
+
+-- 	if object and index then
+-- 		object[index] = nil
+-- 	end
+-- end
+
 function E:CallLoadedModule(obj, silent, object, index)
 	local name, func
 	if type(obj) == 'table' then name, func = unpack(obj) else name = obj end
@@ -1662,12 +1727,29 @@ function E:CallLoadedModule(obj, silent, object, index)
 		E:CallLoadFunc(module.Initialize, module)
 	end
 
-	if object and index then object[index] = nil end
+	if object and index then
+		object[index] = nil
+	end
 end
 
 function E:RegisterInitialModule(name, func)
 	E.RegisteredInitialModules[#E.RegisteredInitialModules + 1] = (func and {name, func}) or name
 end
+
+--TODO
+-- do
+-- 	local loaded = {}
+-- 	function E:RegisterModule(name, func)
+-- 		if E.initialized then
+-- 			loaded.name = name
+-- 			loaded.func = func
+
+-- 			E:CallLoadedModule(loaded)
+-- 		else
+-- 			E.RegisteredModules[#E.RegisteredModules + 1] = { name = name, func = func }
+-- 		end
+-- 	end
+-- end
 
 function E:RegisterModule(name, func)
 	if E.initialized then
@@ -1697,13 +1779,8 @@ function E:DBConversions()
 		E:DBConvert()
 	end
 
-	-- development converts
-
-	-- always convert
-	if not ElvCharacterDB.ConvertKeybindings then
-		E:ConvertActionBarKeybinds()
-		ElvCharacterDB.ConvertKeybindings = true
-	end
+	-- development convert always
+	E:DBConvertDev()
 end
 
 function E:ConvertActionBarKeybinds()
@@ -1777,6 +1854,7 @@ function E:Initialize()
 	E.data.RegisterCallback(E, 'OnProfileChanged', 'StaggeredUpdateAll')
 	E.data.RegisterCallback(E, 'OnProfileCopied', 'StaggeredUpdateAll')
 	E.data.RegisterCallback(E, 'OnProfileReset', 'OnProfileReset')
+
 	E.charSettings = E.Libs.AceDB:New('ElvPrivateDB', E.privateVars)
 	E.charSettings.RegisterCallback(E, 'OnProfileChanged', ReloadUI)
 	E.charSettings.RegisterCallback(E, 'OnProfileCopied', ReloadUI)
@@ -1791,6 +1869,7 @@ function E:Initialize()
 	E:LoadMovers()
 	E:UpdateMedia()
 	E:UpdateDispelColors()
+	E:UpdateCustomClassColors()
 	E:UpdateCooldownSettings('all')
 	E:Contruct_StaticPopups()
 	E:Tutorials()
@@ -1803,7 +1882,7 @@ function E:Initialize()
 		E:TagUpdateRate(E.db.general.tagUpdateRate)
 	end
 
-	if E.db.general.smoothingAmount and (E.db.general.smoothingAmount ~= 0.33) then
+	if E.db.general.smoothingAmount and (E.db.general.smoothingAmount ~= P.general.smoothingAmount) then
 		E:SetSmoothingAmount(E.db.general.smoothingAmount)
 	end
 
@@ -1816,7 +1895,7 @@ function E:Initialize()
 		E:StaticPopup_Show('UPDATE_REQUEST')
 	end
 
-	if GetCVar('scriptProfile') == '1' and not E:IsAddOnEnabled('ElvUI_CPU')then
+	if GetCVar('scriptProfile') == '1' then
 		E:StaticPopup_Show('SCRIPT_PROFILE')
 	end
 

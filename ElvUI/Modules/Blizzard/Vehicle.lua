@@ -49,7 +49,7 @@ function B:PositionVehicleFrame()
 		indicator:SetPoint('TOPRIGHT', _G.MinimapCluster, 'BOTTOMRIGHT', 0, 0)
 		indicator:Size(E.db.general.vehicleSeatIndicatorSize)
 
-		E:CreateMover(indicator, 'VehicleSeatMover', L["Vehicle Seat Frame"], nil, nil, nil, nil, nil, 'general,blizzUIImprovements')
+		E:CreateMover(indicator, 'VehicleSeatMover', L["Vehicle Seat Frame"], nil, nil, nil, nil, nil, 'general,blizzardImprovements')
 		indicator.PositionVehicleFrameHooked = true
 	end
 

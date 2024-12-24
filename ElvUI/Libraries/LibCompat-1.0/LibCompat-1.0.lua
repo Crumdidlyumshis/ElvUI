@@ -14,6 +14,7 @@ lib.callbacks = lib.callbacks or LibStub("CallbackHandler-1.0"):New(lib)
 local pairs, ipairs, select, type = pairs, ipairs, select, type
 local tinsert, tremove, tconcat, wipe = table.insert, table.remove, table.concat, wipe
 local floor, ceil, max, min, abs = math.floor, math.ceil, math.max, math.min, math.abs
+local next = next
 local format = format or string.format
 local strlen = strlen or string.len
 local strmatch = strmatch or string.match
@@ -1437,16 +1438,21 @@ end
 -------------------------------------------------------------------------------
 
 do
-	local GetContainerItemInfo = GetContainerItemInfo
-	local GetContainerItemLink = GetContainerItemLink
-	local GetContainerNumSlots = GetContainerNumSlots
+	local unpack = unpack
+
 	local GetItemInfo = GetItemInfo
+	local GetContainerNumSlots = GetContainerNumSlots
+	local GetContainerItemLink = GetContainerItemLink
+	local GetContainerItemInfo = GetContainerItemInfo
+	local GetInventoryItemLink = GetInventoryItemLink
 
 	local C_Timer = lib.C_Timer
 
 	local C_NewItems = {}
 	local previousBagContents = {}
+	local previousEquipment = {}
 	local newItems = {}
+	local recentlyUnequipped = {}
 	local hasInitialized = false
 
 	-- Mimics C_NewItems.IsNewItem(containerIndex, slotIndex)
@@ -1461,54 +1467,86 @@ do
 		end
 	end
 
-	-- Optimized helper function to check if an item is stackable
-	local stackableItems = setmetatable({}, {__index = function(t, itemID)
-		local _, _, _, _, _, _, _, maxStack = GetItemInfo(itemID)
-		local isStackable = maxStack and maxStack > 1 or false
-		t[itemID] = isStackable
-		return isStackable
-	end})
+	-- Helper function to check if an item is stackable
+	local function IsItemStackable(itemID)
+		local itemInfo = {GetItemInfo(itemID)}
+		if #itemInfo > 0 then
+			local _, _, _, _, _, _, _, maxStack = unpack(itemInfo)
+			return maxStack > 1
+		end
+		return false  -- Default to false if item info is not available
+	end
 
-	-- Optimized helper function to check if an item exists in any bag or bank and count occurrences
-	local function CountItemInBagsAndBank(targetItemID)
+	-- Helper function to check if an item exists in any bag, bank, or equipment and count occurrences
+	local function CountItemInBagsBankAndEquipment(targetItemID)
 		local count = 0
+		-- Check regular bags (-2 to 4) and bank bags (5 to 11)
 		for bag = -2, 11 do
-			local bagContents = previousBagContents[bag]
-			if bagContents then
-				for _, itemData in pairs(bagContents) do
+			if previousBagContents[bag] then
+				for _, itemData in pairs(previousBagContents[bag]) do
 					if itemData.id == targetItemID then
 						count = count + itemData.count
 					end
 				end
 			end
 		end
+		-- Check equipment
+		for slot = 1, 19 do
+			if previousEquipment[slot] and previousEquipment[slot].id == targetItemID then
+				count = count + 1
+			end
+		end
 		return count
 	end
 
-	-- Optimized function to update bag contents and identify new items
-	local function UpdateBagContents()
+	-- Updates equipment contents
+	local function UpdateEquipmentContents()
+		local currentEquipment = {}
+		for slot = 1, 19 do
+			local itemLink = GetInventoryItemLink("player", slot)
+			if itemLink then
+				local itemID = tonumber(itemLink:match('item:(%d+)'))
+				if itemID then
+					currentEquipment[slot] = {id = itemID}
+				end
+			end
+		end
+
+		-- Check for unequipped items
+		for slot, item in pairs(previousEquipment) do
+			if not currentEquipment[slot] or currentEquipment[slot].id ~= item.id then
+				recentlyUnequipped[item.id] = true
+			end
+		end
+
+		previousEquipment = currentEquipment
+	end
+
+	-- Updates bag contents and identifies new items
+	local function UpdateBagContents(isInitialLogin)
 		local currentContents = {}
 		local currentNewItems = {}
 
+		-- Update for regular bags (-2 to 4) and bank bags (5 to 11)
 		for bag = -2, 11 do
 			currentContents[bag] = {}
 			currentNewItems[bag] = {}
 
+			-- GetContainerNumSlots works for both regular bags and bank bags
 			for slot = 1, GetContainerNumSlots(bag) do
 				local itemLink = GetContainerItemLink(bag, slot)
-				if itemLink then
-					local itemID = tonumber(itemLink:match('item:(%d+)'))
-					local _, itemCount = GetContainerItemInfo(bag, slot)
+				local itemID = itemLink and tonumber(itemLink:match('item:(%d+)'))
+				local _, itemCount = GetContainerItemInfo(bag, slot)
 
+				if itemID then
 					currentContents[bag][slot] = {id = itemID, count = itemCount}
+					local previousCount = CountItemInBagsBankAndEquipment(itemID)
 
-					if hasInitialized then
-						local previousCount = CountItemInBagsAndBank(itemID)
-						if previousCount == 0 or (not stackableItems[itemID] and previousCount < itemCount) then
-							currentNewItems[bag][slot] = true
-						elseif newItems[bag] and newItems[bag][slot] then
-							currentNewItems[bag][slot] = true
-						end
+					if not isInitialLogin and hasInitialized and not recentlyUnequipped[itemID] and (previousCount == 0 or (not IsItemStackable(itemID) and previousCount < CountItemInBagsBankAndEquipment(itemID))) then
+						currentNewItems[bag][slot] = true
+					elseif not isInitialLogin and newItems[bag] and newItems[bag][slot] then
+						-- Preserve new status for items that were already marked as new
+						currentNewItems[bag][slot] = true
 					end
 				end
 			end
@@ -1516,24 +1554,34 @@ do
 
 		previousBagContents = currentContents
 		newItems = currentNewItems
+		recentlyUnequipped = {}  -- Clear the recently unequipped items
 		hasInitialized = true
 	end
 
-	local function OnEvent(_, event)
-		if event == "PLAYER_LOGIN" then
-			UpdateBagContents()
-		else
-			C_Timer.After(0.1, UpdateBagContents)
-		end
-	end
-
-	-- Optimized event handling
+	-- Event handling for bag updates, bank updates, player login, and equipment changes
 	local eventFrame = CreateFrame('Frame')
 	eventFrame:RegisterEvent('BAG_UPDATE')
 	eventFrame:RegisterEvent('PLAYERBANKSLOTS_CHANGED')
 	eventFrame:RegisterEvent('PLAYER_LOGIN')
-	eventFrame:SetScript('OnEvent', OnEvent)
+	eventFrame:RegisterEvent('PLAYER_EQUIPMENT_CHANGED')
+	eventFrame:SetScript('OnEvent', function(_, event)
+		if event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_LOGIN" then
+			UpdateEquipmentContents()
+			UpdateBagContents(true)  -- Pass true for initial login
+		elseif event == "PLAYER_EQUIPMENT_CHANGED" then
+			C_Timer.After(0.1, function()
+				UpdateEquipmentContents()
+				UpdateBagContents(false)
+			end)
+		elseif event == "BAG_UPDATE" or event == "PLAYERBANKSLOTS_CHANGED" then
+			C_Timer.After(0.1, function()
+				UpdateBagContents(false)  -- Pass false for subsequent updates
+			end)
+		end
+	end)
 
+	-- Assuming 'lib' is defined elsewhere
+	lib.ClearAll = C_NewItems.ClearAll
 	lib.IsNewItem = C_NewItems.IsNewItem
 	lib.RemoveNewItem = C_NewItems.RemoveNewItem
 	lib.C_NewItems = C_NewItems
@@ -2269,12 +2317,32 @@ do
 		return playerMaxLevel
 	end
 
+	local function GetDifficultyInfo(id)
+		local difficulties = {
+			[1] = { name = PLAYER_DIFFICULTY1, groupType = "party", isHeroic = false, toggleDifficultyID = 2 },
+			[2] = { name = PLAYER_DIFFICULTY2, groupType = "party", isHeroic = true, toggleDifficultyID = 1 },
+			[3] = { name = RAID_DIFFICULTY1, groupType = "raid", isHeroic = false, toggleDifficultyID = 5 },
+			[4] = { name = RAID_DIFFICULTY2, groupType = "raid", isHeroic = false, toggleDifficultyID = 6 },
+			[5] = { name = RAID_DIFFICULTY3, groupType = "raid", isHeroic = true, toggleDifficultyID = 3 },
+			[6] = { name = RAID_DIFFICULTY4, groupType = "raid", isHeroic = true, toggleDifficultyID = 4 },
+		}
+
+		local difficulty = difficulties[id]
+
+		if difficulty then
+			return difficulty.name, difficulty.groupType, difficulty.isHeroic, difficulty.isHeroic, difficulty.toggleDifficultyID
+		else
+			return nil, nil, false, false, nil
+		end
+	end
+
 	lib.FormatShortDate = FormatShortDate
 	lib.GetPhysicalScreenSize = GetPhysicalScreenSize
 	lib.GetAverageItemLevel = GetAverageItemLevel
 	lib.GetItemLevelColor = GetItemLevelColor
 	lib.GetCurrentCalendarTime = GetCurrentCalendarTime
 	lib.GetMaxPlayerLevel = GetMaxPlayerLevel
+	lib.GetDifficultyInfo = GetDifficultyInfo
 end
 
 -------------------------------------------------------------------------------
@@ -2389,6 +2457,7 @@ local mixins = {
 	"GetItemLevelColor",
 	"GetCurrentCalendarTime",
 	"GetMaxPlayerLevel",
+	"GetDifficultyInfo"
 }
 
 function lib:Embed(target)

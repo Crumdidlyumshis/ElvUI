@@ -4,6 +4,8 @@ local MC = E:GetModule("ModuleCopy")
 local D = E:GetModule("Distributor")
 local S = E:GetModule("Skins")
 
+local LCS = E.Libs.LCS
+
 -- libraries used for options
 E:AddLib('AceGUI', 'AceGUI-3.0')
 E:AddLib('AceConfig', 'AceConfig-3.0-ElvUI')
@@ -37,6 +39,8 @@ local UnitExists = UnitExists
 local UnitIsUnit = UnitIsUnit
 local UnitIsFriend = UnitIsFriend
 local UnitIsPlayer = UnitIsPlayer
+local CLASS_SORT_ORDER = CLASS_SORT_ORDER
+local NUM_CLASSES = #CLASS_SORT_ORDER
 
 C.Values = {
 	GrowthDirection = {
@@ -49,6 +53,8 @@ C.Values = {
 		LEFT_DOWN = format(L["%s and then %s"], L["Left"], L["Down"]),
 		LEFT_UP = format(L["%s and then %s"], L["Left"], L["Up"]),
 	},
+	MAX_BOSS_FRAMES = 4,
+	NUM_CLASSES = NUM_CLASSES,
 	FontFlags = ACH.FontValues,
 	FontSize = { min = 8, max = 24, step = 1 },
 	Roman = { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX" }, -- 1 to 20
@@ -67,6 +73,18 @@ C.Values = {
 		FLUID_DEBUFFS_ON_BUFFS = L["Fluid Debuffs on Buffs"],
 	},
 }
+
+do
+	C.ClassTable = {}
+
+	for i = 1, NUM_CLASSES do
+		local name, tag = LCS.GetClassInfo(i)
+		if tag then
+			C.ClassTable[tag] = name
+		end
+	end
+end
+
 do
 	C.StateSwitchGetText = function(_, TEXT)
 		local friend, enemy = strmatch(TEXT, "^Friendly:([^,]*)"), strmatch(TEXT, "^Enemy:([^,]*)")
