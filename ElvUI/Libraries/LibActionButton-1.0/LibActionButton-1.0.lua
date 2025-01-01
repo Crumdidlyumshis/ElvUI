@@ -211,9 +211,6 @@ function lib:CreateButton(id, name, header, config)
 	button.cooldown:SetFrameLevel(button:GetFrameLevel() + 1)
 
 	local AuraCooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
-	AuraCooldown:SetDrawBling(false)
-	AuraCooldown:SetDrawSwipe(false)
-	AuraCooldown:SetDrawEdge(false)
 	button.AuraCooldown = AuraCooldown
 
 	-- Frame Scripts
