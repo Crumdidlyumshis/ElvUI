@@ -1438,149 +1438,206 @@ end
 -------------------------------------------------------------------------------
 
 do
-	local unpack = unpack
+	-- Credits: "Tsoukie"
+	-- https://gitlab.com/Tsoukie/classicapi/-/blob/main/!!!ClassicAPI/Util/C_NewItems.lua
+	-- https://gitlab.com/Tsoukie/classicapi/-/issues/26
+	-- Modified by Crum
 
-	local GetItemInfo = GetItemInfo
+	local hooksecurefunc = hooksecurefunc
+	local type = type
+
 	local GetContainerNumSlots = GetContainerNumSlots
-	local GetContainerItemLink = GetContainerItemLink
 	local GetContainerItemInfo = GetContainerItemInfo
-	local GetInventoryItemLink = GetInventoryItemLink
+	local GetContainerItemID = GetContainerItemID
+	local GetFramesRegisteredForEvent = GetFramesRegisteredForEvent
+	local CursorHasItem = CursorHasItem
+	local GetTime = GetTime
 
-	local C_Timer = lib.C_Timer
+	local C_NewItems = CreateFrame("Frame")
 
-	local C_NewItems = {}
-	local previousBagContents = {}
-	local previousEquipment = {}
-	local newItems = {}
-	local recentlyUnequipped = {}
-	local hasInitialized = false
+	local INVENTORY, STACK_UI
+	local MIN, MAX = 0, 4
 
-	-- Mimics C_NewItems.IsNewItem(containerIndex, slotIndex)
-	function C_NewItems.IsNewItem(containerIndex, slotIndex)
-		return newItems[containerIndex] and newItems[containerIndex][slotIndex] or false
+	local function GetSlotInfo(containerIndex, slotIndex)
+		local container = INVENTORY[containerIndex]
+		return (container and slotIndex) and container[slotIndex]
 	end
 
-	-- Mimics C_NewItems.RemoveNewItem(containerIndex, slotIndex)
-	function C_NewItems.RemoveNewItem(containerIndex, slotIndex)
-		if newItems[containerIndex] then
-			newItems[containerIndex][slotIndex] = nil
+	local function Bag(event, containerIndex)
+		if containerIndex >= MIN and containerIndex <= MAX then
+			if event == "BAG_CLOSED" then
+				INVENTORY[containerIndex] = false
+			else
+				local size = GetContainerNumSlots(containerIndex)
+				local container = INVENTORY[containerIndex]
+				local START, END
+
+				if not container then
+					container = {}
+					INVENTORY[containerIndex] = container
+					START = 1
+				elseif size ~= container.size or not container[size] then
+					if size > container.size then
+						START = container.size
+					else
+						START = size
+						END = container.size
+					end
+				end
+
+				if START then
+					local time = GetTime()
+					for i = START, (END or size) do
+						container[i] = (START == 1 or END) and {[3] = time} or nil
+					end
+				end
+
+				container.size = size
+
+				return container
+			end
 		end
 	end
 
-	-- Helper function to check if an item is stackable
-	local function IsItemStackable(itemID)
-		local itemInfo = {GetItemInfo(itemID)}
-		if #itemInfo > 0 then
-			local _, _, _, _, _, _, _, maxStack = unpack(itemInfo)
-			return maxStack > 1
-		end
-		return false  -- Default to false if item info is not available
-	end
+	local function Query(event, containerIndex)
+		local container = INVENTORY[containerIndex]
 
-	-- Helper function to check if an item exists in any bag, bank, or equipment and count occurrences
-	local function CountItemInBagsBankAndEquipment(targetItemID)
-		local count = 0
-		-- Check regular bags (-2 to 4) and bank bags (5 to 11)
-		for bag = -2, 11 do
-			if previousBagContents[bag] then
-				for _, itemData in pairs(previousBagContents[bag]) do
-					if itemData.id == targetItemID then
-						count = count + itemData.count
+		if event then
+			container = Bag(event, containerIndex)
+		end
+
+		if container then
+			local time = event and GetTime()
+
+			for slotIndex = 1, container.size do
+				local slot = container[slotIndex]
+
+				if slot then
+					if event then
+						local _, stackCurrent = GetContainerItemInfo(containerIndex, slotIndex)
+						local stack = slot[1]
+
+						if stackCurrent ~= stack then
+							local buffer = slot[3]
+
+							if (buffer and (time - buffer) > .5) then -- Latency?
+								buffer = nil
+								slot[3] = nil
+							end
+
+							if (event == "CONSTRUCT" or buffer or (stackCurrent or -1) < (stack or 0)) then
+								if not (buffer and stack == 9998 and not stackCurrent) then
+									slot[1] = stackCurrent
+									slot[2] = nil
+
+									if not stackCurrent and slot == STACK_UI.split then
+										STACK_UI.split = nil -- Move unknown, clear.
+									end
+								end
+							else
+								local currentID = GetContainerItemID(containerIndex, slotIndex)
+								local changed = slot[2] ~= currentID
+
+								slot[1] = stackCurrent
+								slot[2] = (changed) and nil or currentID
+							end
+						end
+					else
+						slot[2] = nil -- .ClearAll()
 					end
 				end
 			end
 		end
-		-- Check equipment
-		for slot = 1, 19 do
-			if previousEquipment[slot] and previousEquipment[slot].id == targetItemID then
-				count = count + 1
-			end
-		end
-		return count
 	end
 
-	-- Updates equipment contents
-	local function UpdateEquipmentContents()
-		local currentEquipment = {}
-		for slot = 1, 19 do
-			local itemLink = GetInventoryItemLink("player", slot)
-			if itemLink then
-				local itemID = tonumber(itemLink:match('item:(%d+)'))
-				if itemID then
-					currentEquipment[slot] = {id = itemID}
-				end
-			end
-		end
+	hooksecurefunc("PickupContainerItem", function(containerIndex, slotIndex)
+		if INVENTORY then
+			local slot = GetSlotInfo(containerIndex, slotIndex)
 
-		-- Check for unequipped items
-		for slot, item in pairs(previousEquipment) do
-			if not currentEquipment[slot] or currentEquipment[slot].id ~= item.id then
-				recentlyUnequipped[item.id] = true
-			end
-		end
+			if slot then
+				if CursorHasItem() then
+					STACK_UI.split = slot
+				else
+					local origin = STACK_UI.split
 
-		previousEquipment = currentEquipment
-	end
+					if origin ~= slot then
+						local time, stack = GetTime()
 
-	-- Updates bag contents and identifies new items
-	local function UpdateBagContents(isInitialLogin)
-		local currentContents = {}
-		local currentNewItems = {}
+						if origin then
+							if type(origin) == "number" then
+								stack = 9998
+							else
+								origin[1] = 9999
+								origin[3] = time
+							end
+						end
 
-		-- Update for regular bags (-2 to 4) and bank bags (5 to 11)
-		for bag = -2, 11 do
-			currentContents[bag] = {}
-			currentNewItems[bag] = {}
-
-			-- GetContainerNumSlots works for both regular bags and bank bags
-			for slot = 1, GetContainerNumSlots(bag) do
-				local itemLink = GetContainerItemLink(bag, slot)
-				local itemID = itemLink and tonumber(itemLink:match('item:(%d+)'))
-				local _, itemCount = GetContainerItemInfo(bag, slot)
-
-				if itemID then
-					currentContents[bag][slot] = {id = itemID, count = itemCount}
-					local previousCount = CountItemInBagsBankAndEquipment(itemID)
-
-					if not isInitialLogin and hasInitialized and not recentlyUnequipped[itemID] and (previousCount == 0 or (not IsItemStackable(itemID) and previousCount < CountItemInBagsBankAndEquipment(itemID))) then
-						currentNewItems[bag][slot] = true
-					elseif not isInitialLogin and newItems[bag] and newItems[bag][slot] then
-						-- Preserve new status for items that were already marked as new
-						currentNewItems[bag][slot] = true
+						slot[1] = stack or 9999
+						slot[3] = time
 					end
+
+					STACK_UI.split = nil
 				end
+			else
+				STACK_UI.split = nil
 			end
-		end
-
-		previousBagContents = currentContents
-		newItems = currentNewItems
-		recentlyUnequipped = {}  -- Clear the recently unequipped items
-		hasInitialized = true
-	end
-
-	-- Event handling for bag updates, bank updates, player login, and equipment changes
-	local eventFrame = CreateFrame('Frame')
-	eventFrame:RegisterEvent('BAG_UPDATE')
-	eventFrame:RegisterEvent('PLAYERBANKSLOTS_CHANGED')
-	eventFrame:RegisterEvent('PLAYER_LOGIN')
-	eventFrame:RegisterEvent('PLAYER_EQUIPMENT_CHANGED')
-	eventFrame:SetScript('OnEvent', function(_, event)
-		if event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_LOGIN" then
-			UpdateEquipmentContents()
-			UpdateBagContents(true)  -- Pass true for initial login
-		elseif event == "PLAYER_EQUIPMENT_CHANGED" then
-			C_Timer.After(0.1, function()
-				UpdateEquipmentContents()
-				UpdateBagContents(false)
-			end)
-		elseif event == "BAG_UPDATE" or event == "PLAYERBANKSLOTS_CHANGED" then
-			C_Timer.After(0.1, function()
-				UpdateBagContents(false)  -- Pass false for subsequent updates
-			end)
 		end
 	end)
 
-	-- Assuming 'lib' is defined elsewhere
+	local function Processor(self, event, ...)
+		if self == "CONSTRUCT" then
+			STACK_UI = StackSplitFrame -- Avoid hook to SplitContainerItem()?
+			INVENTORY = {}
+
+			for i = MIN, MAX do
+				Query(self, i)
+			end
+
+			local BAG_UPDATE = {GetFramesRegisteredForEvent("BAG_UPDATE")}
+
+			C_NewItems:RegisterEvent("BAG_UPDATE")
+			C_NewItems:RegisterEvent("BAG_CLOSED")
+			C_NewItems:SetScript("OnEvent", Processor)
+
+			for i = 1, #BAG_UPDATE do
+				local frame = BAG_UPDATE[i]
+				frame:UnregisterEvent("BAG_UPDATE")
+				frame:RegisterEvent("BAG_UPDATE")
+			end
+		elseif event == "BAG_CLOSED" then
+			Bag(event, ...)
+		else
+			local containerIndex, newItems = ...
+			if not newItems then
+				Query(event, containerIndex)
+			end
+		end
+	end
+
+	function C_NewItems.ClearAll()
+		if not INVENTORY then return Processor("CONSTRUCT") end
+
+		for i = MIN, MAX do
+			Query(nil, i)
+		end
+	end
+
+	function C_NewItems.IsNewItem(containerIndex, slotIndex)
+		if not INVENTORY then return Processor("CONSTRUCT") end
+
+		local slot = GetSlotInfo(containerIndex, slotIndex)
+		return (slot and slot[2]) and true
+	end
+
+	function C_NewItems.RemoveNewItem(containerIndex, slotIndex)
+		if not INVENTORY then return Processor("CONSTRUCT") end
+
+		local slot = GetSlotInfo(containerIndex, slotIndex)
+		if slot then
+			slot[2] = nil
+		end
+	end
+
 	lib.ClearAll = C_NewItems.ClearAll
 	lib.IsNewItem = C_NewItems.IsNewItem
 	lib.RemoveNewItem = C_NewItems.RemoveNewItem

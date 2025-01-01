@@ -52,8 +52,8 @@ local IsBagOpen, IsOptionFrameOpen = IsBagOpen, IsOptionFrameOpen
 local IsShiftKeyDown, IsControlKeyDown = IsShiftKeyDown, IsControlKeyDown
 local CloseBag, CloseBackpack, CloseBankFrame = CloseBag, CloseBackpack, CloseBankFrame
 
-local C_NewItems_IsNewItem = C_NewItems.IsNewItem
-local C_NewItems_RemoveNewItem = C_NewItems.RemoveNewItem
+local C_NewItems_IsNewItem = LC.C_NewItems.IsNewItem
+local C_NewItems_RemoveNewItem = LC.C_NewItems.RemoveNewItem
 
 local EditBox_HighlightText = EditBox_HighlightText
 local BankFrameItemButton_UpdateLocked = BankFrameItemButton_UpdateLocked
