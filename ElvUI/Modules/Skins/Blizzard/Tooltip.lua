@@ -9,6 +9,11 @@ function S:StyleTooltips()
 	if not (E.private.skins.blizzard.enable and E.private.skins.blizzard.tooltip) then return end
 
 	for _, tt in next, {
+		_G.AutoCompleteBox,
+		_G.ConsolidatedBuffsTooltip,
+		_G.DataTextTooltip,
+		_G.FriendsTooltip,
+		_G.GameTooltip,
 		_G.ItemRefTooltip,
 		_G.ItemRefShoppingTooltip1,
 		_G.ItemRefShoppingTooltip2,
@@ -16,16 +21,6 @@ function S:StyleTooltips()
 		_G.ShoppingTooltip1,
 		_G.ShoppingTooltip2,
 		_G.ShoppingTooltip3,
-	} do
-		TT:SetStyle(tt)
-	end
-
-	for _, tt in next, {
-		_G.GameTooltip,
-		_G.AutoCompleteBox,
-		_G.FriendsTooltip,
-		_G.ConsolidatedBuffsTooltip,
-		_G.DataTextTooltip,
 		_G.WorldMapTooltip,
 		_G.WorldMapCompareTooltip1,
 		_G.WorldMapCompareTooltip2,
