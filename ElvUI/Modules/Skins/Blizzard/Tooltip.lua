@@ -9,6 +9,13 @@ function S:StyleTooltips()
 	if not (E.private.skins.blizzard.enable and E.private.skins.blizzard.tooltip) then return end
 
 	for _, tt in next, {
+		_G.ItemRefTooltip,
+	} do
+		if TT:IsHooked(tt, 'OnSizeChanged') then return end
+		TT:SecureHookScript(tt, 'OnSizeChanged', 'SetStyle')
+	end
+
+	for _, tt in next, {
 		_G.AutoCompleteBox,
 		_G.ConsolidatedBuffsTooltip,
 		_G.DataTextTooltip,
@@ -32,7 +39,6 @@ function S:StyleTooltips()
 		_G.LibDBIconTooltip,
 	} do
 		if TT:IsHooked(tt, 'OnShow') then return end
-
 		TT:SecureHookScript(tt, 'OnShow', 'SetStyle')
 	end
 end
