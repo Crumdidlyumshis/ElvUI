@@ -1,7 +1,7 @@
 local E, L, V, P, G = unpack(ElvUI)
 local TT = E:GetModule('Tooltip')
 local AB = E:GetModule('ActionBars')
-local Skins = E:GetModule('Skins')
+local S = E:GetModule('Skins')
 local B = E:GetModule('Bags')
 local LSM = E.Libs.LSM
 -- local LCS = E.Libs.LCS
@@ -37,6 +37,7 @@ local IsModifierKeyDown = IsModifierKeyDown
 local IsShiftKeyDown = IsShiftKeyDown
 local NotifyInspect = NotifyInspect
 local SetTooltipMoney = SetTooltipMoney
+local ShoppingTooltip1, ShoppingTooltip2, ShoppingTooltip3 = ShoppingTooltip1, ShoppingTooltip2, ShoppingTooltip3
 local UIParent = UIParent
 local UnitAura = UnitAura
 local UnitClass = UnitClass
@@ -89,15 +90,6 @@ local inventorySlots = {
 	'HeadSlot', 'NeckSlot', 'ShoulderSlot', 'BackSlot', 'ChestSlot', 'WristSlot',
 	'HandsSlot', 'WaistSlot', 'LegsSlot', 'FeetSlot', 'Finger0Slot', 'Finger1Slot',
 	'Trinket0Slot', 'Trinket1Slot', 'MainHandSlot', 'SecondaryHandSlot', 'RangedSlot'
-}
-
-local updateUnitModifiers = {
-	['LSHIFT'] = true,
-	['RSHIFT'] = true,
-	['LCTRL'] = true,
-	['RCTRL'] = true,
-	['LALT'] = true,
-	['RALT'] = true,
 }
 
 function TT:SetCompareItems(tt, value)
@@ -597,21 +589,12 @@ function TT:GameTooltip_OnTooltipSetItem(data)
 
 	local itemID, bagCount, bankCount, stackSize
 	local modKey = TT:IsModKeyDown()
-
 	local GetItem = self.GetItem
-	if GetItem then -- Some tooltips don't have this func. Example - compare tooltip
+	if GetItem then
 		local _, link = GetItem(self)
 		if not link then return end
 
-		if TT.db.itemQuality then
-			local _, _, quality = GetItemInfo(link)
-			if quality and quality > 1 then
-				local r, g, b = GetItemQualityColor(quality)
-				self:SetBackdropBorderColor(r, g, b)
-
-				self.qualityChanged = true
-			end
-		end
+		TT:SetStyle(self)
 
 		if modKey then
 			itemID = format('|cFFCA3C3C%s|r %s', _G.ID, (data and data.id) or strmatch(link, ':(%w+)'))
@@ -656,7 +639,7 @@ function TT:GameTooltip_AddQuestRewardsToTooltip(tt, questID)
 	if not (tt and questID and tt.progressBar) then return end
 
 	local _, max = tt.progressBar:GetMinMaxValues()
-	Skins:StatusBarColorGradient(tt.progressBar, tt.progressBar:GetValue(), max)
+	S:StatusBarColorGradient(tt.progressBar, tt.progressBar:GetValue(), max)
 end
 
 function TT:GameTooltip_ClearProgressBars(tt)
@@ -689,25 +672,33 @@ function TT:GameTooltip_ShowStatusBar(tt)
 	sb:SetStatusBarTexture(E.media.normTex)
 end
 
-function TT:CheckBackdropColor(tt)
-	if tt:GetAnchorType() == 'ANCHOR_CURSOR' then
-		local r, g, b = unpack(E.media.backdropfadecolor, 1, 3)
-		tt:SetBackdropColor(r, g, b, self.db.colorAlpha)
-	end
-end
-
 function TT:SetStyle(tt)
 	if not tt or (tt == E.ScanTooltip) then return end
 
 	tt.customBackdropAlpha = TT.db.colorAlpha
 	tt:SetTemplate('Transparent')
+
+	local GetItem = tt.GetItem
+	if GetItem then
+		local _, link = GetItem(tt)
+		if not link then return end
+
+		if TT.db.itemQuality then
+			local _, _, quality = GetItemInfo(link)
+			if quality and quality > 1 then
+				local r, g, b = GetItemQualityColor(quality)
+				tt:SetBackdropBorderColor(r, g, b)
+
+				tt.qualityChanged = true
+			end
+		end
+	end
 end
 
-function TT:MODIFIER_STATE_CHANGED(_, key)
-	if updateUnitModifiers[key] then
+function TT:MODIFIER_STATE_CHANGED()
+	if GameTooltip:IsShown() then
 		local owner = GameTooltip:GetOwner()
-		local notOnAuras = not (owner and owner.UpdateTooltip)
-		if notOnAuras and UnitExists('mouseover') then
+		if owner == UIParent and UnitExists('mouseover') then
 			GameTooltip:SetUnit('mouseover')
 		end
 	end
@@ -914,6 +905,9 @@ function TT:Initialize()
 
 	TT:SecureHookScript(GameTooltip, 'OnTooltipSetSpell', TT.GameTooltip_OnTooltipSetSpell)
 	TT:SecureHookScript(GameTooltip, 'OnTooltipSetItem', TT.GameTooltip_OnTooltipSetItem)
+	TT:SecureHookScript(ShoppingTooltip1, 'OnTooltipSetItem', TT.GameTooltip_OnTooltipSetItem)
+	TT:SecureHookScript(ShoppingTooltip2, 'OnTooltipSetItem', TT.GameTooltip_OnTooltipSetItem)
+	TT:SecureHookScript(ShoppingTooltip3, 'OnTooltipSetItem', TT.GameTooltip_OnTooltipSetItem)
 	TT:SecureHookScript(GameTooltip, 'OnTooltipSetUnit', TT.GameTooltip_OnTooltipSetUnit)
 	TT:SecureHookScript(E.SpellBookTooltip, 'OnTooltipSetSpell', TT.GameTooltip_OnTooltipSetSpell)
 
