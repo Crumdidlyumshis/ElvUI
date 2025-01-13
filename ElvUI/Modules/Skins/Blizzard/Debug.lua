@@ -1,97 +1,98 @@
 local E, L, V, P, G = unpack(ElvUI)
-local S = E:GetModule("Skins")
+local S = E:GetModule('Skins')
 local TT = E:GetModule('Tooltip')
 
---Lua functions
 local _G = _G
 local unpack = unpack
 local hooksecurefunc = hooksecurefunc
 local ipairs = ipairs
---WoW API / Variables
+local select = select
 
-S:AddCallbackForAddon("Blizzard_DebugTools", "Skin_Blizzard_DebugTools", function()
+local PlaySound = PlaySound
+
+S:AddCallbackForAddon('Blizzard_DebugTools', 'Skin_Blizzard_DebugTools', function()
 	if not E.private.skins.blizzard.enable or not E.private.skins.blizzard.debug then return end
 
-	ScriptErrorsFrame:SetParent(E.UIParent)
-	ScriptErrorsFrame:StripTextures()
-	ScriptErrorsFrame:SetTemplate("Transparent")
+	_G.ScriptErrorsFrame:SetParent(E.UIParent)
+	_G.ScriptErrorsFrame:StripTextures()
+	_G.ScriptErrorsFrame:SetTemplate('Transparent')
 
-	S:HandleScrollBar(ScriptErrorsFrameScrollFrameScrollBar)
-	S:HandleCloseButton(ScriptErrorsFrameClose, ScriptErrorsFrame)
+	S:HandleScrollBar(_G.ScriptErrorsFrameScrollFrameScrollBar)
+	S:HandleCloseButton(_G.ScriptErrorsFrameClose, _G.ScriptErrorsFrame)
 
-	ScriptErrorsFrameScrollFrameText:FontTemplate(nil, 13)
-	ScriptErrorsFrameScrollFrameText:Width(461)
+	_G.ScriptErrorsFrameScrollFrameText:FontTemplate(nil, 13)
+	_G.ScriptErrorsFrameScrollFrameText:Width(461)
 
-	ScriptErrorsFrameScrollFrame:CreateBackdrop("Default")
-	ScriptErrorsFrameScrollFrame.backdrop:Point("BOTTOMRIGHT", 1, -2)
-	ScriptErrorsFrameScrollFrame:SetFrameLevel(ScriptErrorsFrameScrollFrame:GetFrameLevel() + 2)
-	ScriptErrorsFrameScrollFrame:Width(461)
-	ScriptErrorsFrameScrollFrame:Point("TOPLEFT", 9, -30)
+	_G.ScriptErrorsFrameScrollFrame:CreateBackdrop('Default')
+	_G.ScriptErrorsFrameScrollFrame.backdrop:Point('BOTTOMRIGHT', 1, -2)
+	_G.ScriptErrorsFrameScrollFrame:SetFrameLevel(_G.ScriptErrorsFrameScrollFrame:GetFrameLevel() + 2)
+	_G.ScriptErrorsFrameScrollFrame:Width(461)
+	_G.ScriptErrorsFrameScrollFrame:Point('TOPLEFT', 9, -30)
 
-	ScriptErrorsFrameScrollFrameScrollBar:Point("TOPLEFT", ScriptErrorsFrameScrollFrame, "TOPRIGHT", 4, -18)
-	ScriptErrorsFrameScrollFrameScrollBar:Point("BOTTOMLEFT", ScriptErrorsFrameScrollFrame, "BOTTOMRIGHT", 4, 17)
+	_G.ScriptErrorsFrameScrollFrameScrollBar:Point('TOPLEFT', _G.ScriptErrorsFrameScrollFrame, 'TOPRIGHT', 4, -18)
+	_G.ScriptErrorsFrameScrollFrameScrollBar:Point('BOTTOMLEFT', _G.ScriptErrorsFrameScrollFrame, 'BOTTOMRIGHT', 4, 17)
 
-	EventTraceFrame:StripTextures()
-	EventTraceFrame:SetTemplate("Transparent")
-	S:HandleSliderFrame(EventTraceFrameScroll)
+	_G.EventTraceFrame:StripTextures()
+	_G.EventTraceFrame:SetTemplate('Transparent')
+	S:HandleSliderFrame(_G.EventTraceFrameScroll)
 
-	for i = 1, ScriptErrorsFrame:GetNumChildren() do
-		local child = select(i, ScriptErrorsFrame:GetChildren())
-		if child:IsObjectType("Button") and not child:GetName() then
+	for i = 1, _G.ScriptErrorsFrame:GetNumChildren() do
+		local child = select(i, _G.ScriptErrorsFrame:GetChildren())
+		if child:IsObjectType('Button') and not child:GetName() then
 			S:HandleButton(child)
 		end
 	end
 
 	-- Tooltips
 	if E.private.skins.blizzard.tooltip then
-		TT:SecureHookScript(_G.FrameStackTooltip, "OnShow", "SetStyle")
-		TT:SecureHookScript(_G.EventTraceTooltip, "OnShow", "SetStyle")
+		TT:SecureHookScript(_G.FrameStackTooltip, 'OnShow', 'SetStyle')
+		TT:SecureHookScript(_G.EventTraceTooltip, 'OnShow', 'SetStyle')
 	end
 
-	S:HandleCloseButton(EventTraceFrameCloseButton, EventTraceFrame)
+	S:HandleCloseButton(_G.EventTraceFrameCloseButton, _G.EventTraceFrame)
 end)
 
-S:AddCallbackForAddon("ViragDevTool", "Skin_ViragDevTool", function()
-	local ViragDevTool = ViragDevTool
+S:AddCallbackForAddon('ViragDevTool', 'Skin_ViragDevTool', function()
+	local ViragDevTool = _G.ViragDevTool
 	local color = E:ClassColor(E.myclass)
 
 	local frames = {
-		ViragDevToolFrame,
-		ViragDevToolFrameSideBar,
-		ViragDevToolOptionsMainFrame,
-		ViragDevToolFrameScrollFrame,
-		ViragDevToolFrameSideBarScrollFrame,
+		_G.ViragDevToolFrame,
+		_G.ViragDevToolFrameSideBar,
+		_G.ViragDevToolOptionsMainFrame,
+		_G.ViragDevToolFrameScrollFrame,
+		_G.ViragDevToolFrameSideBarScrollFrame,
 	}
 
 	for _, frame in ipairs(frames) do
 		if frame then
 			frame:StripTextures()
-			frame:SetTemplate("Transparent")
-			if frame:IsObjectType("ScrollFrame") then
+			frame:SetTemplate('Transparent')
+			if frame:IsObjectType('ScrollFrame') then
 				frame:StripTextures()
 			end
 		end
 	end
 
 	local sideButtons = {
-		ViragDevToolFrameSideBarHistoryButton,
-		ViragDevToolFrameSideBarEventsButton,
-		ViragDevToolFrameSideBarLogButton,
-		ViragDevToolFrameClearButton,
-		ViragDevToolFrameAddGlobalButton,
-		ViragDevToolFrameFrameStack,
-		ViragDevToolFrameHelpButton,
-		ViragDevToolFrameFNCallLabelButton,
+		_G.ViragDevToolFrameSideBarHistoryButton,
+		_G.ViragDevToolFrameSideBarEventsButton,
+		_G.ViragDevToolFrameSideBarLogButton,
+		_G.ViragDevToolFrameClearButton,
+		_G.ViragDevToolFrameAddGlobalButton,
+		_G.ViragDevToolFrameFrameStack,
+		_G.ViragDevToolFrameHelpButton,
+		_G.ViragDevToolFrameFNCallLabelButton,
 
-		VDTFrameColorReset,
+		_G.VDTFrameColorReset,
 	}
 
-	hooksecurefunc(ViragDevTool, "UpdateSideBarUI", function(self)
+	hooksecurefunc(ViragDevTool, 'UpdateSideBarUI', function(self)
 		local mainFrame = self.wndRef
 		local sideFrame = mainFrame.sideFrame
 
 		for _, button in ipairs(sideButtons) do
-			local buttonChecked = button:GetName().."Checked"
+			local buttonChecked = button:GetName()..'Checked'
 			local checked = _G[buttonChecked]
 			if button and not checked then
 				S:HandleButton(button, true, nil, nil, true)
@@ -111,7 +112,7 @@ S:AddCallbackForAddon("ViragDevTool", "Skin_ViragDevTool", function()
 		end
 
 		for i = 1, sideFrame:GetNumChildren() do
-			local button = _G["VDTColorPickerFrameItem"..i.."Button"]
+			local button = _G['VDTColorPickerFrameItem'..i..'Button']
 			if button then
 				S:HandleButton(button, true, nil, nil, true)
 
@@ -122,18 +123,18 @@ S:AddCallbackForAddon("ViragDevTool", "Skin_ViragDevTool", function()
 
 	E:Delay(0.1, function()
 		for i = 1, 23 do
-			local actionButton = _G["ViragDevToolFrameSideBarScrollFrameButton"..i.."ActionButton"]
+			local actionButton = _G['ViragDevToolFrameSideBarScrollFrameButton'..i..'ActionButton']
 			if actionButton then
 				S:HandleCloseButton(actionButton)
 			end
 		end
 	end)
 
-	local frame = ViragDevToolFrameSideBar
-	local button = ViragDevToolFrameToggleSideBarButton
-	S:HandleNextPrevButton(button, frame:IsShown() and "right" or "left")
+	local frame = _G.ViragDevToolFrameSideBar
+	local button = _G.ViragDevToolFrameToggleSideBarButton
+	S:HandleNextPrevButton(button, frame:IsShown() and 'right' or 'left')
 
-	hooksecurefunc(ViragDevTool, "ToggleSidebar", function(self)
+	hooksecurefunc(ViragDevTool, 'ToggleSidebar', function(self)
 		local isShown = self.settings.isSideBarOpen
 		local normal, disabled, pushed = button:GetNormalTexture(), button:GetDisabledTexture(), button:GetPushedTexture()
 		local rotation = isShown and E.Skins.ArrowRotation.right or E.Skins.ArrowRotation.left
@@ -145,7 +146,7 @@ S:AddCallbackForAddon("ViragDevTool", "Skin_ViragDevTool", function()
 		PlaySound(isShown and 620 or 621) -- QUESTLOGOPEN or QUESTLOGCLOSE
 	end)
 
-	local button = ViragDevToolFrameResizeButton
+	local button = _G.ViragDevToolFrameResizeButton
 	local normal, pushed = button:GetNormalTexture(), button:GetPushedTexture()
 
 	S:HandleNextPrevButton(button)
@@ -153,11 +154,11 @@ S:AddCallbackForAddon("ViragDevTool", "Skin_ViragDevTool", function()
 	normal:SetRotation(-2.35)
 	pushed:SetRotation(-2.35)
 
-	S:HandleEditBox(ViragDevToolFrameSideBarTextArea, "Transparent")
-	S:HandleEditBox(ViragDevToolFrameTextArea, "Transparent")
+	S:HandleEditBox(_G.ViragDevToolFrameSideBarTextArea, 'Transparent')
+	S:HandleEditBox(_G.ViragDevToolFrameTextArea, 'Transparent')
 
-	S:HandleScrollBar(ViragDevToolFrameScrollFrameScrollBar)
-	S:HandleScrollBar(ViragDevToolFrameSideBarScrollFrameScrollBar)
+	S:HandleScrollBar(_G.ViragDevToolFrameScrollFrameScrollBar)
+	S:HandleScrollBar(_G.ViragDevToolFrameSideBarScrollFrameScrollBar)
 
-	S:HandleCloseButton(ViragDevToolFrameCloseWndButton)
+	S:HandleCloseButton(_G.ViragDevToolFrameCloseWndButton)
 end)
