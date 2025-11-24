@@ -1462,6 +1462,15 @@ function UpdateHotkeys(self)
 	end
 end
 
+local function GetSpellIdByName(spellName)
+	if not spellName then return end
+	local spellLink = GetSpellLink(spellName)
+	if spellLink then
+		return tonumber(spellLink:match("spell:(%d+)"))
+	end
+	return nil
+end
+
 -----------------------------------------------------------
 --- WoW API mapping
 --- Generic Button
@@ -1507,19 +1516,14 @@ Action.IsUnitInRange           = function(self, unit) return IsActionInRange(sel
 Action.SetTooltip              = function(self) return GameTooltip:SetAction(self._state_action) end
 Action.GetSpellId              = function(self)
 	if self._state_type == "action" then
-		local actionType, id, subType = GetActionInfo(self._state_action)
+		local actionType, id, subType, globalID = GetActionInfo(self._state_action)
 		if actionType == "spell" then
-			return id
+			return globalID
 		elseif actionType == "macro" then
-			if subType == "spell" then
-				return id
-			else
-				return (GetMacroSpell(id))
-			end
+			return GetSpellIdByName(GetMacroSpell(id))
 		end
 	end
 end
-
 -----------------------------------------------------------
 --- Spell Button
 Spell.HasAction               = function(self) return true end
