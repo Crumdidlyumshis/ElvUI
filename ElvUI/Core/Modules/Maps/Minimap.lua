@@ -327,7 +327,10 @@ function M:UpdateIcons()
 		if gameTime then M:SaveIconParent(gameTime) end
 		if mailFrame then M:SaveIconParent(mailFrame) end
 		if battlefieldFrame then M:SaveIconParent(battlefieldFrame) end
-		if difficulty then M:SaveIconParent(difficulty) end
+		if difficulty then
+			difficulty:SetParent(Minimap)
+			M:SaveIconParent(difficulty)
+		end
 		if lfgFrame then M:SaveIconParent(lfgFrame) end
 	end
 
