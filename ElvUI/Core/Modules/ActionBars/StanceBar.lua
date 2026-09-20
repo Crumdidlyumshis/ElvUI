@@ -19,6 +19,7 @@ local Masque = E.Masque
 local MasqueGroup = Masque and Masque:Group('ElvUI', 'Stance Bar')
 local WispSplode = [[Interface\Icons\Spell_Nature_WispSplode]]
 local bar = CreateFrame('Frame', 'ElvUI_StanceBar', E.UIParent, 'SecureHandlerStateTemplate')
+bar:SetFrameStrata('LOW')
 bar.buttons = {}
 
 function AB:UPDATE_SHAPESHIFT_COOLDOWN()
@@ -110,10 +111,14 @@ function AB:PositionAndSizeBarShapeShift()
 	bar:SetParent(db.inheritGlobalFade and AB.fadeParent or E.UIParent)
 	bar:EnableMouse(not db.clickThrough)
 	bar:SetAlpha(bar.mouseover and 0 or db.alpha)
+	bar:SetFrameStrata(db.frameStrata or "LOW")
+	bar:SetFrameLevel(db.frameLevel or 1)
 
 
 	if bar.backdrop then
 		bar.backdrop:SetShown(db.backdrop)
+		bar.backdrop:SetFrameStrata(db.frameStrata or "LOW")
+		bar.backdrop:SetFrameLevel((db.frameLevel or 1) - 1)
 		bar.backdrop:ClearAllPoints()
 	end
 
